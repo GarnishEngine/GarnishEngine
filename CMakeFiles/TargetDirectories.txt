@@ -1,0 +1,3 @@
+/Users/cannedbeans/sharedlinuxdir/other/GarnishEngine/CMakeFiles/GarnishEngine.dir
+/Users/cannedbeans/sharedlinuxdir/other/GarnishEngine/CMakeFiles/edit_cache.dir
+/Users/cannedbeans/sharedlinuxdir/other/GarnishEngine/CMakeFiles/rebuild_cache.dir
