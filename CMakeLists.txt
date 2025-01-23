@@ -21,10 +21,10 @@ else()
     add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 endif(_USE_OWN_SDL)
 
-add_executable(${PROJECT_NAME} main.cc
-                    src/carrot_window.cc 
-                    src/garnish_app.cc 
-                    src/sage_pipeline.cc)
+# Glob all C/C++ files in the current directory
+file(GLOB SOURCE_FILES src/*.cc)
+
+add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
 
 
 if(_VULKAN_RENDERING)
