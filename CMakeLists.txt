@@ -7,6 +7,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(SDL3 REQUIRED)
 find_package(Vulkan REQUIRED)
 
-add_executable(${PROJECT_NAME} main.cc)
+add_executable(${PROJECT_NAME} main.cc
+                    src/carrot_window.cc 
+                    src/garnish_app.cc )
 
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan SDL3::SDL3)

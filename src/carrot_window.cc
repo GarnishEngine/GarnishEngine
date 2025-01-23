@@ -1,4 +1,3 @@
-#pragma once
 
 #include "carrot_window.hpp"
 #include <SDL3/SDL_init.h>
@@ -6,7 +5,7 @@
 #include <SDL3/SDL_video.h>
 #include <cstdint>
 
-namespace Garnish {
+namespace garnish {
     CarrotWindow::CarrotWindow(uint32_t w, uint32_t h, std::string name) 
         : width(w), height(h), windowName(name) {
         SDLFlags = (SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -32,7 +31,7 @@ namespace Garnish {
 
     void CarrotWindow::InitWindow() {
         SDL_Init(SDLFlags);
-        SDL_Window *window = SDL_CreateWindow(windowName, width, height, windowFlags);
+        SDL_Window *window = SDL_CreateWindow(windowName.c_str(), width, height, windowFlags);
     }
-    }
+}
     
