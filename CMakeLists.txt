@@ -23,7 +23,8 @@ endif(_USE_OWN_SDL)
 
 add_executable(${PROJECT_NAME} main.cc
                     src/carrot_window.cc 
-                    src/garnish_app.cc )
+                    src/garnish_app.cc 
+                    src/sage_pipeline.cc)
 
 
 if(_VULKAN_RENDERING)

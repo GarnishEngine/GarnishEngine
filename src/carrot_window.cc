@@ -1,7 +1,7 @@
 // needs to be changed to support opengl
 
 #include "carrot_window.hpp"
-#include "src/sage_pipeline.hpp"
+#include "sage_pipeline.hpp"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 
