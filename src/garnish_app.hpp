@@ -13,7 +13,7 @@ namespace garnish {
         bool shouldClose() { return carrotWindow.shouldClose; }
       private:
         CarrotWindow carrotWindow{WIDTH, HEIGHT, "Hello"};
-        SagePipeline sagePipeline{"shaders/shad.vert", "shaders/shad.frag"};
+        //SagePipeline sagePipeline{"shaders/shad.vert", "shaders/shad.frag"};
     };
     
 }
