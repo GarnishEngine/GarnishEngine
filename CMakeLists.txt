@@ -21,7 +21,7 @@ else()
     add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 endif(_USE_OWN_SDL)
 
-# Glob all C/C++ files in the current directory
+# Glob all C/C++ files in the src directory
 file(GLOB SOURCE_FILES src/*.cc)
 
 add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
