@@ -2,6 +2,10 @@
 
 namespace garnish {
     void GarnishApp::run() {
+        if (glewInit() != GLEW_OK) {
+            std::cout << "GLEW failed to initialize" << std::endl;
+        }
+
         SDL_Event event;
 
         while (!shouldClose()) {

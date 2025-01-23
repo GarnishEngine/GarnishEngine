@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
+option(_OPENGL_RENDERING "Use OpenGL" ON)
 option(_USE_OWN_SDL "Use Vulkan" OFF)
 
 
@@ -14,6 +15,10 @@ else()
     find_package(OpenGL REQUIRED)
     include_directories( ${OPENGL_INCLUDE_DIRS}  )
 endif(_VULKAN_RENDERING)
+
+if (_OPENGL_RENDERING)
+    find_package(GLEW REQUIRED)
+endif(_OPENGL_RENDERING)
 
 if(_USE_OWN_SDL)
     find_package(SDL3 REQUIRED)
@@ -30,6 +35,6 @@ add_executable(${PROJECT_NAME} main.cc
 if(_VULKAN_RENDERING)
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan SDL3::SDL3)
 else()
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL3::SDL3)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW)
 
 endif(_VULKAN_RENDERING)
