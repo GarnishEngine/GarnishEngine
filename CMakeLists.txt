@@ -6,18 +6,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
-option(_USE_OWN_SDL "Use Vulkan" OFF)
-
+option(_USE_OWN_SDL "Use your own SDL installation" OFF)
 
 if(_VULKAN_RENDERING)   
     find_package(Vulkan REQUIRED)
+    option(_OPENGL_RENDERING "Use OpenGL" OFF)
 else()
-    find_package(OpenGL REQUIRED)
-    include_directories( ${OPENGL_INCLUDE_DIRS}  )
+    option(_OPENGL_RENDERING "Use OpenGL" ON)
 endif(_VULKAN_RENDERING)
 
 if (_OPENGL_RENDERING)
     find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+    include_directories( ${OPENGL_INCLUDE_DIRS}  )
 endif(_OPENGL_RENDERING)
 
 if(_USE_OWN_SDL)
