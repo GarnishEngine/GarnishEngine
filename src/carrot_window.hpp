@@ -1,10 +1,12 @@
 #pragma once
 
-#include "vulkan/vulkan_core.h"
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_vulkan.h>
+
+
+#include <cstdint>
 #include <string>
 
 namespace garnish {
@@ -27,5 +29,7 @@ namespace garnish {
         SDL_Window *window;
         uint64_t SDLFlags;
         uint64_t windowFlags;
+
+        // static bool resizingEventWatcher(void *data, SDL_Event *event); maybe later lol
     };
 }
