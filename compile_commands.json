@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/Users/cannedbeans/sharedlinuxdir/other/GarnishEngine",
-  "command": "/opt/homebrew/bin/g++-14    -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/GarnishEngine.dir/main.cc.o -c /Users/cannedbeans/sharedlinuxdir/other/GarnishEngine/main.cc",
-  "file": "/Users/cannedbeans/sharedlinuxdir/other/GarnishEngine/main.cc",
-  "output": "CMakeFiles/GarnishEngine.dir/main.cc.o"
-}
-]
