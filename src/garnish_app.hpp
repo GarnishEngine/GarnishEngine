@@ -1,6 +1,8 @@
 #pragma once
 
 #include "carrot_window.hpp"
+#include "sage_pipeline.hpp"
+
 namespace garnish {
     class GarnishApp {
       public:
@@ -11,6 +13,7 @@ namespace garnish {
         bool shouldClose() { return carrotWindow.shouldClose; }
       private:
         CarrotWindow carrotWindow{WIDTH, HEIGHT, "Hello"};
+        SagePipeline sagePipeline{"shaders/shad.vert", "shaders/shad.frag"};
     };
     
 }
