@@ -47,4 +47,5 @@ CMakeUserPresets.json
 
 # Other
 .cache
+build/
 GarnishEngine
