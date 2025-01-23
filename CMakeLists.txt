@@ -4,8 +4,9 @@ project(GarnishEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(SDL3 REQUIRED)
 find_package(Vulkan REQUIRED)
+
+add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 
 add_executable(${PROJECT_NAME} main.cc
                     src/carrot_window.cc 
