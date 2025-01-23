@@ -8,6 +8,8 @@ find_package(Vulkan REQUIRED)
 
 add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 
-add_executable(${PROJECT_NAME} main.cc)
+add_executable(${PROJECT_NAME} main.cc
+                    src/carrot_window.cc 
+                    src/garnish_app.cc )
 
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan SDL3::SDL3)
