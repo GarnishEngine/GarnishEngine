@@ -19,7 +19,7 @@ for the engine, there should be no way to run it.
 
 This leads to an important question, what should it look like for a user (someone making a game with Garnish) to 
 use Garnish, ie what should the users main file look like, heres an example:
-```
+```cpp
 #include <garnish_engine.hpp>
 
 int main() {
