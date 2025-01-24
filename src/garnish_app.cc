@@ -93,11 +93,11 @@ namespace garnish {
             glBindVertexArray(VAO); // Dont need this because we only have one VAO
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            carrotWindow.SwapWindow();
+            garnishWindow.SwapWindow();
 
             SDL_PollEvent(&event);
             if (event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-                carrotWindow.shouldClose = true;
+                garnishWindow.shouldClose = true;
             }
         }
 
