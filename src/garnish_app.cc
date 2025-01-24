@@ -49,6 +49,20 @@ namespace garnish {
 
         SDL_Event event;
         while (!shouldClose()) {
+            float camSpeed = 0.01f;
+            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
+                cam.position += cam.forward * camSpeed;
+            }
+            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
+                cam.position -= cam.forward * camSpeed;
+            }
+            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
+                cam.position += cam.right * camSpeed;
+            }
+            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
+                cam.position -= cam.right * camSpeed;
+            }
+
             glViewport(0, 0, WIDTH, HEIGHT);
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
