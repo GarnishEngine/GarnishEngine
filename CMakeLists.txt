@@ -28,7 +28,7 @@ else()
 endif(_USE_OWN_SDL)
 
 # Glob all C/C++ files in the src directory
-file(GLOB SOURCE_FILES src/*.cc)
+file(GLOB SOURCE_FILES src/*.cc src/Utility/*.cc)
 
 add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
 

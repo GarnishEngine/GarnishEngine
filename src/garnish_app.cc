@@ -1,27 +1,21 @@
 #include "garnish_app.hpp"
 
+#include "Utility/read_file.hpp"
+
 namespace garnish {
     void GarnishApp::run() {
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("GLEW failed to initialize");
         }
 
-        const char *vertexShaderSource = \
-            "#version 330 core\n"
-            "layout (location = 0) in vec3 aPos;\n"
-            "void main() {\n"
-            "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-            "}\0";
+        std::vector<char> vertexShaderSource = ReadFile("shaders/shader.vert");
+        const char* vertexSource = vertexShaderSource.data();
 
-        const char *fragmentShaderSource = \
-            "#version 330 core\n"
-            "out vec4 FragColor;\n"
-            "void main() {\n"
-            "   FragColor = vec4(0.3f, 0.4f, 0.8f, 1.0f);\n"
-            "}\n\0";
+        std::vector<char> fragmentShaderSource = ReadFile("shaders/shader.frag");
+        const char* fragmentSource = fragmentShaderSource.data();
 
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+        glShaderSource(vertexShader, 1, &vertexSource, NULL);
         glCompileShader(vertexShader);
 
         int success;
@@ -30,11 +24,10 @@ namespace garnish {
         if (!success) {
             glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
             throw std::runtime_error("Vertex Shader failed to compile:\n" + std::string{ infoLog });
-
         }
 
         unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+        glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
         glCompileShader(fragmentShader);
 
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
