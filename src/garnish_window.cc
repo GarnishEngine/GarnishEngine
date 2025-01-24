@@ -1,5 +1,3 @@
-// needs to be changed to support opengl
-
 #include "garnish_window.hpp"
 #include "graphics_pipeline.hpp"
 

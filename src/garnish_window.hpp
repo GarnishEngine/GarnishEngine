@@ -12,14 +12,14 @@
 #include <string>
 
 namespace garnish {
-    class CarrotWindow {
+    class GarnishWindow {
       public:
-        CarrotWindow(uint32_t w, uint32_t h, std::string name);
-        CarrotWindow(uint32_t w, uint32_t h, std::string name, uint64_t sdl_flags, uint64_t window_flags);
-        ~CarrotWindow();
+        GarnishWindow(uint32_t w, uint32_t h, std::string name);
+        GarnishWindow(uint32_t w, uint32_t h, std::string name, uint64_t sdl_flags, uint64_t window_flags);
+        ~GarnishWindow();
 
-        CarrotWindow(const CarrotWindow&) = delete;
-        CarrotWindow &operator=(const CarrotWindow&) = delete;
+        GarnishWindow(const GarnishWindow&) = delete;
+        GarnishWindow &operator=(const GarnishWindow&) = delete;
 
         void SwapWindow();
 
