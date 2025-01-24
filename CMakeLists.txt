@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
 option(_USE_OWN_SDL "Use your own SDL installation" OFF)
+option(_USE_OWN_GLM "Use your own GLM installation" OFF)
 
 if(_VULKAN_RENDERING)   
     find_package(Vulkan REQUIRED)
@@ -26,6 +27,12 @@ if(_USE_OWN_SDL)
 else()
     add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 endif(_USE_OWN_SDL)
+
+if(_USE_OWN_GLM)
+    find_package(GLM REQUIRED)
+else()
+    add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
+endif(_USE_OWN_GLM)
 
 # Glob all C/C++ files in the src directory
 file(GLOB SOURCE_FILES 
