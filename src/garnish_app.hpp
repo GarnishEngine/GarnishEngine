@@ -10,7 +10,7 @@ namespace garnish {
         static constexpr int HEIGHT = 600;
 
         void run();
-        bool shouldClose() { return carrotWindow.shouldClose; }
+        bool shouldClose() { return garnishWindow.shouldClose; }
       private:
         GarnishWindow garnishWindow{WIDTH, HEIGHT, "Hello"};
     };
