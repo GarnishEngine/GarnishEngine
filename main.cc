@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#include "src/carrot_window.hpp"
+#include "src/garnish_window.hpp"
 #include "src/garnish_app.hpp"
 
 int main() {
