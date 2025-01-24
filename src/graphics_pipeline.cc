@@ -1,4 +1,4 @@
-#include "graphics_pipeline.hpp" 
+#include "graphics_pipeline.hpp"
 #include <cstddef>
 #include <stdexcept>
 

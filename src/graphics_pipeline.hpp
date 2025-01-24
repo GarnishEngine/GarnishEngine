@@ -7,9 +7,9 @@
 #include <iostream>
 
 namespace garnish {
-    class SagePipeline{
+    class GraphicsPipeline{
       public:
-        SagePipeline(const std::string &vertFilepath, const std::string &fragFilepath);
+        GraphicsPipeline(const std::string &vertFilepath, const std::string &fragFilepath);
                     
       private:
         static std::vector<char> readFile(const std::string &filepath);
