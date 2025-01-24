@@ -1,5 +1,7 @@
 #include "garnish_app.hpp"
 
+#include <glm/ext/matrix_clip_space.hpp>
+
 #include "Utility/OpenGL/shader_program.hpp"
 #include "Utility/OpenGL/gl_buffer.hpp"
 #include "Utility/camera.hpp"
@@ -13,6 +15,13 @@ namespace garnish {
         Camera cam{ };
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
+
+        glm::mat4 model{ 1.0f };
+        glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+
+        glm::mat4 mvp = projection * cam.ViewMatrix() * model;
+
+        shaderProgram.SetUniform("mvp", mvp);
 
         std::vector<float> vertices = {
             -0.5f, -0.5f, 0.0f,
@@ -44,7 +53,6 @@ namespace garnish {
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
-
 
         SDL_Event event;
         while (!shouldClose()) {

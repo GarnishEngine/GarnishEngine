@@ -3,6 +3,8 @@
 #include <vector>
 #include <stdexcept>
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "OpenGL.hpp"
 
 #include "../read_file.hpp"
@@ -59,5 +61,10 @@ namespace garnish {
 
     void ShaderProgram::Use() {
         glUseProgram(handle);
+    }
+
+    void ShaderProgram::SetUniform(const std::string& name, const glm::mat4& mat) {
+        Use();
+        glUniformMatrix4fv(glGetUniformLocation(handle, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
     }
 }

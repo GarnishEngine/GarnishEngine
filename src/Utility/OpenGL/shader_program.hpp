@@ -1,5 +1,7 @@
 #include <string>
 
+#include <glm/mat4x4.hpp>
+
 namespace garnish {
     class ShaderProgram {
         public:
@@ -11,6 +13,8 @@ namespace garnish {
             ~ShaderProgram();
 
             void Use();
+
+            void SetUniform(const std::string& name, const glm::mat4& mat);
 
         private:
             unsigned int handle;
