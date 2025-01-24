@@ -16,18 +16,25 @@ namespace garnish {
              0.5f, -0.5f, 0.0f
         };
 
+        std::vector<float> colors = {
+             1.0f, 0.0f, 0.0f,
+             0.0f, 1.0f, 0.0f,
+             0.0f, 0.0f, 1.0f,
+        };
+
         std::vector<unsigned int> indices = {
             0, 1, 2
         };
 
-        unsigned int VBO, VAO, EBO;
+        unsigned int VBO0, VBO1, VAO, EBO;
         glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &VBO0);
+        glGenBuffers(1, &VBO1);
         glGenBuffers(1, &EBO);
 
         glBindVertexArray(VAO);
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO0);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), (void*)vertices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -35,6 +42,12 @@ namespace garnish {
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), (void*)colors.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
 
         SDL_Event event;
         while (!shouldClose()) {
@@ -56,7 +69,8 @@ namespace garnish {
         }
 
         glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &VBO0);
+        glDeleteBuffers(1, &VBO1);
         glDeleteBuffers(1, &EBO);
     }
 }
