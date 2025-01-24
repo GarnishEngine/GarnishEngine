@@ -25,8 +25,6 @@ namespace garnish {
 
             bool shouldClose = false;
 
-            SDL_Window *window;
-
         private:
             void InitWindow();
             const uint32_t width;
@@ -34,6 +32,7 @@ namespace garnish {
             std::string windowName;
             uint64_t SDLFlags;
             uint64_t windowFlags;
+            SDL_Window *window;
 
             SDL_GLContext glContext;
 
