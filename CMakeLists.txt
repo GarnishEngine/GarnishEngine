@@ -35,6 +35,6 @@ add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
 if(_VULKAN_RENDERING)
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan SDL3::SDL3)
 else()
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL)
 
 endif(_VULKAN_RENDERING)
