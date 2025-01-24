@@ -16,13 +16,6 @@ namespace garnish {
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
-        glm::mat4 model{ 1.0f };
-        glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-
-        glm::mat4 mvp = projection * cam.ViewMatrix() * model;
-
-        shaderProgram.SetUniform("mvp", mvp);
-
         std::vector<float> vertices = {
             -0.5f, -0.5f, 0.0f,
              0.0f,  0.5f, 0.0f,
@@ -61,6 +54,13 @@ namespace garnish {
             glClear(GL_COLOR_BUFFER_BIT);
 
             shaderProgram.Use();
+
+            glm::mat4 model{ 1.0f };
+            glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+
+            glm::mat4 mvp = projection * cam.ViewMatrix() * model;
+
+            shaderProgram.SetUniform("mvp", mvp);
 
             // glBindVertexArray(VAO); // Dont need this because we only have one VAO
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
