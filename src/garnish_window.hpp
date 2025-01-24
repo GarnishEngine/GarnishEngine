@@ -13,31 +13,30 @@
 
 namespace garnish {
     class GarnishWindow {
-      public:
-        GarnishWindow(uint32_t w, uint32_t h, std::string name);
-        GarnishWindow(uint32_t w, uint32_t h, std::string name, uint64_t sdl_flags, uint64_t window_flags);
-        ~GarnishWindow();
+        public:
+            GarnishWindow(uint32_t w, uint32_t h, std::string name);
+            GarnishWindow(uint32_t w, uint32_t h, std::string name, uint64_t sdl_flags, uint64_t window_flags);
+            ~GarnishWindow();
 
-        GarnishWindow(const GarnishWindow&) = delete;
-        GarnishWindow &operator=(const GarnishWindow&) = delete;
+            GarnishWindow(const GarnishWindow&) = delete;
+            GarnishWindow &operator=(const GarnishWindow&) = delete;
 
-        void SwapWindow();
+            void SwapWindow();
 
-        bool shouldClose = false;
+            bool shouldClose = false;
 
-        SDL_Window *window;
+            SDL_Window *window;
 
+        private:
+            void InitWindow();
+            const uint32_t width;
+            const uint32_t height;
+            std::string windowName;
+            uint64_t SDLFlags;
+            uint64_t windowFlags;
 
-      private:
-        void InitWindow();
-        const uint32_t width;
-        const uint32_t height;
-        std::string windowName;
-        uint64_t SDLFlags;
-        uint64_t windowFlags;
+            SDL_GLContext glContext;
 
-        SDL_GLContext glContext;
-
-        // static bool resizingEventWatcher(void *data, SDL_Event *event); maybe later lol
+            // static bool resizingEventWatcher(void *data, SDL_Event *event); maybe later lol
     };
 }
