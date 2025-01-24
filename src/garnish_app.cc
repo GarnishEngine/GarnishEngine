@@ -17,6 +17,12 @@ namespace garnish {
              0.5f, -0.5f, 0.0f
         };
 
+        std::vector<float> colors = {
+             1.0f, 0.0f, 0.0f,
+             0.0f, 1.0f, 0.0f,
+             0.0f, 0.0f, 1.0f,
+        };
+
         std::vector<unsigned int> indices = {
             0, 1, 2
         };
@@ -25,11 +31,17 @@ namespace garnish {
         glGenVertexArrays(1, &VAO);
         glBindVertexArray(VAO);
 
-        VertexBufferObject VBO{ vertices };
+        VertexBufferObject VBO0{ vertices };
         ElementBufferObject EBO{ indices };
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
+
+        VertexBufferObject VBO1{ colors };
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+
 
         SDL_Event event;
         while (!shouldClose()) {
