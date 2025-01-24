@@ -3,9 +3,7 @@
 #include <vector>
 #include <stdexcept>
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <SDL3/SDL_opengl.h>
+#include "OpenGL.hpp"
 
 #include "../read_file.hpp"
 
