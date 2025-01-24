@@ -1,6 +1,6 @@
 #include "garnish_app.hpp"
 
-#include "Utility/read_file.hpp"
+#include "Utility/OpenGL/shader_program.hpp"
 
 namespace garnish {
     void GarnishApp::run() {
@@ -8,47 +8,7 @@ namespace garnish {
             throw std::runtime_error("GLEW failed to initialize");
         }
 
-        std::vector<char> vertexShaderSource = ReadFile("shaders/shader.vert");
-        const char* vertexSource = vertexShaderSource.data();
-
-        std::vector<char> fragmentShaderSource = ReadFile("shaders/shader.frag");
-        const char* fragmentSource = fragmentShaderSource.data();
-
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexSource, NULL);
-        glCompileShader(vertexShader);
-
-        int success;
-        char infoLog[512];
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            throw std::runtime_error("Vertex Shader failed to compile:\n" + std::string{ infoLog });
-        }
-
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
-        glCompileShader(fragmentShader);
-
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            throw std::runtime_error("Fragment Shader failed to compile:\n" + std::string{ infoLog });
-        }
-
-        unsigned int shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-            throw std::runtime_error("Shader Program failed to link:\n" + std::string{ infoLog });
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+        ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
         std::vector<float> vertices = {
             -0.5f, -0.5f, 0.0f,
@@ -82,7 +42,7 @@ namespace garnish {
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            glUseProgram(shaderProgram);
+            shaderProgram.Use();
 
             // glBindVertexArray(VAO); // Dont need this because we only have one VAO
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -98,6 +58,5 @@ namespace garnish {
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
         glDeleteBuffers(1, &EBO);
-        glDeleteProgram(shaderProgram);
     }
 }
