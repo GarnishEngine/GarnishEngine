@@ -17,7 +17,7 @@ namespace garnish {
             "#version 330 core\n"
             "out vec4 FragColor;\n"
             "void main() {\n"
-            "   FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);\n"
+            "   FragColor = vec4(0.3f, 0.4f, 0.8f, 1.0f);\n"
             "}\n\0";
 
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -85,12 +85,12 @@ namespace garnish {
         SDL_Event event;
         while (!shouldClose()) {
             glViewport(0, 0, WIDTH, HEIGHT);
-            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(shaderProgram);
 
-            glBindVertexArray(VAO); // Dont need this because we only have one VAO
+            // glBindVertexArray(VAO); // Dont need this because we only have one VAO
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             garnishWindow.SwapWindow();
