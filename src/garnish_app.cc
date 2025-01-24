@@ -3,7 +3,7 @@
 namespace garnish {
     void GarnishApp::run() {
         if (glewInit() != GLEW_OK) {
-            std::cout << "GLEW failed to initialize" << std::endl;
+            throw std::runtime_error("GLEW failed to initialize");
         }
 
         const char *vertexShaderSource = \
@@ -29,7 +29,8 @@ namespace garnish {
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            std::cout << "Vertex Shader failed to compile:\n" << infoLog << std::endl;
+            throw std::runtime_error("Vertex Shader failed to compile:\n" + std::string{ infoLog });
+
         }
 
         unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -39,7 +40,7 @@ namespace garnish {
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            std::cout << "Fragment Shader failed to compile:\n" << infoLog << std::endl;
+            throw std::runtime_error("Fragment Shader failed to compile:\n" + std::string{ infoLog });
         }
 
         unsigned int shaderProgram = glCreateProgram();
@@ -50,7 +51,7 @@ namespace garnish {
         glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-            std::cout << "Shader Program failed to link:\n" << infoLog << std::endl;
+            throw std::runtime_error("Shader Program failed to link:\n" + std::string{ infoLog });
         }
 
         glDeleteShader(vertexShader);
