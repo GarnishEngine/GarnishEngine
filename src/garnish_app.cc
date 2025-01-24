@@ -2,12 +2,15 @@
 
 #include "Utility/OpenGL/shader_program.hpp"
 #include "Utility/OpenGL/gl_buffer.hpp"
+#include "Utility/camera.hpp"
 
 namespace garnish {
     void GarnishApp::run() {
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("GLEW failed to initialize");
         }
+
+        Camera cam{ };
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
