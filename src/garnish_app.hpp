@@ -1,9 +1,9 @@
 #pragma once
 
 #include "SDL3/SDL_events.h"
-#include "Utility/OpenGL/gl_buffer.hpp"
-#include "Utility/OpenGL/shader_program.hpp"
-#include "Utility/camera.hpp"
+#include "Rendering/OpenGL/gl_buffer.hpp"
+#include "Rendering/OpenGL/shader_program.hpp"
+#include "Rendering/camera.hpp"
 #include "garnish_entity.hpp"
 #include "garnish_event.hpp"
 #include "garnish_window.hpp"

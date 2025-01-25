@@ -7,7 +7,7 @@
 
 #include "OpenGL.hpp"
 
-#include "../read_file.hpp"
+#include "../../Utility/read_file.hpp"
 
 namespace garnish {
     ShaderProgram::ShaderProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) 

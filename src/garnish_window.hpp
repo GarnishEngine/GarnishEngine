@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utility/OpenGL/OpenGL.hpp"
+#include "Rendering/OpenGL/OpenGL.hpp"
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
