@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <iostream>
+
 namespace garnish {
     glm::mat4 Camera::ViewMatrix() {
         return glm::lookAt(position, position + forward, up);
@@ -13,29 +15,63 @@ namespace garnish {
         switch (gEvent.event.type) {
             case SDL_EVENT_KEY_DOWN:
                 if (gEvent.event.key.scancode == SDL_SCANCODE_W) {
-                    position += forward * speed;
+                    position += forward * movementSpeed;
                 }
                 if (gEvent.event.key.scancode == SDL_SCANCODE_S) {
-                    position -= forward * speed;
+                    position -= forward * movementSpeed;
                 }
                 if (gEvent.event.key.scancode == SDL_SCANCODE_D) {
-                    position += right * speed;
+                    position += right * movementSpeed;
                 }
                 if (gEvent.event.key.scancode == SDL_SCANCODE_A) {
-                    position -= right * speed;
+                    position -= right * movementSpeed;
                 }
                 break;
-              default:
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                if (gEvent.event.button.button == 1) {
+                    mouseButtonHeld = true;
+                }
+                break;
+
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                if (gEvent.event.button.button == 1) {
+                    mouseButtonHeld = false;
+                }
+                break;
+
+            case SDL_EVENT_MOUSE_MOTION:
+                if (!mouseButtonHeld) {
+                    break;
+                }
+
+                yaw += gEvent.event.motion.xrel * lookSensitivity;
+                pitch -= gEvent.event.motion.yrel * lookSensitivity;
+
+                if (pitch > 89.9f) {
+                    pitch = 89.9f;
+                }
+                else if (pitch < -89.9f) {
+                    pitch = -89.9f;
+                }
+
+                forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+                forward.y = sin(glm::radians(pitch));
+                forward.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+                forward = glm::normalize(forward);
+
+                right = glm::normalize(glm::cross(forward, up));
+
                 break;
         }
     }
-    Camera::Camera(float s) {
+    Camera::Camera(float movementSpeed, float lookSensitivity) 
+        : movementSpeed(movementSpeed), lookSensitivity(lookSensitivity) {
+
         glm::vec3 position{0.0f, 0.0f, 5.0f};
 
         glm::vec3 up{0.0f, 1.0f, 0.0f};
         glm::vec3 forward{0.0f, 0.0f, -1.0f};
         glm::vec3 right{1.0f, 0.0f, 0.0f};
-
-        speed = s;
     }
 }

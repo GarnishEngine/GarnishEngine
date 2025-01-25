@@ -26,7 +26,7 @@ namespace garnish {
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("GLEW failed to initialize");
         }
-        std::shared_ptr<Camera> cam = std::make_shared<Camera>(0.1f);
+        std::shared_ptr<Camera> cam = std::make_shared<Camera>();
         entities.push_back(cam);
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };

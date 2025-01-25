@@ -7,7 +7,7 @@
 
 namespace garnish {
     struct Camera : public GarnishEntity {
-        Camera(float s);
+        Camera(float movementSpeed = 0.25f, float lookSensitivity = 0.5f);
         
         glm::vec3 position{ 0.0f, 0.0f, 5.0f };
 
@@ -15,12 +15,15 @@ namespace garnish {
         glm::vec3 forward{ 0.0f, 0.0f, -1.0f };
         glm::vec3 right{ 1.0f, 0.0f, 0.0f };
 
-        // TODO Camera movement/looking around
-        // float yaw{ 0.0f };
-        // float pitch{ 0.0f };
+        float yaw{ -90.0f };
+        float pitch{ 0.0f };
+
+        bool mouseButtonHeld{ false };
 
         glm::mat4 ViewMatrix();
-        float speed = 0.01f;
+
+        float movementSpeed;
+        float lookSensitivity;
 
         void update(GarnishEvent &gEvent) override;
 
