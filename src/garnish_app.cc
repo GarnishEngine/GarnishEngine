@@ -4,7 +4,8 @@
 #include <memory>
 
 typedef std::chrono::duration<float> fsec;
-const int32_t FRAME_RATE = 30;
+const int32_t FRAME_RATE = 60;
+
 namespace garnish {
     bool GarnishApp::handle_poll_event() {
         GarnishEvent event{};
@@ -15,11 +16,12 @@ namespace garnish {
         }
 
         for (const auto &entity : entities) {
-
              entity->update(event);
         }
+
         return true;
     }
+    
     void GarnishApp::handle_all_events() {
         while (handle_poll_event()) {}
     }

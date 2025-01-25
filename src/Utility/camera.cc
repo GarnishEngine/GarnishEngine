@@ -12,22 +12,22 @@ namespace garnish {
     void Camera::update(GarnishEvent &gEvent) {
         // debug("cam update");
         // debug(position);
+        
         switch (gEvent.event.type) {
             case SDL_EVENT_KEY_DOWN:
-                if (gEvent.event.key.scancode == SDL_SCANCODE_W) {
-                    position += forward * movementSpeed;
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
+                position += forward * movementSpeed;
                 }
-                if (gEvent.event.key.scancode == SDL_SCANCODE_S) {
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
                     position -= forward * movementSpeed;
                 }
-                if (gEvent.event.key.scancode == SDL_SCANCODE_D) {
-                    position += right * movementSpeed;
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
+                    position += right * (movementSpeed/3);
                 }
-                if (gEvent.event.key.scancode == SDL_SCANCODE_A) {
-                    position -= right * movementSpeed;
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
+                    position -= right * (movementSpeed/3);
                 }
                 break;
-
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 if (gEvent.event.button.button == 1) {
                     mouseButtonHeld = true;
