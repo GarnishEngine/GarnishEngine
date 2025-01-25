@@ -1,17 +1,22 @@
 #include "garnish_app.hpp"
 #include "Utility/garnish_debug.hpp"
+#include <chrono>
 #include <memory>
 
+typedef std::chrono::duration<float> fsec;
+const int32_t FRAME_RATE = 30;
 namespace garnish {
     void GarnishApp::handle_poll_event() {
         GarnishEvent event{};
         if (!event.state) return;
+
         if (event.event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-          garnishWindow.shouldClose = true;
+            garnishWindow.shouldClose = true;
         }
+
         for (const auto &entity : entities) {
 
-          entity->update(event);
+             entity->update(event);
         }
     }
 
@@ -56,8 +61,10 @@ namespace garnish {
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
-        int i = 0;
+        // int frame_num = -1;
         SDL_Event event;
+        tp end_time = hrclock::now();
+        
         while (!shouldClose()) {
             handle_poll_event();
 
@@ -78,10 +85,14 @@ namespace garnish {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             garnishWindow.SwapWindow();
-            // std::cout << "frame: " << i << std::endl;
-            // ++i;
 
-            
+            tp start_time = hrclock::now();
+
+            int32_t dt = duration_cast<ms>(start_time - end_time).count();
+            //  std::cerr << "frame: " << ++frame_num << " ms_elapsed_since_last: " << dt << '\n';
+
+            end_time = start_time;
+
         }
 
         glDeleteVertexArrays(1, &VAO);

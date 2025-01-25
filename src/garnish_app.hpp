@@ -10,18 +10,25 @@
 #include "graphics_pipeline.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 #include <memory>
+#include <chrono>
+
+typedef std::chrono::high_resolution_clock hrclock;
+typedef std::chrono::time_point<hrclock> tp;
+typedef std::chrono::milliseconds ms;
+using std::chrono::duration_cast;
 
 namespace garnish {
     class GarnishApp {
-        public:
-            static constexpr int WIDTH = 800;
-            static constexpr int HEIGHT = 600;
+    public:
+        static constexpr int WIDTH = 800;
+        static constexpr int HEIGHT = 600;
 
-            void run();
-            bool shouldClose() { return garnishWindow.shouldClose; }
-            void handle_poll_event();
-        private:
-            GarnishWindow garnishWindow{WIDTH, HEIGHT, "Hello"};
-            std::vector<std::shared_ptr<GarnishEntity>> entities;
+        void run();
+        bool shouldClose() { return garnishWindow.shouldClose; }
+        void handle_poll_event();
+
+    private:
+        GarnishWindow garnishWindow{WIDTH, HEIGHT, "Hello"};
+        std::vector<std::shared_ptr<GarnishEntity>> entities;
     };
 }
