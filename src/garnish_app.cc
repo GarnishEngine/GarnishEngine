@@ -34,6 +34,14 @@ namespace garnish {
         while (handle_poll_event()) {}
     }
 
+    struct Vertex {
+        Vertex(float x, float y, float z) 
+            : position(glm::vec3{ x, y, z }) {
+
+        }
+        glm::vec3 position{ };
+    };
+
     void GarnishApp::run() {
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("GLEW failed to initialize");
@@ -43,11 +51,45 @@ namespace garnish {
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
-        std::vector<float> vertices = {
-            -0.5f, -0.5f, 0.0f,
-             0.0f,  0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f
+        // Calculating cube vertices
+        std::vector<Vertex> cubeVertices{ 
+            Vertex{ -0.5f, -0.5f,  0.5f },
+            Vertex{ -0.5f,  0.5f,  0.5f },
+            Vertex{  0.5f,  0.5f,  0.5f },
+            Vertex{  0.5f, -0.5f,  0.5f },
+
+            Vertex{  0.5f, -0.5f,  0.5f },
+            Vertex{  0.5f,  0.5f,  0.5f },
+            Vertex{  0.5f,  0.5f, -0.5f },
+            Vertex{  0.5f, -0.5f, -0.5f },
+
+            Vertex{ -0.5f, -0.5f, -0.5f },
+            Vertex{ -0.5f,  0.5f, -0.5f },
+            Vertex{ -0.5f,  0.5f,  0.5f },
+            Vertex{ -0.5f, -0.5f,  0.5f },
+
+            Vertex{  0.5f, -0.5f, -0.5f },
+            Vertex{  0.5f,  0.5f, -0.5f },
+            Vertex{ -0.5f,  0.5f, -0.5f },
+            Vertex{ -0.5f, -0.5f, -0.5f },
+
+            Vertex{ -0.5f,  0.5f,  0.5f },
+            Vertex{ -0.5f,  0.5f, -0.5f },
+            Vertex{  0.5f,  0.5f, -0.5f },
+            Vertex{  0.5f,  0.5f,  0.5f },
+
+            Vertex{ -0.5f, -0.5f, -0.5f },
+            Vertex{ -0.5f, -0.5f,  0.5f },
+            Vertex{  0.5f, -0.5f,  0.5f },
+            Vertex{  0.5f, -0.5f, -0.5f }
         };
+
+        std::vector<float> vertices{ };
+        for (auto& vert : cubeVertices) {
+            vertices.push_back(vert.position.x);
+            vertices.push_back(vert.position.y);
+            vertices.push_back(vert.position.z);
+        }
 
         std::vector<float> colors = {
              1.0f, 0.0f, 0.0f,
@@ -56,7 +98,23 @@ namespace garnish {
         };
 
         std::vector<unsigned int> indices = {
-            0, 1, 2
+            0, 1, 2,
+            0, 2, 3,
+
+            4, 5, 6,
+            4, 6, 7,
+
+            8, 9, 10,
+            8, 10, 11,
+
+            12, 13, 14,
+            12, 14, 15,
+
+            16, 17, 18,
+            16, 18, 19,
+
+            20, 21, 22,
+            20, 22, 23,
         };
 
         unsigned int VAO;
@@ -103,7 +161,7 @@ namespace garnish {
 
                 // glBindVertexArray(VAO); // Dont need this because we only have
                 // one VAO
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
                 garnishWindow.SwapWindow();
 
