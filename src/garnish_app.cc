@@ -35,11 +35,8 @@ namespace garnish {
     }
 
     struct Vertex {
-        Vertex(float x, float y, float z) 
-            : position(glm::vec3{ x, y, z }) {
-
-        }
         glm::vec3 position{ };
+        glm::vec3 color{ };
     };
 
     void GarnishApp::run() {
@@ -51,37 +48,36 @@ namespace garnish {
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
-        // Calculating cube vertices
         std::vector<Vertex> cubeVertices{ 
-            Vertex{ -0.5f, -0.5f,  0.5f },
-            Vertex{ -0.5f,  0.5f,  0.5f },
-            Vertex{  0.5f,  0.5f,  0.5f },
-            Vertex{  0.5f, -0.5f,  0.5f },
+            Vertex{ glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{  0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } },
 
-            Vertex{  0.5f, -0.5f,  0.5f },
-            Vertex{  0.5f,  0.5f,  0.5f },
-            Vertex{  0.5f,  0.5f, -0.5f },
-            Vertex{  0.5f, -0.5f, -0.5f },
+            Vertex{ glm::vec3{  0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{  0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } },
 
-            Vertex{ -0.5f, -0.5f, -0.5f },
-            Vertex{ -0.5f,  0.5f, -0.5f },
-            Vertex{ -0.5f,  0.5f,  0.5f },
-            Vertex{ -0.5f, -0.5f,  0.5f },
+            Vertex{ glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } },
 
-            Vertex{  0.5f, -0.5f, -0.5f },
-            Vertex{  0.5f,  0.5f, -0.5f },
-            Vertex{ -0.5f,  0.5f, -0.5f },
-            Vertex{ -0.5f, -0.5f, -0.5f },
+            Vertex{ glm::vec3{  0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } },
 
-            Vertex{ -0.5f,  0.5f,  0.5f },
-            Vertex{ -0.5f,  0.5f, -0.5f },
-            Vertex{  0.5f,  0.5f, -0.5f },
-            Vertex{  0.5f,  0.5f,  0.5f },
+            Vertex{ glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{  0.5f,  0.5f,  0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } },
 
-            Vertex{ -0.5f, -0.5f, -0.5f },
-            Vertex{ -0.5f, -0.5f,  0.5f },
-            Vertex{  0.5f, -0.5f,  0.5f },
-            Vertex{  0.5f, -0.5f, -0.5f }
+            Vertex{ glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 0.0f, 0.0f } },
+            Vertex{ glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ 0.0f, 1.0f, 0.0f } },
+            Vertex{ glm::vec3{  0.5f, -0.5f,  0.5f }, glm::vec3{ 0.0f, 0.0f, 1.0f } },
+            Vertex{ glm::vec3{  0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f, 1.0f, 1.0f } }
         };
 
         std::vector<float> vertices{ };
@@ -89,6 +85,10 @@ namespace garnish {
             vertices.push_back(vert.position.x);
             vertices.push_back(vert.position.y);
             vertices.push_back(vert.position.z);
+
+            vertices.push_back(vert.color.x);
+            vertices.push_back(vert.color.y);
+            vertices.push_back(vert.color.z);
         }
 
         std::vector<float> colors = {
@@ -121,17 +121,15 @@ namespace garnish {
         glGenVertexArrays(1, &VAO);
         glBindVertexArray(VAO);
 
-        VertexBufferObject VBO0{ vertices };
+        VertexBufferObject VBO{ vertices };
         ElementBufferObject EBO{ indices };
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
-        VertexBufferObject VBO1{ colors };
-
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
-        // int frame_num = -1;
+
         SDL_Event event;
         tp end_time = hrclock::now();
         
@@ -146,7 +144,7 @@ namespace garnish {
                 handle_all_events();
                 glViewport(0, 0, WIDTH, HEIGHT);
                 glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 shaderProgram.Use();
 

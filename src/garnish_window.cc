@@ -49,6 +49,8 @@ namespace garnish {
         // SDL_AddEventWatch(resizingEventWatcher, window); maybe later
 
         glContext = SDL_GL_CreateContext(window);
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     void GarnishWindow::SwapWindow() {
