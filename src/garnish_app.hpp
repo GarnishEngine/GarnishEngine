@@ -25,9 +25,10 @@ namespace garnish {
 
         void run();
         bool shouldClose() { return garnishWindow.shouldClose; }
-        void handle_poll_event();
+        bool handle_poll_event();
+        void handle_all_events();
 
-    private:
+      private:
         GarnishWindow garnishWindow{WIDTH, HEIGHT, "Hello"};
         std::vector<std::shared_ptr<GarnishEntity>> entities;
     };
