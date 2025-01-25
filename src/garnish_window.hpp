@@ -20,16 +20,24 @@ namespace garnish {
             GarnishWindow &operator=(const GarnishWindow&) = delete;
 
             void SwapWindow();
-
             bool shouldClose = false;
+            void pairWindowSize() {
+                SDL_GetWindowSize(window, &width, &height);
+            }
+            void pairWindowSize(int32_t *width, int32_t *height) {
+                SDL_GetWindowSize(window, width, height);
+            }
 
-        private:
+            private: 
             void InitWindow();
-            const uint32_t width;
-            const uint32_t height;
+            int32_t width;
+            int32_t height;
+
             std::string windowName;
+
             uint64_t SDLFlags;
             uint64_t windowFlags;
+
             SDL_Window *window;
 
             SDL_GLContext glContext;

@@ -20,16 +20,20 @@ using std::chrono::duration_cast;
 namespace garnish {
     class GarnishApp {
     public:
-        static constexpr int WIDTH = 800;
-        static constexpr int HEIGHT = 600;
+        int32_t WIDTH;
+        int32_t HEIGHT;
 
+        GarnishApp(int32_t w, int32_t h);
+        GarnishApp();
+        
         void run();
         bool shouldClose() { return garnishWindow.shouldClose; }
         bool handle_poll_event();
         void handle_all_events();
 
       private:
-        GarnishWindow garnishWindow{WIDTH, HEIGHT, "Hello"};
+        GarnishWindow garnishWindow;
         std::vector<std::shared_ptr<GarnishEntity>> entities;
+
     };
 }
