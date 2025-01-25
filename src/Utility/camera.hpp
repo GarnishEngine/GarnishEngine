@@ -1,8 +1,14 @@
-#include <glm/vec3.hpp>
+#pragma once
+
+#include "../garnish_entity.hpp"
+#include "../garnish_event.hpp"
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 
 namespace garnish {
-    struct Camera {
+    struct Camera : public GarnishEntity {
+        Camera(float s);
+        
         glm::vec3 position{ 0.0f, 0.0f, 5.0f };
 
         glm::vec3 up{ 0.0f, 1.0f, 0.0f };
@@ -14,5 +20,9 @@ namespace garnish {
         // float pitch{ 0.0f };
 
         glm::mat4 ViewMatrix();
+        float speed = 0.01f;
+
+        void update(GarnishEvent &gEvent) override;
+
     };
 }

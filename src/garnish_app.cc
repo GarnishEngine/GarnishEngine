@@ -1,18 +1,28 @@
 #include "garnish_app.hpp"
-
-#include <glm/ext/matrix_clip_space.hpp>
-
-#include "Utility/OpenGL/shader_program.hpp"
-#include "Utility/OpenGL/gl_buffer.hpp"
-#include "Utility/camera.hpp"
+#include "Utility/garnish_debug.hpp"
+#include <memory>
 
 namespace garnish {
+    void GarnishApp::handle_poll_event() {
+        GarnishEvent event{};
+        if (!event.state) return;
+        if (event.event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+          garnishWindow.shouldClose = true;
+        }
+        for (const auto &entity : entities) {
+
+          entity->update(event);
+        }
+    }
+
+
+
     void GarnishApp::run() {
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("GLEW failed to initialize");
         }
-
-        Camera cam{ };
+        std::shared_ptr<Camera> cam = std::make_shared<Camera>(0.1f);
+        entities.push_back(cam);
 
         ShaderProgram shaderProgram{ "shaders/shader.vert", "shaders/shader.frag" };
 
@@ -46,22 +56,10 @@ namespace garnish {
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
-
+        int i = 0;
         SDL_Event event;
         while (!shouldClose()) {
-            float camSpeed = 0.01f;
-            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
-                cam.position += cam.forward * camSpeed;
-            }
-            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
-                cam.position -= cam.forward * camSpeed;
-            }
-            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
-                cam.position += cam.right * camSpeed;
-            }
-            if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
-                cam.position -= cam.right * camSpeed;
-            }
+            handle_poll_event();
 
             glViewport(0, 0, WIDTH, HEIGHT);
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -72,7 +70,7 @@ namespace garnish {
             glm::mat4 model{ 1.0f };
             glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
 
-            glm::mat4 mvp = projection * cam.ViewMatrix() * model;
+            glm::mat4 mvp = projection * cam->ViewMatrix() * model;
 
             shaderProgram.SetUniform("mvp", mvp);
 
@@ -80,11 +78,10 @@ namespace garnish {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             garnishWindow.SwapWindow();
+            // std::cout << "frame: " << i << std::endl;
+            // ++i;
 
-            SDL_PollEvent(&event);
-            if (event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-                garnishWindow.shouldClose = true;
-            }
+            
         }
 
         glDeleteVertexArrays(1, &VAO);
