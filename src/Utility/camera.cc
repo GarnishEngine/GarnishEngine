@@ -27,6 +27,13 @@ namespace garnish {
                 if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
                     position -= right * (movementSpeed/3);
                 }
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_SPACE]) {
+                    position += up * (movementSpeed);
+                }
+                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT]) {
+                    position -= up * (movementSpeed);
+                }
+
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 if (gEvent.event.button.button == 1) {
