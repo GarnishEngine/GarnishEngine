@@ -38,7 +38,9 @@ endif(_USE_OWN_GLM)
 file(GLOB SOURCE_FILES 
     src/*.cc 
     src/Utility/*.cc
-    src/Utility/OpenGL/*.cc
+    src/Rendering/OpenGL/*.cc
+    src/Rendering/*.cc
+    src/Utility/*.cc
 )
 
 add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})

@@ -1,7 +1,7 @@
 #include "garnish_window.hpp"
 #include "graphics_pipeline.hpp"
 
-#include "Utility/OpenGL/OpenGL.hpp"
+#include "Rendering/OpenGL/OpenGL.hpp"
 
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
