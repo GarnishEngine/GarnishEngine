@@ -3,11 +3,17 @@ project(GarnishEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(BUILD_SHARED_LIBS ON)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
 option(_USE_OWN_SDL "Use your own SDL installation" OFF)
 option(_USE_OWN_GLM "Use your own GLM installation" OFF)
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 if(_VULKAN_RENDERING)   
     find_package(Vulkan REQUIRED)
@@ -35,14 +41,39 @@ else()
 endif(_USE_OWN_GLM)
 
 # Glob all C/C++ files in the src directory
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
-    src/*.cc 
-)
 
-add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
+file(GLOB_RECURSE INC include/*.h include/*.hpp)
+file(GLOB_RECURSE SRC src/*.cc)
+
+add_library(GarnishEngine SHARED ${INC} ${SRC})
+add_library(garnish::GarnishEngine ALIAS GarnishEngine)
+
+set_property(TARGET GarnishEngine PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+target_include_directories(GarnishEngine PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+list(APPEND GARNISH_TARGETS GarnishEngine)
+
+add_executable(GarnishApp main.cc ${SOURCE_FILES} )
+
 
 if(_VULKAN_RENDERING)
-target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan SDL3::SDL3)
+target_link_libraries(GarnishApp GarnishEngine Vulkan::Vulkan SDL3::SDL3)
 else()
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
+target_link_libraries(GarnishApp GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
 endif(_VULKAN_RENDERING)
+
+install(TARGETS ${GARNISH_TARGETS}
+        EXPORT flecs-export
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+        PATTERN "*.inl")
+
