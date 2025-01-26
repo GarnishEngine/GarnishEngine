@@ -91,12 +91,6 @@ namespace garnish {
             vertices.push_back(vert.color.z);
         }
 
-        std::vector<float> colors = {
-             1.0f, 0.0f, 0.0f,
-             0.0f, 1.0f, 0.0f,
-             0.0f, 0.0f, 1.0f,
-        };
-
         std::vector<unsigned int> indices = {
             0, 1, 2,
             0, 2, 3,
