@@ -22,7 +22,8 @@ namespace garnish {
             std::vector<int32_t> indicies;
             std::vector<texture> textures;
         private:
-        
+            unsigned int VAO, VBO, EBO;
+            void setupMesh();
     };
     
 }

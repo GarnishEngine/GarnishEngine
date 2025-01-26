@@ -7,7 +7,7 @@
 #include "garnish_entity.hpp"
 #include "garnish_event.hpp"
 #include "garnish_window.hpp"
-#include "graphics_pipeline.hpp"
+#include "Rendering/graphics_pipeline.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 #include <memory>
 #include <chrono>

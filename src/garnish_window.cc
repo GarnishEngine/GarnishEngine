@@ -1,5 +1,5 @@
 #include "garnish_window.hpp"
-#include "graphics_pipeline.hpp"
+#include "Rendering/graphics_pipeline.hpp"
 
 #include "Rendering/OpenGL/OpenGL.hpp"
 

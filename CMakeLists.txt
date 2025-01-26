@@ -3,17 +3,17 @@ project(GarnishEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(BUILD_SHARED_LIBS ON)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
+
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
 option(_USE_OWN_SDL "Use your own SDL installation" OFF)
 option(_USE_OWN_GLM "Use your own GLM installation" OFF)
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 if(_VULKAN_RENDERING)   
     find_package(Vulkan REQUIRED)
@@ -45,11 +45,14 @@ endif(_USE_OWN_GLM)
 file(GLOB_RECURSE INC include/*.h include/*.hpp)
 file(GLOB_RECURSE SRC src/*.cc)
 
+if(BUILD_SHARED_LIBS)
 add_library(GarnishEngine SHARED ${INC} ${SRC})
-add_library(garnish::GarnishEngine ALIAS GarnishEngine)
-
 set_property(TARGET GarnishEngine PROPERTY POSITION_INDEPENDENT_CODE ON)
+else()
+add_library(GarnishEngine STATIC ${INC} ${SRC})
+endif()
 
+add_library(garnish::GarnishEngine ALIAS GarnishEngine)
 
 target_include_directories(GarnishEngine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -65,13 +68,13 @@ target_link_libraries(GarnishApp GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GL
 endif(_VULKAN_RENDERING)
 
 install(TARGETS ${GARNISH_TARGETS}
-        EXPORT flecs-export
+        EXPORT garnish-export
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        DESTINATION include ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"
