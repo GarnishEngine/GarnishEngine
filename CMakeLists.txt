@@ -35,12 +35,8 @@ else()
 endif(_USE_OWN_GLM)
 
 # Glob all C/C++ files in the src directory
-file(GLOB SOURCE_FILES 
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
     src/*.cc 
-    src/Utility/*.cc
-    src/Rendering/OpenGL/*.cc
-    src/Rendering/*.cc
-    src/Utility/*.cc
 )
 
 add_executable(${PROJECT_NAME} main.cc ${SOURCE_FILES})
