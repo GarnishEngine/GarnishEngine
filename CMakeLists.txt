@@ -13,6 +13,8 @@ option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
 option(_USE_OWN_SDL "Use your own SDL installation" OFF)
 option(_USE_OWN_GLM "Use your own GLM installation" OFF)
+option(_USE_OWN_TOBJ "Use your own TOBJ lib" OFF)
+
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 if(_VULKAN_RENDERING)   
@@ -40,6 +42,9 @@ else()
     add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
 endif(_USE_OWN_GLM)
 
+add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
+        
+
 # Glob all C/C++ files in the src directory
 
 file(GLOB_RECURSE INC include/*.h include/*.hpp)
@@ -60,6 +65,7 @@ list(APPEND GARNISH_TARGETS GarnishEngine)
 
 add_executable(GarnishApp main.cc ${SOURCE_FILES} )
 
+target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader 3rdParty/stb)
 
 if(_VULKAN_RENDERING)
 target_link_libraries(GarnishApp GarnishEngine Vulkan::Vulkan SDL3::SDL3)
@@ -74,7 +80,7 @@ install(TARGETS ${GARNISH_TARGETS}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/"
-        DESTINATION include ${CMAKE_INSTALL_INCLUDEDIR}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"

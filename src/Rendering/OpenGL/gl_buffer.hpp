@@ -1,6 +1,9 @@
+#pragma once
+
 #include <vector>
 
 #include "OpenGL.hpp"
+#include <iostream>
 
 namespace garnish {
     template<typename T, int BUFFER_TYPE>
@@ -8,10 +11,12 @@ namespace garnish {
         public:
             GlBuffer(const std::vector<T>& data, unsigned int bufferType = GL_STATIC_DRAW)
                 : handle(0) {
+              std::cerr << "init buff" << '\n';
 
-                glGenBuffers(1, &handle);
-                Bind();
-                glBufferData(BUFFER_TYPE, data.size() * sizeof(T), (void*)data.data(), bufferType);
+              glGenBuffers(1, &handle);
+              Bind();
+              glBufferData(BUFFER_TYPE, data.size() * sizeof(T),
+                           (void *)data.data(), bufferType);
             }
 
             GlBuffer(const GlBuffer& other) = delete;
@@ -32,5 +37,5 @@ namespace garnish {
     };
 
     using VertexBufferObject = GlBuffer<float, GL_ARRAY_BUFFER>;
-    using ElementBufferObject = GlBuffer<unsigned int, GL_ELEMENT_ARRAY_BUFFER>;
+    using ElementBufferObject = GlBuffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER>;
 }

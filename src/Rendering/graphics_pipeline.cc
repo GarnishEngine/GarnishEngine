@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include "Utility/read_file.hpp"
+#include "../Utility/read_file.hpp"
 
 namespace garnish {
     GraphicsPipeline::GraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath) {
