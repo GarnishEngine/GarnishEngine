@@ -11,27 +11,6 @@ namespace garnish {
         // debug(position);
         
         switch (gEvent.event.type) {
-            case SDL_EVENT_KEY_DOWN:
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
-                position += forward * movementSpeed;
-                }
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
-                    position -= forward * movementSpeed;
-                }
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
-                    position += right * (movementSpeed/3);
-                }
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
-                    position -= right * (movementSpeed/3);
-                }
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_SPACE]) {
-                    position += up * (movementSpeed);
-                }
-                if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT]) {
-                    position -= up * (movementSpeed);
-                }
-
-                break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 if (gEvent.event.button.button == 1) {
                     mouseButtonHeld = true;
@@ -67,6 +46,26 @@ namespace garnish {
                 right = glm::normalize(glm::cross(forward, up));
 
                 break;
+        }
+    }
+    void Camera::update() {
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
+            position += forward * movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
+            position -= forward * movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
+            position += right * (movementSpeed / 3);
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
+            position -= right * (movementSpeed / 3);
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_SPACE]) {
+            position += up * (movementSpeed);
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT]) {
+            position -= up * (movementSpeed);
         }
     }
     Camera::Camera(float movementSpeed, float lookSensitivity) 

@@ -25,6 +25,8 @@ namespace garnish {
     }
     
     void GarnishApp::handle_all_events() {
+        SDL_PumpEvents();
+
         while (handle_poll_event()) {}
     }
 

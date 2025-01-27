@@ -7,6 +7,7 @@ namespace garnish {
         public:
           virtual ~GarnishEntity() = default;
           virtual void update(GarnishEvent &gEvent) = 0;
+          virtual void update() = 0;
     };
 
 }

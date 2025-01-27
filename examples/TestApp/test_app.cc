@@ -23,10 +23,10 @@ namespace garnish {
             ShaderProgram shaderProgram{"shaders/shader.vert",
                                         "shaders/shader.frag"};
 
-            // GarnishMesh gMesh;
-            // gMesh.loadModel("Models/viking_room.obj");
-            // gMesh.setupMesh();
-            // gMesh.loadTexture("Textures/viking_room.png");
+            GarnishMesh gMesh;
+            gMesh.loadModel("Models/viking_room.obj");
+            gMesh.setupMesh();
+            gMesh.loadTexture("Textures/viking_room.png");
 
             SDL_Event event;
 
@@ -43,7 +43,7 @@ namespace garnish {
                     glViewport(0, 0, WIDTH, HEIGHT);
                     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+                    cam->update();
                     shaderProgram.Use();
 
                     glm::mat4 model{1.0f};
@@ -55,7 +55,7 @@ namespace garnish {
 
                     shaderProgram.SetUniform("mvp", mvp);
 
-                    // gMesh.draw();
+                    gMesh.draw();
                     garnishWindow.SwapWindow();
 
                     end_time = start_time;

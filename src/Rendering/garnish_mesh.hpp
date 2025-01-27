@@ -45,7 +45,6 @@ namespace garnish {
             void loadModel(std::string modelPath);
             void draw();
             void loadTexture(std::string texturePath);
-
         private: 
             uint32_t VAO, VBO, EBO;
             GarnishTexture gTexture;

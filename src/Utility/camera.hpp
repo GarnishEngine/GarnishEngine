@@ -29,6 +29,6 @@ namespace garnish {
         float lookSensitivity;
 
         void update(GarnishEvent &gEvent) override;
-
+        void update() override;
     };
 }
