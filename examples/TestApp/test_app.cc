@@ -47,6 +47,11 @@ namespace garnish {
                     shaderProgram.Use();
 
                     glm::mat4 model{1.0f};
+                    model = glm::translate(model, glm::vec3{ 0.0f, -0.3f, 3.0f });
+
+                    model = glm::rotate(model, glm::radians(-90.0f), glm::vec3{ 1.0f, 0.0f, 0.0f });
+                    model = glm::rotate(model, glm::radians(-135.0f), glm::vec3{ 0.0f, 0.0f, 1.0f });
+
                     glm::mat4 projection = glm::perspective(
                         glm::radians(60.0f), (float)WIDTH / (float)HEIGHT, 0.01f,
                         1000.0f);
