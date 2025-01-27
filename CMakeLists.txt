@@ -53,7 +53,6 @@ endif()
 target_include_directories(GarnishEngine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-
 target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader 3rdParty/stb)
 
 if(_VULKAN_RENDERING)
@@ -62,4 +61,8 @@ else()
 target_link_libraries(GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
 endif(_VULKAN_RENDERING)
 
-
+install(TARGETS GarnishEngine
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    PUBLIC_HEADER DESTINATION include/GarnishEngine)
