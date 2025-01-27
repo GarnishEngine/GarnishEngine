@@ -38,6 +38,7 @@ else()
 endif(_USE_OWN_GLM)
 
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
+        
 
 #  file(GLOB_RECURSE INC include/*.h include/*.hpp)
 file(GLOB_RECURSE SRC src/*.cc)

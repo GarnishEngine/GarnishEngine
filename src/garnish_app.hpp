@@ -27,15 +27,14 @@ namespace garnish {
 
         GarnishApp(int32_t w, int32_t h);
         GarnishApp();
-        
-        void run();
+        ~GarnishApp() {}
+
+        virtual void run() {}
         bool shouldClose() { return garnishWindow.shouldClose; }
         bool handle_poll_event();
         void handle_all_events();
 
-      private:
         GarnishWindow garnishWindow;
         std::vector<std::shared_ptr<GarnishEntity>> entities;
-
     };
 }

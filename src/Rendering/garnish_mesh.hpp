@@ -38,11 +38,6 @@ namespace garnish {
                                     std::vector<texture> textures);
             GarnishMesh(std::vector<vertex> vVertices,
                         std::vector<uint32_t> indices);
-            GarnishMesh(std::vector<float> vertices,
-                        std::vector<uint32_t> indices,
-                        std::vector<texture> textures);
-            GarnishMesh(std::vector<float> vertices,
-                        std::vector<uint32_t> indices);
 
             void setupMesh();
             void deleteVertexArray();
