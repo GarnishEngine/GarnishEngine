@@ -53,14 +53,13 @@ endif()
 target_include_directories(GarnishEngine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-add_executable(GarnishApp main.cc ${SOURCE_FILES} )
 
 target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader 3rdParty/stb)
 
 if(_VULKAN_RENDERING)
-target_link_libraries(GarnishApp GarnishEngine Vulkan::Vulkan SDL3::SDL3)
+target_link_libraries(GarnishEngine Vulkan::Vulkan SDL3::SDL3)
 else()
-target_link_libraries(GarnishApp GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
+target_link_libraries(GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
 endif(_VULKAN_RENDERING)
 
 
