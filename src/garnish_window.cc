@@ -1,10 +1,4 @@
 #include "garnish_window.hpp"
-#include "Rendering/graphics_pipeline.hpp"
-
-#include "Rendering/OpenGL/OpenGL.hpp"
-
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_video.h>
 
 namespace garnish {
     GarnishWindow::GarnishWindow(uint32_t w, uint32_t h, std::string name) 

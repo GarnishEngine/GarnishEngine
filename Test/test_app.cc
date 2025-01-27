@@ -1,3 +1,6 @@
+#include "../src/Rendering/OpenGL/shader_program.hpp"
+#include "../src/Rendering/garnish_mesh.hpp"
+#include "../src/Utility/camera.hpp"
 #include "../src/garnish_app.hpp"
 
 const int32_t FRAME_RATE = 60;

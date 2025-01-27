@@ -1,13 +1,7 @@
 #pragma once
 
-#include "Rendering/OpenGL/gl_buffer.hpp"
-#include "Rendering/OpenGL/shader_program.hpp"
-#include "Rendering/garnish_mesh.hpp"
-#include "Rendering/graphics_pipeline.hpp"
-#include "SDL3/SDL_events.h"
-#include "Utility/camera.hpp"
+
 #include "garnish_entity.hpp"
-#include "garnish_event.hpp"
 #include "garnish_window.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 

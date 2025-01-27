@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "SDL3/SDL_events.h"
+
 namespace garnish {
     class GarnishEvent {
         public:

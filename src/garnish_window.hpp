@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <string>
+
 namespace garnish {
     class GarnishWindow {
         public:

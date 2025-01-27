@@ -1,9 +1,4 @@
 #include "garnish_app.hpp"
-#include "Rendering/garnish_mesh.hpp"
-#include "Utility/garnish_debug.hpp"
-#include "garnish_window.hpp"
-#include <chrono>
-#include <memory>
 
 typedef std::chrono::duration<float> fsec;
 namespace garnish {

@@ -1,9 +1,6 @@
 #pragma once 
 
-
 #include "garnish_event.hpp"
-#include "SDL3/SDL_events.h"
-#include <SDL3/SDL_scancode.h>
 
 namespace garnish {
     class GarnishEntity {

@@ -1,8 +1,5 @@
 #include "camera.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <iostream>
 
 namespace garnish {
     glm::mat4 Camera::ViewMatrix() {
