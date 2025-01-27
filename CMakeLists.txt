@@ -4,65 +4,54 @@ project(GarnishEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+file(GLOB_RECURSE SRC src/*.cc)
+add_library(GarnishEngine STATIC ${SRC})
+
+# Settings
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
 option(_OPENGL_RENDERING "Use OpenGL" ON)
-option(_USE_OWN_SDL "Use your own SDL installation" OFF)
-option(_USE_OWN_GLM "Use your own GLM installation" OFF)
-option(_USE_OWN_TOBJ "Use your own TOBJ lib" OFF)
+option(_BUILD_EXAMPLES "Build Examples" ON)
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
+# Ensure Vulkan and OpenGL are mutually exclusive
 if(_VULKAN_RENDERING)   
-    find_package(Vulkan REQUIRED)
     option(_OPENGL_RENDERING "Use OpenGL" OFF)
 else()
     option(_OPENGL_RENDERING "Use OpenGL" ON)
 endif(_VULKAN_RENDERING)
 
 if (_OPENGL_RENDERING)
-    find_package(GLEW REQUIRED)
-    find_package(OpenGL REQUIRED)
-    include_directories( ${OPENGL_INCLUDE_DIRS}  )
+    option(_VULKAN_RENDERING "Use Vulkan" OFF)
+else()
+    option(_VULKAN_RENDERING "Use Vulkan" ON)
 endif(_OPENGL_RENDERING)
 
-if(_USE_OWN_SDL)
-    find_package(SDL3 REQUIRED)
-else()
-    add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
-endif(_USE_OWN_SDL)
-
-if(_USE_OWN_GLM)
-    find_package(glm REQUIRED)
-else()
-    add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
-endif(_USE_OWN_GLM)
-
-add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
-        
-
-#  file(GLOB_RECURSE INC include/*.h include/*.hpp)
-file(GLOB_RECURSE SRC src/*.cc)
-
-add_library(GarnishEngine ${SRC})
-add_library(garnish::GarnishEngine ALIAS GarnishEngine)
-
-if(BUILD_SHARED_LIBS)
-set_property(TARGET GarnishEngine PROPERTY POSITION_INDEPENDENT_CODE ON)
-endif()
-
-target_include_directories(GarnishEngine PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader 3rdParty/stb)
-
-if(_VULKAN_RENDERING)
-target_link_libraries(GarnishEngine Vulkan::Vulkan SDL3::SDL3)
-else()
-target_link_libraries(GarnishEngine ${OPENGL_LIBRARIES} SDL3::SDL3 GLEW::GLEW GL glm::glm)
+# Act on Graphics API choice
+if (_VULKAN_RENDERING)
+    find_package(Vulkan REQUIRED)
+    target_link_libraries(GarnishEngine Vulkan::Vulkan)
 endif(_VULKAN_RENDERING)
 
-install(TARGETS GarnishEngine
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    PUBLIC_HEADER DESTINATION include/GarnishEngine)
+if (_OPENGL_RENDERING)
+    find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(GarnishEngine GLEW::GLEW GL)
+endif(_OPENGL_RENDERING)
+
+# 3rdParty libraries
+add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
+
+target_include_directories(GarnishEngine PUBLIC 3rdParty/SDL)
+target_include_directories(GarnishEngine PUBLIC 3rdParty/glm)
+target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader)
+target_include_directories(GarnishEngine PUBLIC 3rdParty/stb)
+
+target_link_libraries(GarnishEngine SDL3::SDL3 glm::glm)
+
+
+# Building examples:
+if (_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif(_BUILD_EXAMPLES)

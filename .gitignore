@@ -48,4 +48,5 @@ CMakeUserPresets.json
 # Other
 .cache
 build/
-GarnishEngine
+libGarnishEngine.a
+examples/TestApp/TestApp

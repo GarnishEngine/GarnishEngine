@@ -1,7 +1,7 @@
-#include "../src/Rendering/OpenGL/shader_program.hpp"
-#include "../src/Rendering/garnish_mesh.hpp"
-#include "../src/Utility/camera.hpp"
-#include "../src/garnish_app.hpp"
+#include "Rendering/OpenGL/shader_program.hpp"
+#include "Rendering/garnish_mesh.hpp"
+#include "Utility/camera.hpp"
+#include "garnish_app.hpp"
 
 const int32_t FRAME_RATE = 60;
 
@@ -10,12 +10,10 @@ typedef std::chrono::time_point<hrclock> tp;
 typedef std::chrono::milliseconds ms;
 using std::chrono::duration_cast;
 
-
 namespace garnish {
     class TestApp : public GarnishApp { 
         public:
         void run() override {
-
             if (glewInit() != GLEW_OK) {
                 throw std::runtime_error("GLEW failed to initialize");
             }
@@ -25,17 +23,16 @@ namespace garnish {
             ShaderProgram shaderProgram{"shaders/shader.vert",
                                         "shaders/shader.frag"};
 
-            GarnishMesh gMesh;
-            gMesh.loadModel("Models/viking_room.obj");
-            gMesh.setupMesh();
-            gMesh.loadTexture("Textures/viking_room.png");
+            // GarnishMesh gMesh;
+            // gMesh.loadModel("Models/viking_room.obj");
+            // gMesh.setupMesh();
+            // gMesh.loadTexture("Textures/viking_room.png");
 
             SDL_Event event;
 
             tp end_time = hrclock::now();
 
             while (!shouldClose()) {
-
                 tp start_time = hrclock::now();
 
                 int32_t dt = duration_cast<ms>(start_time - end_time).count();
@@ -58,7 +55,7 @@ namespace garnish {
 
                     shaderProgram.SetUniform("mvp", mvp);
 
-                    gMesh.draw();
+                    // gMesh.draw();
                     garnishWindow.SwapWindow();
 
                     end_time = start_time;
@@ -71,4 +68,10 @@ namespace garnish {
             }
         }
     };
+}
+
+int main() {
+    garnish::TestApp app{ };
+
+    app.run();
 }
