@@ -1,7 +1,9 @@
 #include "garnish_mesh.hpp"
 #include "OpenGL/OpenGL.hpp"
 #include "OpenGL/gl_buffer.hpp"
+#include "garnish_texture.hpp"
 #include <cstdint>
+#include "stb_image.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -80,6 +82,11 @@ namespace garnish {
                 indices.push_back(indices.size());
             }
         }
+    }
+    void GarnishMesh::loadTexture(std::string texturePath) {
+        gTexture.loadTexture(texturePath);
+        glBindTexture(GL_TEXTURE_2D, gTexture.texture);
+        glBindVertexArray(VAO);
     }
 
     void GarnishMesh::draw() {

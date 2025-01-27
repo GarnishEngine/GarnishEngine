@@ -8,7 +8,7 @@
 
 namespace garnish {
     struct Camera : public GarnishEntity {
-        Camera(float movementSpeed = 0.25f, float lookSensitivity = 0.5f);
+        Camera(float movementSpeed = 0.125f, float lookSensitivity = 0.5f);
         
         glm::vec3 position{ 0.0f, 0.0f, 5.0f };
 

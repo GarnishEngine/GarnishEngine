@@ -1,15 +1,15 @@
 #pragma once
 
 #include "OpenGL/OpenGL.hpp"
-#include <cstdlib>
 #include "OpenGL/gl_buffer.hpp"
+#include "garnish_texture.hpp"
+#include "stb_image.h"
+#include <cstdlib>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
 #include <string>
 #include <vector>
-
-
 
 namespace garnish {
     struct vertex {
@@ -49,9 +49,11 @@ namespace garnish {
 
             void loadModel(std::string modelPath);
             void draw();
+            void loadTexture(std::string texturePath);
 
         private: 
             uint32_t VAO, VBO, EBO;
+            GarnishTexture gTexture;
 
     };
     

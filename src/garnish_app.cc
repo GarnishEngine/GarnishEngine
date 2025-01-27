@@ -129,8 +129,9 @@ namespace garnish {
         GarnishMesh gMesh;
         gMesh.loadModel("Models/viking_room.obj");
         gMesh.setupMesh();
+        gMesh.loadTexture("Textures/viking_room.png");
 
-        SDL_Event event;
+            SDL_Event event;
         tp end_time = hrclock::now();
         
         while (!shouldClose()) {
