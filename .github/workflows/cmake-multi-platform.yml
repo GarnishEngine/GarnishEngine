@@ -50,6 +50,7 @@ jobs:
     - name:  Install Deps
       shell: bash
       run: |
+        git submodule init
          if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install libglew-dev
               sudo apt-get install mesa-utils
