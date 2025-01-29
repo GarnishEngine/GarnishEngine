@@ -59,7 +59,7 @@ jobs:
         sudo apt-get install libglew-dev
 
     - name:  Install Windows deps
-      if: runner.os == 'windows-latest'
+      if: runner.os == 'Windows'
       uses: msys2/setup-msys2@v2
       with:
           msystem: MINGW64  # Use MinGW64 environment
