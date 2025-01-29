@@ -46,7 +46,9 @@ _deps
 CMakeUserPresets.json
 
 # Other
-.cache
 build/
 libGarnishEngine.a
 examples/TestApp/TestApp
+
+
+
