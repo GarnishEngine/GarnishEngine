@@ -82,8 +82,28 @@ jobs:
           msystem: MINGW64  # Use MinGW64 environment
           update: true  # Update package database
           install: >-  # Install required packages
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
             mingw-w64-x86_64-glew
             mingw-w64-x86_64-mesa
+
+    - name: Configure CMake
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/mingw64
+  
+    - name: Build with Ninja
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cmake --build build --target all
+  
+    - name: Install
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cmake --install build
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
