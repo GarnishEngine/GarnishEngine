@@ -50,13 +50,14 @@ jobs:
     - name:  Install Deps
       id: deps
       shell: bash
-      run: >
+      run: |
         git submodule init
          if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install libglew-dev
          elif [ "$RUNNER_OS" == "Windows" ]; then
          ls
-              cd 3rdParty\glew\
+              cd 3rdParty
+              cd glew
               mingw32-make
               cd ..
               mingw32-make
