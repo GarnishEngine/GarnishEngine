@@ -48,12 +48,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name:  Install Deps
+      id: deps
       shell: bash
-      run: |
+      run: >
         git submodule init
          if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install libglew-dev
-              sudo apt-get install mesa-utils
          elif [ "$RUNNER_OS" == "Windows" ]; then
          ls
               cd 3rdParty/glew/auto
