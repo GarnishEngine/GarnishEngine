@@ -5,7 +5,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+# *.obj
 
 # Precompiled Headers
 *.gch
@@ -47,4 +47,10 @@ CMakeUserPresets.json
 
 # Other
 .cache
-GarnishEngine
+build/
+libGarnishEngine.a
+examples/TestApp/TestApp
+
+
+
+
