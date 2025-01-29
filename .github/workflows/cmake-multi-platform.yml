@@ -81,7 +81,7 @@ jobs:
         git clone https://github.com/microsoft/vcpkg.git
         cd vcpkg
         ./bootstrap-vcpkg.bat
-        .\vcpkg\vcpkg install glew:x64-windows mesa:x64-windows
+        ./vcpkg install glew:x64-windows mesa:x64-windows
 
 
     - name: Set reusable strings
