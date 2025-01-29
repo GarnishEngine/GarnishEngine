@@ -55,6 +55,7 @@ jobs:
               sudo apt-get install libglew-dev
               sudo apt-get install mesa-utils
          elif [ "$RUNNER_OS" == "Windows" ]; then
+         ls
               cd 3rdParty/glew/auto
               mingw32-make
               cd ..
