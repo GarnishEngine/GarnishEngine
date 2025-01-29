@@ -47,22 +47,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name:  Install Deps
-      id: deps
+    - name:  Init Submodules
       shell: bash
       run: |
         git submodule init
         git submodule update
 
-         if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install libglew-dev
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              pacman -S mingw-w64-x86_64-glew
-              pacman -S mingw-w64-x86_64-mesa
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+    - name:  Install Linux deps
+      if: runner.os == 'Linux'
+      run: >
+        sudo apt-get install libglew-dev
+
+    - name:  Install Windows deps
+      if: runner.os == 'windows-latest'
+      uses: msys2/setup-msys2@v2
+      with:
+          msystem: MINGW64  # Use MinGW64 environment
+          update: true  # Update package database
+          install: >-  # Install required packages
+            mingw-w64-x86_64-glew
+            mingw-w64-x86_64-mesa
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
