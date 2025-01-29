@@ -7,11 +7,11 @@
 #include <iostream>
 
 namespace garnish {
-    class GarnishTexture {
+    class garnish_texture {
         public:
-        GarnishTexture() : valid(false) {};
+        garnish_texture() : valid(false) {};
 
-        ~GarnishTexture() { if (valid) stbi_image_free(data); };
+        ~garnish_texture() { if (valid) stbi_image_free(data); };
 
         void loadTexture(std::string texturePath);
         int texture = -1;

@@ -6,19 +6,19 @@ namespace garnish {
         return glm::lookAt(position, position + forward, up);
     }
 
-    void Camera::update(GarnishEvent &gEvent) {
+    void Camera::update(event &gEvent) {
         // debug("cam update");
         // debug(position);
         
-        switch (gEvent.event.type) {
+        switch (gEvent.sdl_event.type) {
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                if (gEvent.event.button.button == 1) {
+                if (gEvent.sdl_event.button.button == 1) {
                     mouseButtonHeld = true;
                 }
                 break;
 
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                if (gEvent.event.button.button == 1) {
+                if (gEvent.sdl_event.button.button == 1) {
                     mouseButtonHeld = false;
                 }
                 break;
@@ -28,8 +28,8 @@ namespace garnish {
                     break;
                 }
 
-                yaw += gEvent.event.motion.xrel * lookSensitivity;
-                pitch -= gEvent.event.motion.yrel * lookSensitivity;
+                yaw += gEvent.sdl_event.motion.xrel * lookSensitivity;
+                pitch -= gEvent.sdl_event.motion.yrel * lookSensitivity;
 
                 if (pitch > 89.9f) {
                     pitch = 89.9f;

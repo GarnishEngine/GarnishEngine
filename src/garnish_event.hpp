@@ -3,11 +3,11 @@
 #include "SDL3/SDL_events.h"
 
 namespace garnish {
-    class GarnishEvent {
+    class event {
         public:
-        GarnishEvent(SDL_Event &SDLEvent);
-        GarnishEvent();
-        SDL_Event event;
+        event(SDL_Event &SDLEvent);
+        event();
+        SDL_Event sdl_event;
 
         bool state;
 

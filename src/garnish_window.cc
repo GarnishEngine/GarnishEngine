@@ -1,7 +1,7 @@
 #include "garnish_window.hpp"
 
 namespace garnish {
-    GarnishWindow::GarnishWindow(uint32_t w, uint32_t h, std::string name) 
+    window::window(uint32_t w, uint32_t h, std::string name) 
         : width(w), height(h), windowName(name) {
         SDLFlags = (SDL_INIT_VIDEO | SDL_INIT_EVENTS);
         
@@ -16,7 +16,7 @@ namespace garnish {
         InitWindow();
     }
 
-    GarnishWindow::GarnishWindow(uint32_t w, uint32_t h, std::string name,
+    window::window(uint32_t w, uint32_t h, std::string name,
                                uint64_t sdl_flags, uint64_t window_flags) 
         : width(w),
         height(h),
@@ -26,29 +26,29 @@ namespace garnish {
       InitWindow();
     }
 
-    GarnishWindow::~GarnishWindow() {
+    window::~window() {
         SDL_GL_DestroyContext(glContext);
-        SDL_DestroyWindow(window);
+        SDL_DestroyWindow(sdl_window);
         SDL_Quit();
     }
 
-    void GarnishWindow::InitWindow() {
+    void window::InitWindow() {
         SDL_Init(SDLFlags);
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        window = SDL_CreateWindow(windowName.c_str(), width, height, windowFlags);
+        sdl_window = SDL_CreateWindow(windowName.c_str(), width, height, windowFlags);
         // SDL_AddEventWatch(resizingEventWatcher, window); maybe later
 
-        glContext = SDL_GL_CreateContext(window);
+        glContext = SDL_GL_CreateContext(sdl_window);
 
         glEnable(GL_DEPTH_TEST);
     }
 
-    void GarnishWindow::SwapWindow() {
-        SDL_GL_SwapWindow(window);
+    void window::SwapWindow() {
+        SDL_GL_SwapWindow(sdl_window);
     }
 }
     

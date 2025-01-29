@@ -14,21 +14,21 @@ typedef std::chrono::milliseconds ms;
 using std::chrono::duration_cast;
 
 namespace garnish {
-    class GarnishApp {
+    class app {
     public:
         int32_t WIDTH;
         int32_t HEIGHT;
 
-        GarnishApp(int32_t w, int32_t h);
-        GarnishApp();
-        ~GarnishApp() {}
+        app(int32_t w, int32_t h);
+        app();
+        ~app() {}
 
         virtual void run() {}
         bool shouldClose() { return garnishWindow.shouldClose; }
         bool handle_poll_event();
         void handle_all_events();
 
-        GarnishWindow garnishWindow;
-        std::vector<std::shared_ptr<GarnishEntity>> entities;
+        window garnishWindow;
+        std::vector<std::shared_ptr<entity>> entities;
     };
 }

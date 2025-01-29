@@ -5,7 +5,7 @@
 
 
 namespace garnish {
-    void GarnishTexture::loadTexture(std::string texturePath) {
+    void garnish_texture::loadTexture(std::string texturePath) {
         valid = true;
         unsigned int texture;
         glGenTextures(1, &texture);

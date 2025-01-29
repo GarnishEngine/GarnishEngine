@@ -2,17 +2,17 @@
 
 typedef std::chrono::duration<float> fsec;
 namespace garnish {
-    GarnishApp::GarnishApp(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") {}
-    GarnishApp::GarnishApp() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") {}
+    app::app(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") {}
+    app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") {}
 
-    bool GarnishApp::handle_poll_event() {
-        GarnishEvent event{};
+    bool app::handle_poll_event() {
+        event event{};
         if (!event.state)
             return false;
-        if (event.event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+        if (event.sdl_event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
             garnishWindow.shouldClose = true;
         }
-        if (event.event.window.type == SDL_EVENT_WINDOW_RESIZED) {
+        if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
             garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
             glViewport(0, 0, WIDTH, HEIGHT);
         }  
@@ -24,7 +24,7 @@ namespace garnish {
         return true;
     }
     
-    void GarnishApp::handle_all_events() {
+    void app::handle_all_events() {
         SDL_PumpEvents();
 
         while (handle_poll_event()) {}

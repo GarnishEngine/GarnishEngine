@@ -3,10 +3,10 @@
 #include "garnish_event.hpp"
 
 namespace garnish {
-    class GarnishEntity {
+    class entity {
         public:
-          virtual ~GarnishEntity() = default;
-          virtual void update(GarnishEvent &gEvent) = 0;
+          virtual ~entity() = default;
+          virtual void update(event &gEvent) = 0;
           virtual void update() = 0;
     };
 

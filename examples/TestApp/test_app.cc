@@ -11,7 +11,7 @@ typedef std::chrono::milliseconds ms;
 using std::chrono::duration_cast;
 
 namespace garnish {
-    class TestApp : public GarnishApp { 
+    class TestApp : public app { 
         public:
         void run() override {
             if (glewInit() != GLEW_OK) {
@@ -23,8 +23,8 @@ namespace garnish {
             ShaderProgram shaderProgram{"shaders/shader.vert",
                                         "shaders/shader.frag"};
 
-            GarnishMesh gMesh;
-            gMesh.loadModel("Models/viking_room.obj");
+            mesh gMesh;
+            gMesh.loadMesh("Models/viking_room.obj");
             gMesh.setupMesh();
             gMesh.loadTexture("Textures/viking_room.png");
 

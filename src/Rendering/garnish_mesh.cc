@@ -9,7 +9,7 @@
 #include <tiny_obj_loader.h>
 
 namespace garnish {
-    void GarnishMesh::setupMesh() {
+    void mesh::setupMesh() {
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
@@ -41,16 +41,16 @@ namespace garnish {
         glBindVertexArray(0);
     }
 
-    GarnishMesh::GarnishMesh(std::vector<vertex> vertices,
+    mesh::mesh(std::vector<vertex> vertices,
                              std::vector<uint32_t> indices,
-                             std::vector<texture> textures)
+                             std::vector<base_texture> textures)
         : vertices(vertices), indices(indices), textures(textures) {
     }
 
-    GarnishMesh::GarnishMesh(std::vector<vertex> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
+    mesh::mesh(std::vector<vertex> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
     }
 
-    void GarnishMesh::loadModel(std::string modelPath) {
+    void mesh::loadMesh(std::string meshPath) {
         indices.clear();
         vertices.clear();
         tinyobj::attrib_t attrib;
@@ -59,7 +59,7 @@ namespace garnish {
         std::string warn, err;
 
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                                modelPath.c_str())) {
+                                meshPath.c_str())) {
             throw std::runtime_error(warn + err);
         }
 
@@ -83,13 +83,13 @@ namespace garnish {
             }
         }
     }
-    void GarnishMesh::loadTexture(std::string texturePath) {
+    void mesh::loadTexture(std::string texturePath) {
         gTexture.loadTexture(texturePath);
         glBindTexture(GL_TEXTURE_2D, gTexture.texture);
         glBindVertexArray(VAO);
     }
 
-    void GarnishMesh::draw() {
+    void mesh::draw() {
         glBindVertexArray(VAO); // Dont need this because we only have
         // one VAO
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -97,7 +97,7 @@ namespace garnish {
     }
 
 
-    void GarnishMesh::deleteVertexArray() {
+    void mesh::deleteVertexArray() {
         glDeleteVertexArrays(1, &VAO);
     }
 }

@@ -9,8 +9,8 @@
 
 
 namespace garnish {
-    struct Camera : public GarnishEntity {
-        Camera(float movementSpeed = 0.125f, float lookSensitivity = 0.5f);
+    struct Camera : public entity {
+        Camera(float movementSpeed = 0.05f, float lookSensitivity = 0.5f);
         
         glm::vec3 position{ 0.0f, 0.0f, 5.0f };
 
@@ -28,7 +28,7 @@ namespace garnish {
         float movementSpeed;
         float lookSensitivity;
 
-        void update(GarnishEvent &gEvent) override;
+        void update(event &gEvent) override;
         void update() override;
     };
 }

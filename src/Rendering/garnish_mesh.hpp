@@ -21,33 +21,33 @@ namespace garnish {
         vertex(glm::vec3 pos, glm::vec3 color, glm::vec2 texCoord) : pos(pos), color(color), texCoord(texCoord) {}
     };
 
-    struct texture {
+    struct base_texture {
         unsigned int id;
         std::string type;
     };
 
-    class GarnishMesh {
+    class mesh {
         public: 
             std::vector<vertex> vertices;
             std::vector<uint32_t> indices;
-            std::vector<texture> textures;
+            std::vector<base_texture> textures;
 
-            GarnishMesh() {}
-            GarnishMesh(std::vector<vertex> Vertices,
+            mesh() {}
+            mesh(std::vector<vertex> Vertices,
                                     std::vector<uint32_t> indices,
-                                    std::vector<texture> textures);
-            GarnishMesh(std::vector<vertex> vVertices,
+                                    std::vector<base_texture> textures);
+            mesh(std::vector<vertex> vVertices,
                         std::vector<uint32_t> indices);
 
             void setupMesh();
             void deleteVertexArray();
 
-            void loadModel(std::string modelPath);
+            void loadMesh(std::string meshPath);
             void draw();
             void loadTexture(std::string texturePath);
         private: 
             uint32_t VAO, VBO, EBO;
-            GarnishTexture gTexture;
+            garnish_texture gTexture;
 
     };
     

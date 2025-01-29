@@ -1,8 +1,8 @@
 #include "garnish_event.hpp"
 
 namespace garnish {
-    GarnishEvent::GarnishEvent(SDL_Event &SDLEvent) : event(SDLEvent) {}
-    GarnishEvent::GarnishEvent() {
-        state = SDL_PollEvent(&event);   
+    event::event(SDL_Event &SDLEvent) : sdl_event(SDLEvent) {}
+    event::event() {
+        state = SDL_PollEvent(&sdl_event);   
     }
 }
