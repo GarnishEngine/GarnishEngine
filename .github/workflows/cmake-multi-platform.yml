@@ -23,51 +23,52 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, clang]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc
-          - os: windows-latest
-            c_compiler: clang
-          - os: ubuntu-latest
-            c_compiler: cl
 
     steps:
     - uses: actions/checkout@v4
 
-    - name:  Install Deps
-      shell: bash
-      run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install libglew-dev
-              sudo apt-get install mesa-utils
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              cd 3rdParty/glew/auto
-              mingw32-make
-              cd ..
-              mingw32-make
-              mingw32-make install
-              mingw32-make install.all
-            curl.exe -L --output mesa.7z --url https://github.com/pal1000/mesa-dist-win/releases/download/20.3.2/mesa3d-20.3.2-release-msvc.7z
-            "C:\Program Files\7-Zip\7z.exe" x mesa.7z
-            mklink opengl32.dll "x64\opengl32.dll"
-            mklink libglapi.dll "x64\libglapi.dll"
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+    - name: Cache and Update Submodules
+      uses: actions/cache@v4.2.0
+      with:
+        path: |
+          3rdParty/SDL
+          3rdParty/glew
+          3rdParty/glm
+          3rdParty/imgui
+          3rdParty/stb
+          3rdParty/tinyobjloader
+        key: ${{ runner.os }}-submodules
+    - name: Update git submodules
+      if: steps.cache-submodule.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      env: 
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+          
+
+
+    - name:  Install Linux deps
+      if: runner.os == 'Linux'
+      run: >
+        sudo apt-get install libglew-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -82,6 +83,7 @@ jobs:
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -D_VULKAN_RENDERING=OFF
+        -DSDL_UNIX_CONSOLE_BUILD=ON
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
