@@ -1,6 +1,8 @@
 #pragma once
-#ifdef _VULKAN_RENDERING
-#include <Vulkan/vulkan.h>
+
+
+#ifndef _OPENGL_RENDERING
+#include <vulkan/vulkan.h>
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>

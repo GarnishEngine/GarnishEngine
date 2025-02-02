@@ -4,8 +4,9 @@ project(GarnishEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-file(GLOB_RECURSE SRC src/*.cc)
-add_library(GarnishEngine STATIC ${SRC})
+
+
+
 
 # Settings
 option(_VULKAN_RENDERING "Use Vulkan" OFF)
@@ -18,6 +19,7 @@ if(_VULKAN_RENDERING)
     option(_OPENGL_RENDERING "Use OpenGL" OFF)
 else()
     option(_OPENGL_RENDERING "Use OpenGL" ON)
+    set(EXCLD "src/Rendering/Vulkan/*")
 endif(_VULKAN_RENDERING)
 
 if (_OPENGL_RENDERING)
@@ -25,6 +27,10 @@ if (_OPENGL_RENDERING)
 else()
     option(_VULKAN_RENDERING "Use Vulkan" ON)
 endif(_OPENGL_RENDERING)
+
+file(GLOB_RECURSE SRC src/*.cc)
+list(FILTER SRC EXCLUDE REGEX ${EXCLD})
+add_library(GarnishEngine STATIC ${SRC})
 
 # Act on Graphics API choice
 if (_VULKAN_RENDERING)

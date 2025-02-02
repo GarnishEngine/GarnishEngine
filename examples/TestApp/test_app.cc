@@ -2,6 +2,7 @@
 #include "Rendering/garnish_mesh.hpp"
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
+#include "Utility/log.hpp"
 
 const int32_t FRAME_RATE = 60;
 
@@ -77,6 +78,6 @@ namespace garnish {
 
 int main() {
     garnish::TestApp app{ };
-
+    garnish::logfile << "hi";
     app.run();
 }
