@@ -6,7 +6,6 @@
 
 namespace garnish {
 
-    extern std::ofstream logfile("log.txt");
-
+    extern std::ofstream log("log.txt");
 
 }

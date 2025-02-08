@@ -3,6 +3,7 @@
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
 #include "Utility/log.hpp"
+#include "garnish_sprite.h"
 
 const int32_t FRAME_RATE = 60;
 
@@ -28,6 +29,10 @@ namespace garnish {
             gMesh.loadMesh("Models/viking_room.obj");
             gMesh.setupMesh();
             gMesh.loadTexture("Textures/viking_room.png");
+
+            sprite testsprite;
+            testsprite.drawSprite();
+
 
             SDL_Event event;
 
@@ -78,6 +83,6 @@ namespace garnish {
 
 int main() {
     garnish::TestApp app{ };
-    garnish::logfile << "hi";
+    garnish::log << "hi";
     app.run();
 }

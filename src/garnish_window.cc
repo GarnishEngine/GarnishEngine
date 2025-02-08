@@ -10,7 +10,7 @@ namespace garnish {
                        SDL_WINDOW_RESIZABLE);
         #else
         windowFlags = (SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY |
-                       SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+                       SDL_WINDOW_RESIZABLE);
         #endif
 
         InitWindow();

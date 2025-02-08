@@ -19,7 +19,6 @@ if(_VULKAN_RENDERING)
     option(_OPENGL_RENDERING "Use OpenGL" OFF)
 else()
     option(_OPENGL_RENDERING "Use OpenGL" ON)
-    set(EXCLD "src/Rendering/Vulkan/*")
 endif(_VULKAN_RENDERING)
 
 if (_OPENGL_RENDERING)
@@ -29,7 +28,6 @@ else()
 endif(_OPENGL_RENDERING)
 
 file(GLOB_RECURSE SRC src/*.cc)
-list(FILTER SRC EXCLUDE REGEX ${EXCLD})
 add_library(GarnishEngine STATIC ${SRC})
 
 # Act on Graphics API choice
@@ -41,8 +39,14 @@ endif(_VULKAN_RENDERING)
 if (_OPENGL_RENDERING)
     find_package(GLEW REQUIRED)
     find_package(OpenGL REQUIRED)
+    if (APPLE)
+    target_link_libraries(GarnishEngine GLEW::GLEW "-framework OpenGL")
+    else()
     target_link_libraries(GarnishEngine GLEW::GLEW GL)
+    endif()
 endif(_OPENGL_RENDERING)
+
+
 
 # 3rdParty libraries
 add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)

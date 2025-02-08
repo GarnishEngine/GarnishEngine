@@ -96,7 +96,6 @@ namespace garnish {
         glBindVertexArray(0);
     }
 
-
     void mesh::deleteVertexArray() {
         glDeleteVertexArrays(1, &VAO);
     }
