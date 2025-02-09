@@ -47,7 +47,6 @@ if (_OPENGL_RENDERING)
 endif(_OPENGL_RENDERING)
 
 
-
 # 3rdParty libraries
 add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
@@ -58,7 +57,20 @@ target_include_directories(GarnishEngine PUBLIC 3rdParty/glm)
 target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader)
 target_include_directories(GarnishEngine PUBLIC 3rdParty/stb)
 
-target_link_libraries(GarnishEngine SDL3::SDL3 glm::glm)
+
+file(GLOB IMGUI_SOURCES
+        "3rdParty/imgui/*.h"
+        "3rdParty/imgui/*.cpp"
+        "3rdParty/imgui/backends/imgui_impl_opengl3.cpp"
+        "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
+
+add_library(imgui STATIC ${IMGUI_SOURCES})
+target_include_directories(imgui PUBLIC 3rdParty/imgui
+                                                3rdParty/imgui/backends)
+target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
+
+    
+target_link_libraries(GarnishEngine SDL3::SDL3 glm::glm imgui)
 
 
 # Building examples:

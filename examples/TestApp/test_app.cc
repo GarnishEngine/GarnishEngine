@@ -4,13 +4,9 @@
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
 #include "Utility/log.hpp"
-<<<<<<< Updated upstream
-#include "garnish_sprite.h"
-=======
 #include "Rendering/garnish_sprite.hpp"
->>>>>>> Stashed changes
 
-const int32_t FRAME_RATE = 60;
+const int32_t FRAME_RATE = 90;
 
 typedef std::chrono::high_resolution_clock hrclock;
 typedef std::chrono::time_point<hrclock> tp;
@@ -20,7 +16,51 @@ using std::chrono::duration_cast;
 namespace garnish {
     class TestApp : public app { 
         public:
+        bool handle_poll_event() override {
+            event event{};
+
+            if (event.sdl_event.type== SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                std::cout << "hi" << std::endl;
+            }
+
+            ImGui_ImplSDL3_ProcessEvent(&event.sdl_event); 
+            ImGuiIO& io = ImGui::GetIO();
+
+            
+            
+            if (!event.state)
+                return false;
+
+            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+                garnishWindow.shouldClose = true;
+            }
+            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
+                garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
+                glViewport(0, 0, WIDTH, HEIGHT);
+            }  
+    
+            for (const auto &entity : entities) {
+                entity->update(event);
+            }
+    
+            return true;
+        }
+        
         void run() override {
+
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGuiIO& io = ImGui::GetIO();
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+
+
+            // Setup Platform/Renderer backends
+            ImGui_ImplSDL3_InitForOpenGL(garnishWindow.sdl_window, garnishWindow.glContext);
+            ImGui_ImplOpenGL3_Init();
+
             if (glewInit() != GLEW_OK) {
                 throw std::runtime_error("GLEW failed to initialize");
             }
@@ -43,7 +83,7 @@ namespace garnish {
 
 
             sprite testsprite;
-            testsprite.drawSprite();
+            testsprite.draw();
 
 
             SDL_Event event;
@@ -53,14 +93,40 @@ namespace garnish {
             while (!shouldClose()) {
                 tp start_time = hrclock::now();
 
-                int32_t dt = duration_cast<ms>(start_time - end_time).count();
+                float dt = duration_cast<us>(start_time - end_time).count();
 
-                if (dt > 1000 / FRAME_RATE) {
+                if (dt > 1000000.0F / FRAME_RATE) {
 
                     handle_all_events();
+                    ImGui_ImplSDL3_NewFrame();
+                    ImGui_ImplOpenGL3_NewFrame();
+                    ImGui::NewFrame();
+                    ImGui::ShowDemoWindow();
+                    {
+                        static float f = 0.0f;
+                        static int counter = 0;
+            
+                        ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+            
+                        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+                    
+                        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                            counter++;
+                        ImGui::SameLine();
+                        ImGui::Text("counter = %d", counter);
+            
+                        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+                        ImGui::End();
+                    }
+
+                    ImGui::Render();
+
+
                     glViewport(0, 0, WIDTH, HEIGHT);
                     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
                     cam->update();
                     shaderProgram.Use();
 
@@ -78,12 +144,12 @@ namespace garnish {
 
                     shaderProgram.SetUniform("mvp", mvp);
 
+                    
                     // gMesh.draw();
                     gSprite.draw();
 
 
                     garnishWindow.SwapWindow();
-
                     end_time = start_time;
                     // TODO: make so things work with dt, probably should move it to
                     // class member or something
@@ -92,6 +158,9 @@ namespace garnish {
                     //             << " ms_elapsed_since_last: " << dt << '\n';
                 }
             }
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
         }
     };
 }

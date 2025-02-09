@@ -6,15 +6,9 @@ namespace garnish {
         SDLFlags = (SDL_INIT_VIDEO | SDL_INIT_EVENTS);
         
         #ifdef _VULKAN_RENDERING
-        windowFlags = (SDL_WINDOW_VULKAN |
-                       SDL_WINDOW_RESIZABLE);
+        windowFlags = (SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
         #else
-<<<<<<< Updated upstream
-        windowFlags = (SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY |
-=======
-        windowFlags = (SDL_WINDOW_OPENGL  |
->>>>>>> Stashed changes
-                       SDL_WINDOW_RESIZABLE);
+        windowFlags = (SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
         #endif
 
         InitWindow();

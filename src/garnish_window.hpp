@@ -28,6 +28,9 @@ namespace garnish {
                 SDL_GetWindowSize(sdl_window, width, height);
             }
 
+            SDL_GLContext glContext;
+            SDL_Window *sdl_window;
+
             private: 
             void InitWindow();
             int32_t width;
@@ -37,11 +40,6 @@ namespace garnish {
 
             uint64_t SDLFlags;
             uint64_t windowFlags;
-
-            SDL_Window *sdl_window;
-
-            SDL_GLContext glContext;
-
             // static bool resizingEventWatcher(void *data, SDL_Event *event); maybe later lol
     };
 }

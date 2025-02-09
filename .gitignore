@@ -52,5 +52,5 @@ libGarnishEngine.a
 examples/TestApp/TestApp
 .DS_Store
 .clangd
-
-
+.idea
+imgui.ini

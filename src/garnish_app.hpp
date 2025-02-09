@@ -5,12 +5,19 @@
 #include "garnish_window.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 
+
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_opengl3.h"
+
 #include <memory>
 #include <chrono>
 
 typedef std::chrono::high_resolution_clock hrclock;
 typedef std::chrono::time_point<hrclock> tp;
 typedef std::chrono::milliseconds ms;
+typedef std::chrono::microseconds us;
+
 using std::chrono::duration_cast;
 
 namespace garnish {
@@ -25,7 +32,7 @@ namespace garnish {
 
         virtual void run() {}
         bool shouldClose() { return garnishWindow.shouldClose; }
-        bool handle_poll_event();
+        virtual bool handle_poll_event();
         void handle_all_events();
 
         window garnishWindow;
