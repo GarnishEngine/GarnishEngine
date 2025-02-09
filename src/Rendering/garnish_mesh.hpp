@@ -12,13 +12,13 @@
 #include <vector>
 
 namespace garnish {
-    struct vertex {
+    struct vertex3d {
         glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
-        vertex() {}
-        vertex(glm::vec3 pos, glm::vec3 color) : pos(pos), color(color) {}
-        vertex(glm::vec3 pos, glm::vec3 color, glm::vec2 texCoord) : pos(pos), color(color), texCoord(texCoord) {}
+        vertex3d() {}
+        vertex3d(glm::vec3 pos, glm::vec3 color) : pos(pos), color(color) {}
+        vertex3d(glm::vec3 pos, glm::vec3 color, glm::vec2 texCoord) : pos(pos), color(color), texCoord(texCoord) {}
     };
 
     struct base_texture {
@@ -28,15 +28,15 @@ namespace garnish {
 
     class mesh {
         public: 
-            std::vector<vertex> vertices;
+            std::vector<vertex3d> vertices;
             std::vector<uint32_t> indices;
             std::vector<base_texture> textures;
 
             mesh() {}
-            mesh(std::vector<vertex> Vertices,
+            mesh(std::vector<vertex3d> Vertices,
                                     std::vector<uint32_t> indices,
                                     std::vector<base_texture> textures);
-            mesh(std::vector<vertex> vVertices,
+            mesh(std::vector<vertex3d> vVertices,
                         std::vector<uint32_t> indices);
 
             void setupMesh();
@@ -45,6 +45,8 @@ namespace garnish {
             void loadMesh(std::string meshPath);
             void draw();
             void loadTexture(std::string texturePath);
+            void loadTexture(garnish_texture texture);
+
         private: 
             uint32_t VAO, VBO, EBO;
             garnish_texture gTexture;

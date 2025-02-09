@@ -1,9 +1,14 @@
 #include "Rendering/OpenGL/shader_program.hpp"
 #include "Rendering/garnish_mesh.hpp"
+#include "Rendering/garnish_texture.hpp"
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
 #include "Utility/log.hpp"
+<<<<<<< Updated upstream
 #include "garnish_sprite.h"
+=======
+#include "Rendering/garnish_sprite.hpp"
+>>>>>>> Stashed changes
 
 const int32_t FRAME_RATE = 60;
 
@@ -25,10 +30,17 @@ namespace garnish {
             ShaderProgram shaderProgram{"shaders/shader.vert",
                                         "shaders/shader.frag"};
 
-            mesh gMesh;
-            gMesh.loadMesh("Models/viking_room.obj");
-            gMesh.setupMesh();
-            gMesh.loadTexture("Textures/viking_room.png");
+            // mesh gMesh;
+            garnish_texture texture;
+            texture.loadTexture("Textures/viking_room.png");
+
+            // gMesh.loadMesh("Models/viking_room.obj");
+            // gMesh.setupMesh();
+            // gMesh.loadTexture(texture);
+            sprite gSprite;
+            gSprite.setupSprite();
+            gSprite.loadTexture(texture);
+
 
             sprite testsprite;
             testsprite.drawSprite();
@@ -66,7 +78,10 @@ namespace garnish {
 
                     shaderProgram.SetUniform("mvp", mvp);
 
-                    gMesh.draw();
+                    // gMesh.draw();
+                    gSprite.draw();
+
+
                     garnishWindow.SwapWindow();
 
                     end_time = start_time;

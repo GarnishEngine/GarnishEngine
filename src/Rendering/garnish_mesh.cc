@@ -17,7 +17,7 @@ namespace garnish {
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex),
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex3d),
                     &vertices[0], GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -25,29 +25,29 @@ namespace garnish {
                     indices.size() * sizeof(unsigned int), &indices[0],
                     GL_STATIC_DRAW);
 
-        // vertex positions
+        // vertex3d positions
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex3d),
                                 (void *)0);
-        // vertex normals
+        // vertex3d normals
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                                (void *)offsetof(vertex, color));
-        // vertex texture coords
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex3d),
+                                (void *)offsetof(vertex3d, color));
+        // vertex3d texture coords
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                                (void *)offsetof(vertex, texCoord));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex3d),
+                                (void *)offsetof(vertex3d, texCoord));
 
         glBindVertexArray(0);
     }
 
-    mesh::mesh(std::vector<vertex> vertices,
+    mesh::mesh(std::vector<vertex3d> vertices,
                              std::vector<uint32_t> indices,
                              std::vector<base_texture> textures)
         : vertices(vertices), indices(indices), textures(textures) {
     }
 
-    mesh::mesh(std::vector<vertex> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
+    mesh::mesh(std::vector<vertex3d> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
     }
 
     void mesh::loadMesh(std::string meshPath) {
@@ -65,7 +65,7 @@ namespace garnish {
 
         for (const auto &shape : shapes) {
             for (const auto &index : shape.mesh.indices) {
-                vertex vert{};
+                vertex3d vert{};
                 vert.pos = {attrib.vertices[3 * index.vertex_index + 0],
                                 attrib.vertices[3 * index.vertex_index + 1],
                                 attrib.vertices[3 * index.vertex_index + 2]};
@@ -85,6 +85,10 @@ namespace garnish {
     }
     void mesh::loadTexture(std::string texturePath) {
         gTexture.loadTexture(texturePath);
+        glBindTexture(GL_TEXTURE_2D, gTexture.texture);
+        glBindVertexArray(VAO);
+    }
+    void mesh::loadTexture(garnish_texture gTexture) {
         glBindTexture(GL_TEXTURE_2D, gTexture.texture);
         glBindVertexArray(VAO);
     }
