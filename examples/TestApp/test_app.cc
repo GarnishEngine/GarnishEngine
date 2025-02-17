@@ -55,8 +55,6 @@ namespace garnish {
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
             io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
 
-
-
             // Setup Platform/Renderer backends
             ImGui_ImplSDL3_InitForOpenGL(garnishWindow.sdl_window, garnishWindow.glContext);
             ImGui_ImplOpenGL3_Init();
@@ -101,6 +99,7 @@ namespace garnish {
                     ImGui_ImplSDL3_NewFrame();
                     ImGui_ImplOpenGL3_NewFrame();
                     ImGui::NewFrame();
+
                     ImGui::ShowDemoWindow();
                     {
                         static float f = 0.0f;
@@ -119,13 +118,9 @@ namespace garnish {
                         ImGui::End();
                     }
 
-                    ImGui::Render();
-
-
                     glViewport(0, 0, WIDTH, HEIGHT);
                     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
                     cam->update();
                     shaderProgram.Use();
@@ -148,6 +143,11 @@ namespace garnish {
                     // gMesh.draw();
                     gSprite.draw();
 
+
+
+
+                    ImGui::Render();
+                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
                     garnishWindow.SwapWindow();
                     end_time = start_time;
