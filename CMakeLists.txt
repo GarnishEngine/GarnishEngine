@@ -71,7 +71,7 @@ target_include_directories(imgui PUBLIC 3rdParty/imgui
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
 
     
-target_link_libraries(GarnishEngine SDL3::SDL3 glm::glm imgui)
+target_link_libraries(GarnishEngine SDL3::SDL3 glm::glm imgui GarnishECS)
 
 
 # Building examples:

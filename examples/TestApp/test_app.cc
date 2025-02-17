@@ -13,6 +13,8 @@ typedef std::chrono::time_point<hrclock> tp;
 typedef std::chrono::milliseconds ms;
 using std::chrono::duration_cast;
 
+struct Component {};
+
 namespace garnish {
     class TestApp : public app { 
         public:
@@ -26,8 +28,10 @@ namespace garnish {
             ImGui_ImplSDL3_ProcessEvent(&event.sdl_event); 
             ImGuiIO& io = ImGui::GetIO();
 
-            
-            
+            auto ent = ecsManager.CreateEntity();
+            // ecsManager.RegisterComponent<Component>();
+            // ecsManager.AddComponent<Component>(ent, Component{ });
+
             if (!event.state)
                 return false;
 

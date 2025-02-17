@@ -40,6 +40,6 @@ namespace garnish {
         window garnishWindow;
         std::vector<std::shared_ptr<entity>> entities;
 
-        
+        ECSManager ecsManager{ };
     };
 }
