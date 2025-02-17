@@ -10,6 +10,8 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"
 
+#include "garnish_ecs.h"
+
 #include <memory>
 #include <chrono>
 
@@ -37,5 +39,7 @@ namespace garnish {
 
         window garnishWindow;
         std::vector<std::shared_ptr<entity>> entities;
+
+        
     };
 }

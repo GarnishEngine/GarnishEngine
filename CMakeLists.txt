@@ -51,12 +51,13 @@ endif(_OPENGL_RENDERING)
 add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/GarnishECS EXCLUDE_FROM_ALL)
 
 target_include_directories(GarnishEngine PUBLIC 3rdParty/SDL)
 target_include_directories(GarnishEngine PUBLIC 3rdParty/glm)
 target_include_directories(GarnishEngine PUBLIC 3rdParty/tinyobjloader)
 target_include_directories(GarnishEngine PUBLIC 3rdParty/stb)
-
+target_include_directories(GarnishEngine PUBLIC 3rdParty/GarnishECS/include)
 
 file(GLOB IMGUI_SOURCES
         "3rdParty/imgui/*.h"
