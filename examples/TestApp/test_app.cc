@@ -3,7 +3,6 @@
 #include "Rendering/garnish_texture.hpp"
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
-#include "Utility/log.hpp"
 #include "Rendering/garnish_sprite.hpp"
 
 const int32_t FRAME_RATE = 90;
@@ -17,40 +16,11 @@ struct Component {};
 
 namespace garnish {
     class TestApp : public app { 
-        public:
-        bool handle_poll_event() override {
-            event event{};
-
-            if (event.sdl_event.type== SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                std::cout << "hi" << std::endl;
-            }
-
-            ImGui_ImplSDL3_ProcessEvent(&event.sdl_event); 
-            ImGuiIO& io = ImGui::GetIO();
-
-            auto ent = ecsManager.CreateEntity();
-            // ecsManager.RegisterComponent<Component>();
-            // ecsManager.AddComponent<Component>(ent, Component{ });
-
-            if (!event.state)
-                return false;
-
-            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-                garnishWindow.shouldClose = true;
-            }
-            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
-                garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
-                glViewport(0, 0, WIDTH, HEIGHT);
-            }  
-    
-            for (const auto &entity : entities) {
-                entity->update(event);
-            }
-    
-            return true;
-        }
-        
+        public:        
         void run() override {
+            auto ent = ecsManager.CreateEntity();
+            ecsManager.RegisterComponent<Component>();
+            ecsManager.AddComponent<Component>(ent, Component{ });
 
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
@@ -143,12 +113,8 @@ namespace garnish {
 
                     shaderProgram.SetUniform("mvp", mvp);
 
-                    
                     // gMesh.draw();
                     gSprite.draw();
-
-
-
 
                     ImGui::Render();
                     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -166,11 +132,38 @@ namespace garnish {
             ImGui_ImplSDL3_Shutdown();
             ImGui::DestroyContext();
         }
+
+        bool handle_poll_event() override {
+            event event{};
+
+            if (event.sdl_event.type== SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                std::cout << "hi" << std::endl;
+            }
+
+            ImGui_ImplSDL3_ProcessEvent(&event.sdl_event); 
+            ImGuiIO& io = ImGui::GetIO();
+
+            if (!event.state)
+                return false;
+
+            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+                garnishWindow.shouldClose = true;
+            }
+            if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
+                garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
+                glViewport(0, 0, WIDTH, HEIGHT);
+            }  
+    
+            for (const auto &entity : entities) {
+                entity->update(event);
+            }
+    
+            return true;
+        }
     };
 }
 
 int main() {
     garnish::TestApp app{ };
-    garnish::log << "hi";
     app.run();
 }
