@@ -38,7 +38,6 @@ namespace garnish {
         void handle_all_events();
 
         window garnishWindow;
-        std::vector<std::shared_ptr<entity>> entities;
 
         ECSManager ecsManager{ };
     };

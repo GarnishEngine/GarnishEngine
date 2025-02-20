@@ -1,5 +1,5 @@
 #include "camera.hpp"
-
+#include <iostream>
 
 namespace garnish {
     glm::mat4 Camera::ViewMatrix() {
@@ -51,6 +51,7 @@ namespace garnish {
     void Camera::update() {
         if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
             position += forward * movementSpeed;
+            std::cout << position.x << ", " << position.y << ", " << position.z << ", " << "\n";
         }
         if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
             position -= forward * movementSpeed;
