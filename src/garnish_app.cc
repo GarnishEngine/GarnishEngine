@@ -2,17 +2,70 @@
 
 #include <stdexcept>
 
+#include "Rendering/garnish_mesh.hpp"
+#include "Rendering/garnish_sprite.hpp"
+#include "Rendering/garnish_texture.hpp"
+
 typedef std::chrono::duration<float> fsec;
 namespace garnish {
-    app::app(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") {}
-    app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") {}
+    app::app(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") { Init(); }
+    app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") { Init(); }
 
-    void app::run() {
+    void app::Init() {
+        std::cout << "init1" << std::endl;
+
         InitImGui();
   
         if (glewInit() != GLEW_OK) {
           throw std::runtime_error("GLEW failed to initialize");
         }
+
+        shaderProgram = std::make_unique<ShaderProgram>("shaders/shader.vert", "shaders/shader.frag");
+
+
+        // Naive Rendering system
+        ecsManager.RegisterComponent<mesh>();
+        ecsManager.AddSystem([](ECSManager* ecs){
+            for (auto& ent : ecs->GetEntities<mesh>()) {
+                auto m = ecs->GetComponent<mesh>(ent);
+                m->draw();
+            }
+        });
+
+        ecsManager.RegisterComponent<sprite>();
+        ecsManager.AddSystem([&](ECSManager* ecs){ // TODO remove capture
+            auto cam_ent = ecs->GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
+            auto cam = ecs->GetComponent<Camera>(cam_ent);
+            cam->update();
+
+            shaderProgram->Use();
+
+            glm::mat4 model{1.0f};
+            model = glm::translate(model, glm::vec3{0.0f, -0.3f, 3.0f});
+
+            model = glm::rotate(model, glm::radians(-90.0f),
+                                glm::vec3{1.0f, 0.0f, 0.0f});
+            model = glm::rotate(model, glm::radians(-135.0f),
+                                glm::vec3{0.0f, 0.0f, 1.0f});
+
+            glm::mat4 projection =
+                glm::perspective(glm::radians(60.0f),
+                                (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+
+            glm::mat4 mvp = projection * cam->ViewMatrix() * model;
+
+            shaderProgram->SetUniform("mvp", mvp);
+
+            for (auto& ent : ecs->GetEntities<sprite>()) {
+                auto s = ecs->GetComponent<sprite>(ent);
+                s->draw();
+            }
+        });
+        std::cout << "init2" << std::endl;
+    }
+
+    void app::run() {
+        std::cout << "run" << std::endl;
 
         while (!shouldClose()) {
             handle_all_events();
@@ -42,8 +95,9 @@ namespace garnish {
 
             garnishWindow.SwapWindow();
         }
-
+        std::cout << "About to term imgui" << std::endl;
         TerminateImGui();
+        std::cout << "imgui gone" << std::endl;
     }
     
     bool app::handle_poll_event() {

@@ -169,9 +169,9 @@ namespace garnish {
 } // namespace garnish
 
 int main() {
-    // garnish::TestApp app{};
-
+    std::cout << "main" << std::endl;
     garnish::app app{ };
+    std::cout << "main2" << std::endl;
 
     app.ecsManager.AddSystem([](garnish::ECSManager* ecs){
         ImGui::ShowDemoWindow();
@@ -198,51 +198,33 @@ int main() {
                     1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
     });
+    std::cout << "main3" << std::endl;
 
-    // app.ecsManager.RegisterComponent<garnish::Camera>();
-    // auto camera_entity = app.ecsManager.CreateEntityWithComponents<garnish::Camera>(garnish::Camera());
+    app.ecsManager.RegisterComponent<garnish::Camera>();
+    auto camera_entity = app.ecsManager.CreateEntityWithComponents<garnish::Camera>(garnish::Camera());
 
-    // garnish::ShaderProgram shaderProgram{"shaders/shader.vert", "shaders/shader.frag"};
+    // TODO 3d mesh
+    // auto vikingRoom = app.ecsManager.CreateEntity();
 
-    // // mesh gMesh;
-    // garnish::garnish_texture texture;
-    // texture.loadTexture("Textures/viking_room.png");
+    // TODO one of these things is not being destructed properly and causing a free error on close
+    // garnish::mesh gMesh;
+    garnish::garnish_texture texture;
+    texture.loadTexture("Textures/viking_room.png");
 
-    // // gMesh.loadMesh("Models/viking_room.obj");
-    // // gMesh.setupMesh();
-    // // gMesh.loadTexture(texture);
-    // garnish::sprite gSprite;
-    // gSprite.setupSprite();
-    // gSprite.loadTexture(texture);
+    // gMesh.loadMesh("Models/viking_room.obj");
+    // gMesh.setupMesh();
+    // gMesh.loadTexture(texture);
 
-    // garnish::sprite testsprite;
-    // testsprite.draw();
+    // app.ecsManager.AddComponent<garnish::mesh>(vikingRoom, gMesh);
 
-    // app.ecsManager.AddSystem([&](garnish::ECSManager* ecs){ // TODO captures are all temporary
-    //     auto cam_ent = ecs->GetEntities<garnish::Camera>()[0]; // TODO this is really janky, need to do something about the camera
-    //     auto cam = ecs->GetComponent<garnish::Camera>(cam_ent);
-    //     cam->update();
 
-    //     shaderProgram.Use();
+    auto spriteEnt = app.ecsManager.CreateEntity();
 
-    //     glm::mat4 model{1.0f};
-    //     model = glm::translate(model, glm::vec3{0.0f, -0.3f, 3.0f});
+    garnish::sprite gSprite;
+    gSprite.setupSprite();
+    gSprite.loadTexture(texture);
 
-    //     model = glm::rotate(model, glm::radians(-90.0f),
-    //                         glm::vec3{1.0f, 0.0f, 0.0f});
-    //     model = glm::rotate(model, glm::radians(-135.0f),
-    //                         glm::vec3{0.0f, 0.0f, 1.0f});
-
-    //     glm::mat4 projection =
-    //         glm::perspective(glm::radians(60.0f),
-    //                         (float)app.WIDTH / (float)app.HEIGHT, 0.01f, 1000.0f);
-
-    //     glm::mat4 mvp = projection * cam->ViewMatrix() * model;
-
-    //     shaderProgram.SetUniform("mvp", mvp);
-    //     // gMesh.draw();
-    //     gSprite.draw();
-    // });
+    app.ecsManager.AddComponent<garnish::sprite>(spriteEnt, gSprite);
 
     app.run();
 }

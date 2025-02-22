@@ -15,6 +15,9 @@
 #include <memory>
 #include <chrono>
 
+#include "Rendering/OpenGL/shader_program.hpp"
+#include "Utility/camera.hpp"
+
 typedef std::chrono::high_resolution_clock hrclock;
 typedef std::chrono::time_point<hrclock> tp;
 typedef std::chrono::milliseconds ms;
@@ -43,7 +46,12 @@ namespace garnish {
         ECSManager ecsManager{ };
 
     private:
+        void Init();
+
         void InitImGui();
         void TerminateImGui();
+
+    private: // Private section for integrated renderer
+        std::unique_ptr<ShaderProgram> shaderProgram{ };
     };
 }
