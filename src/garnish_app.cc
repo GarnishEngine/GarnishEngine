@@ -17,9 +17,9 @@ namespace garnish {
             glViewport(0, 0, WIDTH, HEIGHT);
         }  
 
-        for (const auto &entity : entities) {
-            entity->update(event);
-        }
+        // for (const auto &entity : entities) {
+        //     entity->update(event);
+        // }
 
         return true;
     }
