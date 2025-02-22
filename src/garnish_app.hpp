@@ -41,5 +41,9 @@ namespace garnish {
         window garnishWindow;
 
         ECSManager ecsManager{ };
+
+    private:
+        void InitImGui();
+        void TerminateImGui();
     };
 }
