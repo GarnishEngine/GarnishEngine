@@ -22,7 +22,6 @@ namespace garnish {
 
         shaderProgram = std::make_unique<ShaderProgram>("shaders/shader.vert", "shaders/shader.frag");
 
-
         // Naive Rendering system
         ecsManager.RegisterComponent<mesh>();
         ecsManager.AddSystem([](ECSManager* ecs){
@@ -113,7 +112,11 @@ namespace garnish {
         if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
             garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
             glViewport(0, 0, WIDTH, HEIGHT);
-        }  
+        }
+
+        auto cam_ent = ecsManager.GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
+        auto cam = ecsManager.GetComponent<Camera>(cam_ent);
+        cam->update(event);
 
         return true;
     }

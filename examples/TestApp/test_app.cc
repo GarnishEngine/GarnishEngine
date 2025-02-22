@@ -203,6 +203,12 @@ int main() {
     app.ecsManager.RegisterComponent<garnish::Camera>();
     auto camera_entity = app.ecsManager.CreateEntityWithComponents<garnish::Camera>(garnish::Camera());
 
+    app.ecsManager.AddSystem([](garnish::ECSManager* ecs){
+        auto cam_ent = ecs->GetEntities<garnish::Camera>()[0]; // TODO this is really janky, need to do something about the camera
+        auto cam = ecs->GetComponent<garnish::Camera>(cam_ent);
+        cam->update();
+    });
+
     // TODO 3d mesh
     // auto vikingRoom = app.ecsManager.CreateEntity();
 
