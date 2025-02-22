@@ -5,6 +5,14 @@ namespace garnish {
     app::app(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") {}
     app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") {}
 
+    void app::run() {
+        while (!shouldClose()) {
+            handle_poll_event();
+            
+            ecsManager.ExecuteSystems();
+        }
+    }
+    
     bool app::handle_poll_event() {
         event event{};
         if (!event.state)
@@ -16,10 +24,6 @@ namespace garnish {
             garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
             glViewport(0, 0, WIDTH, HEIGHT);
         }  
-
-        // for (const auto &entity : entities) {
-        //     entity->update(event);
-        // }
 
         return true;
     }

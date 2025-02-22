@@ -32,7 +32,8 @@ namespace garnish {
         app();
         ~app() {}
 
-        virtual void run() {}
+        void run();
+
         bool shouldClose() { return garnishWindow.shouldClose; }
         virtual bool handle_poll_event();
         void handle_all_events();
