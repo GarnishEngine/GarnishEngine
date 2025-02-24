@@ -202,8 +202,43 @@ int main() {
 
     app.ecsManager.AddSystem([](garnish::ECSManager* ecs){
         auto cam_ent = ecs->GetEntities<garnish::Camera>()[0]; // TODO this is really janky, need to do something about the camera
-        auto cam = ecs->GetComponent<garnish::Camera>(cam_ent);
-        cam->update();
+        auto& cam = ecs->GetComponent<garnish::Camera>(cam_ent);
+        
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
+            cam.position += cam.forward * cam.movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S]) {
+            cam.position -= cam.forward * cam.movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D]) {
+            cam.position += cam.right * cam.movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A]) {
+            cam.position -= cam.right * cam.movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_SPACE]) {
+            cam.position += cam.up * cam.movementSpeed;
+        }
+        if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT]) {
+            cam.position -= cam.up * cam.movementSpeed;
+        }
+
+        // cam->yaw += gEvent.sdl_event.motion.xrel * lookSensitivity;
+        // pitch -= gEvent.sdl_event.motion.yrel * lookSensitivity;
+
+        // if (pitch > 89.9f) {
+            // pitch = 89.9f;
+        // }
+        // else if (pitch < -89.9f) {
+            // pitch = -89.9f;
+        // }
+
+        // forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        // forward.y = sin(glm::radians(pitch));
+        // forward.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        // forward = glm::normalize(forward);
+
+        cam.right = glm::normalize(glm::cross(cam.forward, cam.up));
     });
 
     // TODO 3d mesh

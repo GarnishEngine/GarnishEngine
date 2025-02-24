@@ -26,7 +26,7 @@ namespace garnish {
         ecsManager.AddSystem([](ECSManager* ecs){
             for (auto& ent : ecs->GetEntities<mesh>()) {
                 auto m = ecs->GetComponent<mesh>(ent);
-                m->draw();
+                m.draw();
             }
         });
 
@@ -34,7 +34,6 @@ namespace garnish {
         ecsManager.AddSystem([&](ECSManager* ecs){ // TODO remove capture
             auto cam_ent = ecs->GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
             auto cam = ecs->GetComponent<Camera>(cam_ent);
-            cam->update();
 
             shaderProgram->Use();
 
@@ -50,13 +49,13 @@ namespace garnish {
                 glm::perspective(glm::radians(60.0f),
                                 (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
 
-            glm::mat4 mvp = projection * cam->ViewMatrix() * model;
+            glm::mat4 mvp = projection * cam.ViewMatrix() * model;
 
             shaderProgram->SetUniform("mvp", mvp);
 
             for (auto& ent : ecs->GetEntities<sprite>()) {
                 auto s = ecs->GetComponent<sprite>(ent);
-                s->draw();
+                s.draw();
             }
         });
     }
@@ -125,7 +124,7 @@ namespace garnish {
 
         auto cam_ent = ecsManager.GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
         auto cam = ecsManager.GetComponent<Camera>(cam_ent);
-        cam->update(event);
+        // cam->update(event);
 
         return true;
     }
