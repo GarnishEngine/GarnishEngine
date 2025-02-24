@@ -12,7 +12,6 @@ namespace garnish {
     app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") { Init(); }
 
     void app::Init() {
-        std::cout << "init1" << std::endl;
 
         InitImGui();
   
@@ -60,14 +59,24 @@ namespace garnish {
                 s->draw();
             }
         });
-        std::cout << "init2" << std::endl;
     }
 
     void app::run() {
-        std::cout << "run" << std::endl;
-
         while (!shouldClose()) {
-            handle_all_events();
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                switch (event.type) {
+                case SDL_EVENT_QUIT:
+                    garnishWindow.shouldClose = true;
+                    break;
+                case SDL_EVENT_WINDOW_RESIZED:
+                    garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
+                    glViewport(0, 0, WIDTH, HEIGHT);
+                    break;
+                }
+
+                ImGui_ImplSDL3_ProcessEvent(&event);
+            }
             
             // ImGui Prep Frame
             ImGui_ImplOpenGL3_NewFrame();
@@ -94,9 +103,9 @@ namespace garnish {
 
             garnishWindow.SwapWindow();
         }
-        std::cout << "About to term imgui" << std::endl;
         TerminateImGui();
-        std::cout << "imgui gone" << std::endl;
+
+        SDL_Quit();
     }
     
     bool app::handle_poll_event() {

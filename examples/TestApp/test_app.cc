@@ -169,9 +169,7 @@ namespace garnish {
 } // namespace garnish
 
 int main() {
-    std::cout << "main" << std::endl;
     garnish::app app{ };
-    std::cout << "main2" << std::endl;
 
     app.ecsManager.AddSystem([](garnish::ECSManager* ecs){
         ImGui::ShowDemoWindow();
@@ -198,7 +196,6 @@ int main() {
                     1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
     });
-    std::cout << "main3" << std::endl;
 
     app.ecsManager.RegisterComponent<garnish::Camera>();
     auto camera_entity = app.ecsManager.CreateEntityWithComponents<garnish::Camera>(garnish::Camera());
