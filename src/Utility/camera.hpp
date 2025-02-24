@@ -6,7 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
-
+#include <limits>
 
 namespace garnish {
     struct Camera : public entity {
@@ -22,6 +22,8 @@ namespace garnish {
         float pitch{ 0.0f };
 
         bool mouseButtonHeld{ false };
+
+        glm::vec2 lastMousePos{ std::numeric_limits<float>::max() };
 
         glm::mat4 ViewMatrix();
 

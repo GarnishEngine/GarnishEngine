@@ -4,6 +4,7 @@
 #include "Rendering/garnish_texture.hpp"
 #include "Utility/camera.hpp"
 #include "garnish_app.hpp"
+#include <limits>
 
 const int32_t FRAME_RATE = 90;
 
@@ -222,23 +223,38 @@ int main() {
         if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT]) {
             cam.position -= cam.up * cam.movementSpeed;
         }
-
-        // cam->yaw += gEvent.sdl_event.motion.xrel * lookSensitivity;
-        // pitch -= gEvent.sdl_event.motion.yrel * lookSensitivity;
-
-        // if (pitch > 89.9f) {
-            // pitch = 89.9f;
-        // }
-        // else if (pitch < -89.9f) {
-            // pitch = -89.9f;
-        // }
-
-        // forward.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        // forward.y = sin(glm::radians(pitch));
-        // forward.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        // forward = glm::normalize(forward);
-
-        cam.right = glm::normalize(glm::cross(cam.forward, cam.up));
+        if (SDL_GetMouseState(nullptr, nullptr) == SDL_BUTTON_LEFT) {
+            if (cam.lastMousePos == glm::vec2(std::numeric_limits<float>::max())) {
+                glm::vec2 mousePos{ };
+                SDL_GetMouseState(&mousePos.x, &mousePos.y);
+    
+                cam.lastMousePos = mousePos;
+            }
+    
+            glm::vec2 mousePos{ };
+            SDL_GetMouseState(&mousePos.x, &mousePos.y);
+    
+            glm::vec2 deltaMousePos = cam.lastMousePos - mousePos;
+    
+            cam.yaw -= deltaMousePos.x * cam.lookSensitivity;
+            cam.pitch += deltaMousePos.y * cam.lookSensitivity;
+    
+            if (cam.pitch > 89.9f) {
+                cam.pitch = 89.9f;
+            }
+            else if (cam.pitch < -89.9f) {
+                cam.pitch = -89.9f;
+            }
+    
+            cam.forward.x = cos(glm::radians(cam.yaw)) * cos(glm::radians(cam.pitch));
+            cam.forward.y = sin(glm::radians(cam.pitch));
+            cam.forward.z = sin(glm::radians(cam.yaw)) * cos(glm::radians(cam.pitch));
+            cam.forward = glm::normalize(cam.forward);
+    
+            cam.right = glm::normalize(glm::cross(cam.forward, cam.up));
+    
+            cam.lastMousePos = mousePos;
+        }
     });
 
     // TODO 3d mesh
