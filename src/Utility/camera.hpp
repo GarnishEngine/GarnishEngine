@@ -9,7 +9,7 @@
 #include <limits>
 
 namespace garnish {
-    struct Camera : public entity {
+    struct Camera {
         Camera(float movementSpeed = 0.02f, float lookSensitivity = 0.5f);
         
         glm::vec3 position{ 0.0f, 0.0f, 5.0f };
@@ -21,16 +21,11 @@ namespace garnish {
         float yaw{ -90.0f };
         float pitch{ 0.0f };
 
-        bool mouseButtonHeld{ false };
+        float movementSpeed;
+        float lookSensitivity;
 
         glm::vec2 lastMousePos{ std::numeric_limits<float>::max() };
 
         glm::mat4 ViewMatrix();
-
-        float movementSpeed;
-        float lookSensitivity;
-
-        void update(event &gEvent) override;
-        void update() override;
     };
 }
