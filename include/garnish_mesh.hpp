@@ -1,7 +1,6 @@
 #pragma once
+#include "OpenGL.hpp"
 
-#include "OpenGL/OpenGL.hpp"
-#include "OpenGL/gl_buffer.hpp"
 #include "garnish_texture.hpp"
 #include "stb_image.h"
 #include <cstdlib>
@@ -16,7 +15,7 @@ namespace garnish {
         glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
-        vertex3d() {}
+        vertex3d() = default;
         vertex3d(glm::vec3 pos, glm::vec3 color) : pos(pos), color(color) {}
         vertex3d(glm::vec3 pos, glm::vec3 color, glm::vec2 texCoord) : pos(pos), color(color), texCoord(texCoord) {}
     };
@@ -26,30 +25,32 @@ namespace garnish {
         std::string type;
     };
 
-    class mesh {
+    class Mesh {
         public: 
             std::vector<vertex3d> vertices;
             std::vector<uint32_t> indices;
             std::vector<base_texture> textures;
 
-            mesh() {}
-            mesh(std::vector<vertex3d> Vertices,
+            Mesh() = default;
+            Mesh(std::vector<vertex3d> Vertices,
                                     std::vector<uint32_t> indices,
                                     std::vector<base_texture> textures);
-            mesh(std::vector<vertex3d> vVertices,
+            Mesh(std::vector<vertex3d> vVertices,
                         std::vector<uint32_t> indices);
 
-            void setupMesh();
-            void deleteVertexArray();
+            void setup_mesh();
+            void delete_vertex_array();
 
-            void loadMesh(std::string meshPath);
+            void load_mesh(const std::string& mesh_path);
             void draw();
-            void loadTexture(std::string texturePath);
-            void loadTexture(garnish_texture texture);
+            void load_texture(const std::string& texture_path);
+            void load_texture(const g_texture& texture);
 
         private: 
-            uint32_t VAO, VBO, EBO;
-            garnish_texture gTexture;
+            uint32_t VAO = 0,
+                     VBO = 0,
+                     EBO = 0;
+            g_texture gTexture;
 
     };
     

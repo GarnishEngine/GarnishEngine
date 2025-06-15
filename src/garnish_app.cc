@@ -1,77 +1,49 @@
 #include "garnish_app.hpp"
+#include <thread>
 
-#include <stdexcept>
 
-#include "Rendering/garnish_mesh.hpp"
-#include "Rendering/garnish_sprite.hpp"
-#include "Rendering/garnish_texture.hpp"
-
-typedef std::chrono::duration<float> fsec;
 namespace garnish {
-    app::app(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") { Init(); }
-    app::app() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") { Init(); }
+    using namespace std::chrono_literals; 
+    App::App(int32_t w, int32_t h) : WIDTH(w), HEIGHT(h), garnishWindow(w, h, "hello window") { init(); }
+    App::App() : WIDTH(800), HEIGHT(600), garnishWindow(800, 600, "hello window") { init(); }
+    App::~App() {  terminate_imgui(); }
 
-    void app::Init() {
+    void App::init() {
 
-        InitImGui();
+        init_imgui();
   
         if (glewInit() != GLEW_OK) {
           throw std::runtime_error("GLEW failed to initialize");
         }
 
-        shaderProgram = std::make_unique<ShaderProgram>("shaders/shader.vert", "shaders/shader.frag");
 
         // Naive Rendering system
-        ecsManager.RegisterComponent<mesh>();
-        ecsManager.AddSystem([](ECSManager* ecs){
-            for (auto& ent : ecs->GetEntities<mesh>()) {
-                auto m = ecs->GetComponent<mesh>(ent);
-                m.draw();
-            }
-        });
+        ecsController.register_component<Mesh>();
+        // ecsController.add_system([](ECSController* ecs){
+        //     for (auto& ent : ecs->GetEntities<mesh>()) {
+        //         auto m = ecs->GetComponent<mesh>(ent);
+        //         m.draw();
+        //     }
+        // });
 
-        ecsManager.RegisterComponent<sprite>();
-        ecsManager.AddSystem([&](ECSManager* ecs){ // TODO remove capture
-            auto cam_ent = ecs->GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
-            auto cam = ecs->GetComponent<Camera>(cam_ent);
+        ecsController.register_component<Sprite>();
 
-            shaderProgram->Use();
-
-            glm::mat4 model{1.0f};
-            model = glm::translate(model, glm::vec3{0.0f, -0.3f, 3.0f});
-
-            model = glm::rotate(model, glm::radians(-90.0f),
-                                glm::vec3{1.0f, 0.0f, 0.0f});
-            model = glm::rotate(model, glm::radians(-135.0f),
-                                glm::vec3{0.0f, 0.0f, 1.0f});
-
-            glm::mat4 projection =
-                glm::perspective(glm::radians(60.0f),
-                                (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-
-            glm::mat4 mvp = projection * cam.ViewMatrix() * model;
-
-            shaderProgram->SetUniform("mvp", mvp);
-
-            for (auto& ent : ecs->GetEntities<sprite>()) {
-                auto s = ecs->GetComponent<sprite>(ent);
-                s.draw();
-            }
-        });
     }
 
-    void app::run() {
-        while (!shouldClose()) {
+    void App::run() {
+         while (!shouldClose) {
             SDL_Event event;
             while (SDL_PollEvent(&event)) {
                 switch (event.type) {
-                case SDL_EVENT_QUIT:
-                    garnishWindow.shouldClose = true;
-                    break;
-                case SDL_EVENT_WINDOW_RESIZED:
-                    garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
-                    glViewport(0, 0, WIDTH, HEIGHT);
-                    break;
+                    case SDL_EVENT_QUIT:
+                        shouldClose = true;
+                        break;
+                    case SDL_EVENT_WINDOW_RESIZED:
+                        garnishWindow.pair_window_size(&WIDTH, &HEIGHT);
+                        glViewport(0, 0, WIDTH, HEIGHT);
+                        break;
+                    default: 
+                        break;
                 }
 
                 ImGui_ImplSDL3_ProcessEvent(&event);
@@ -83,10 +55,10 @@ namespace garnish {
             ImGui::NewFrame();
 
             glViewport(0, 0, WIDTH, HEIGHT);
-            glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            ecsManager.ExecuteSystems();
+            ecsController.update_all();
             
             // ImGui Render Frame
             ImGui::Render();
@@ -94,48 +66,50 @@ namespace garnish {
 
             const ImGuiIO& io = ImGui::GetIO();
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-                auto currentContextBackup = SDL_GL_GetCurrentContext();
+                auto *currentContextBackup = SDL_GL_GetCurrentContext();
                 ImGui::UpdatePlatformWindows();
                 ImGui::RenderPlatformWindowsDefault();
-                SDL_GL_MakeCurrent(garnishWindow.sdl_window, currentContextBackup);
+                SDL_GL_MakeCurrent(garnishWindow.get_sdl_window(), currentContextBackup);
             }
 
-            garnishWindow.SwapWindow();
+            garnishWindow.swap_window();
+            std::this_thread::sleep_for(8ms); // most certainly the cleanest way to do this
         }
-        TerminateImGui();
+        terminate_imgui();
 
         SDL_Quit();
     }
     
-    bool app::handle_poll_event() {
-        event event{};
+    bool App::handle_poll_event() {
+        Event event{};
 
         ImGui_ImplSDL3_ProcessEvent(&event.sdl_event);
 
-        if (!event.state)
+        if (!event.state) {
             return false;
+        }
         if (event.sdl_event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-            garnishWindow.shouldClose = true;
+           shouldClose = true;
         }
         if (event.sdl_event.window.type == SDL_EVENT_WINDOW_RESIZED) {
-            garnishWindow.pairWindowSize(&WIDTH, &HEIGHT);
+            garnishWindow.pair_window_size(&WIDTH, &HEIGHT);
             glViewport(0, 0, WIDTH, HEIGHT);
         }
 
-        auto cam_ent = ecsManager.GetEntities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
-        auto cam = ecsManager.GetComponent<Camera>(cam_ent);
+        auto cam_ent = ecsController.get_entities<Camera>()[0]; // TODO this is really janky, need to do something about the camera
+        auto cam = ecsController.get_component<Camera>(cam_ent);
         // cam->update(event);
 
         return true;
     }
     
-    void app::handle_all_events() {
+    void App::handle_all_events() {
         SDL_PumpEvents();
 
         while (handle_poll_event()) {}
     }
 
-    void app::InitImGui() {
+    void App::init_imgui() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
@@ -148,12 +122,12 @@ namespace garnish {
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   
         // Setup Platform/Renderer backends
-        ImGui_ImplSDL3_InitForOpenGL(garnishWindow.sdl_window,
-                                     garnishWindow.glContext);
+        ImGui_ImplSDL3_InitForOpenGL(garnishWindow.get_sdl_window(),
+                                     garnishWindow.get_context());
         ImGui_ImplOpenGL3_Init();
     }
 
-    void app::TerminateImGui() {
+    void App::terminate_imgui() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();

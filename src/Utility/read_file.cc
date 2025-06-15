@@ -3,7 +3,7 @@
 #include <fstream>
 
 namespace garnish {
-    std::vector<char> ReadFile(const std::string& path) {
+    std::vector<char> read_file(const std::string& path) {
         std::ifstream file{ path, std::ios::ate | std::ios::binary };
 
         if (!file.is_open()) {

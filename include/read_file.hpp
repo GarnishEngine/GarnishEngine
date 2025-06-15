@@ -2,5 +2,5 @@
 #include <string>
 
 namespace garnish {
-    std::vector<char> ReadFile(const std::string& path);
+    std::vector<char> read_file(const std::string& path);
 }

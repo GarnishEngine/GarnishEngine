@@ -5,9 +5,8 @@
 
 
 namespace garnish {
-    void garnish_texture::loadTexture(std::string texturePath) {
+    void g_texture::load_texture(const std::string& texturePath) {
         valid = true;
-        unsigned int texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -25,7 +24,7 @@ namespace garnish {
                         GL_UNSIGNED_BYTE, data);
             glGenerateMipmap(GL_TEXTURE_2D);
         } else {
-            std::cerr << "Failed to load texture" << std::endl;
+            std::cerr << "Failed to load texture\n";
         }
         
     }

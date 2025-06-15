@@ -7,16 +7,16 @@
 
 #include "OpenGL.hpp"
 
-#include "../../Utility/read_file.hpp"
+#include "read_file.hpp"
 
 namespace garnish {
     ShaderProgram::ShaderProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) 
         : handle(glCreateProgram()) {
 
-        std::vector<char> vertexShaderSource = ReadFile(vertexShaderPath);
+        std::vector<char> vertexShaderSource = read_file(vertexShaderPath);
         const char* vertexSource = vertexShaderSource.data();
 
-        std::vector<char> fragmentShaderSource = ReadFile(fragmentShaderPath);
+        std::vector<char> fragmentShaderSource = read_file(fragmentShaderPath);
         const char* fragmentSource = fragmentShaderSource.data();
 
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -59,12 +59,15 @@ namespace garnish {
         glDeleteProgram(handle);
     }
 
-    void ShaderProgram::Use() {
+    void ShaderProgram::use() {
         glUseProgram(handle);
     }
 
-    void ShaderProgram::SetUniform(const std::string& name, const glm::mat4& mat) {
-        Use();
-        glUniformMatrix4fv(glGetUniformLocation(handle, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+    void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) {
+        use();
+        glUniformMatrix4fv(
+            glGetUniformLocation(handle, name.c_str()),
+            1, GL_FALSE, glm::value_ptr(mat)
+        );
     }
 }

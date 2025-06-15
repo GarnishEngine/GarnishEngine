@@ -1,7 +1,5 @@
 #pragma once
-
-#include "../garnish_entity.hpp"
-#include "../garnish_event.hpp"
+#include "garnish_event.hpp"
 #include <SDL3/SDL_keyboard.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
@@ -23,9 +21,10 @@ namespace garnish {
 
         float movementSpeed;
         float lookSensitivity;
+        bool held = false;
 
         glm::vec2 lastMousePos{ std::numeric_limits<float>::max() };
 
-        glm::mat4 ViewMatrix();
+        glm::mat4 view_matrix();
     };
 }

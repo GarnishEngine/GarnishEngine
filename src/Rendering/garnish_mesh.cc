@@ -1,6 +1,5 @@
 #include "garnish_mesh.hpp"
-#include "OpenGL/OpenGL.hpp"
-#include "OpenGL/gl_buffer.hpp"
+#include "OpenGL.hpp"
 #include "garnish_texture.hpp"
 #include <cstdint>
 #include "stb_image.h"
@@ -9,7 +8,10 @@
 #include <tiny_obj_loader.h>
 
 namespace garnish {
-    void mesh::setupMesh() {
+    GLsizeiptr gl_size(std::size_t n) noexcept {
+        return static_cast<GLsizeiptr>(n);
+    }
+    void Mesh::setup_mesh() {
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
@@ -17,18 +19,18 @@ namespace garnish {
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex3d),
-                    &vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, gl_size(vertices.size()) * sizeof(vertex3d),
+                    vertices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                    indices.size() * sizeof(unsigned int), &indices[0],
+                    gl_size(indices.size()) * sizeof(unsigned int), indices.data(),
                     GL_STATIC_DRAW);
 
         // vertex3d positions
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex3d),
-                                (void *)0);
+                                nullptr);
         // vertex3d normals
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex3d),
@@ -41,16 +43,16 @@ namespace garnish {
         glBindVertexArray(0);
     }
 
-    mesh::mesh(std::vector<vertex3d> vertices,
-                             std::vector<uint32_t> indices,
-                             std::vector<base_texture> textures)
+    Mesh::Mesh(std::vector<vertex3d> vertices,
+               std::vector<uint32_t> indices,
+               std::vector<base_texture> textures)
         : vertices(vertices), indices(indices), textures(textures) {
     }
 
-    mesh::mesh(std::vector<vertex3d> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
+    Mesh::Mesh(std::vector<vertex3d> vertices, std::vector<u_int32_t> indices) : vertices(vertices), indices(indices) {
     }
 
-    void mesh::loadMesh(std::string meshPath) {
+    void Mesh::load_mesh(const std::string& mesh_path) {
         indices.clear();
         vertices.clear();
         tinyobj::attrib_t attrib;
@@ -59,7 +61,7 @@ namespace garnish {
         std::string warn, err;
 
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                                meshPath.c_str())) {
+                                mesh_path.c_str())) {
             throw std::runtime_error(warn + err);
         }
 
@@ -72,9 +74,9 @@ namespace garnish {
 
                 vert.texCoord = {
                     attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
+                    1.0F - attrib.texcoords[2 * index.texcoord_index + 1]};
 
-                vert.color = {1.0f, 1.0f, 1.0f};
+                vert.color = {1.0F, 1.0F, 1.0F};
 
                 vertices.push_back(vert);
             
@@ -83,24 +85,24 @@ namespace garnish {
             }
         }
     }
-    void mesh::loadTexture(std::string texturePath) {
-        gTexture.loadTexture(texturePath);
+    void Mesh::load_texture(const std::string& texture_path) {
+        gTexture.load_texture(texture_path);
         glBindTexture(GL_TEXTURE_2D, gTexture.texture);
         glBindVertexArray(VAO);
     }
-    void mesh::loadTexture(garnish_texture gTexture) {
-        glBindTexture(GL_TEXTURE_2D, gTexture.texture);
+    void Mesh::load_texture(const g_texture &texture) {
+        glBindTexture(GL_TEXTURE_2D, texture.texture);
         glBindVertexArray(VAO);
     }
 
-    void mesh::draw() {
+    void Mesh::draw() {
         glBindVertexArray(VAO); // Dont need this because we only have
         // one VAO
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 
-    void mesh::deleteVertexArray() {
+    void Mesh::delete_vertex_array() {
         glDeleteVertexArrays(1, &VAO);
     }
 }

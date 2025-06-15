@@ -17,5 +17,5 @@
 	path = 3rdParty/glew
 	url = https://github.com/nigels-com/glew
 [submodule "3rdParty/GarnishECS"]
-	path = 3rdParty/GarnishECS
+	path = GarnishECS
 	url = git@github.com:GarnishEngine/GarnishECS.git

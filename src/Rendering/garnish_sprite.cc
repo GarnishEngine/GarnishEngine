@@ -1,15 +1,14 @@
 #include "garnish_sprite.hpp"
-#include "OpenGL/OpenGL.hpp"
-#include "OpenGL/gl_buffer.hpp"
+#include "OpenGL.hpp"
+#include "gl_buffer.hpp"
 #include "garnish_texture.hpp"
 #include <cstdint>
 #include "stb_image.h"
 
-
 #include <tiny_obj_loader.h>
 
 namespace garnish {
-    void sprite::setupSprite() {
+    void Sprite::setup_sprite() {
         glGenBuffers(1, &VBO);
         glGenVertexArrays(1, &VAO);
 
@@ -35,28 +34,28 @@ namespace garnish {
         glBindVertexArray(0);
     }
 
-    void sprite::loadTexture(std::string texturePath) {
-        gTexture.loadTexture(texturePath);
+    void Sprite::load_texture(const std::string& texture_path) {
+        gTexture.load_texture(texture_path);
         glBindTexture(GL_TEXTURE_2D, gTexture.texture);
         glBindVertexArray(VAO);
         glBindVertexArray(0);
 
     }
-    void sprite::loadTexture(garnish_texture gTexture) {
-        glBindTexture(GL_TEXTURE_2D, gTexture.texture);
+    void Sprite::load_texture(g_texture texture) {
+        glBindTexture(GL_TEXTURE_2D, texture.texture);
         glBindVertexArray(VAO);
         glBindVertexArray(0);
 
     }
 
-    void sprite::draw() {
+    void Sprite::draw() {
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
     }
 
-    void sprite::deleteVertexArray() {
+    void Sprite::delete_vertex_array() {
         glDeleteVertexArrays(1, &VAO);
     }
 }

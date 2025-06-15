@@ -1,7 +1,6 @@
 #pragma once
-
 #include <string>
-
+#include "system.h"
 #include <glm/mat4x4.hpp>
 
 namespace garnish {
@@ -14,9 +13,8 @@ namespace garnish {
             ShaderProgram& operator=(ShaderProgram&& other) noexcept = default;
             ~ShaderProgram();
 
-            void Use();
-
-            void SetUniform(const std::string& name, const glm::mat4& mat);
+            void use();
+            void set_uniform(const std::string& name, const glm::mat4& mat);
 
         private:
             unsigned int handle;
