@@ -19,3 +19,6 @@
 [submodule "3rdParty/GarnishECS"]
 	path = GarnishECS
 	url = git@github.com:GarnishEngine/GarnishECS.git
+[submodule "GarnishECS"]
+	path = GarnishECS
+	url = git@github.com:GarnishEngine/GarnishECS.git
