@@ -293,7 +293,8 @@ int main() {
 
     auto r = app.ecsController.register_system<RenderingSystem>(0);
     auto m = app.ecsController.register_system<MeshSystem>(0);
-
+    app.ecsController.register_component<Mesh>();
+    app.ecsController.register_component<Sprite>();
     app.ecsController.register_component<FramebufferCam>();
 
     auto camera1_entity = app.ecsController.create_entity_with_components(FramebufferCam());
@@ -302,7 +303,7 @@ int main() {
     auto vikingRoom = app.ecsController.create_entity();
 
     garnish::Mesh gMesh;
-    garnish::g_texture texture;
+    garnish::Texture texture;
     texture.load_texture("Textures/viking_room.png");
 
     gMesh.load_mesh("Models/viking_room.obj");

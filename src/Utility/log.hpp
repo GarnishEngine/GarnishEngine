@@ -1,11 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
 #include <chrono>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 namespace garnish {
-
-    extern std::ofstream log("log.txt");
-
+inline std::ofstream log("log.txt");
 }

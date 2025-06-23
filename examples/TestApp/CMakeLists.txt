@@ -6,11 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(TestApp test_app.cc)
 
-# target_include_directories(TestApp PUBLIC ../../src/include)
-
-# target_include_directories(TestApp PUBLIC ../../3rdParty/SDL)
-# target_include_directories(TestApp PUBLIC ../../3rdParty/glm)
-# target_include_directories(TestApp PUBLIC ../../3rdParty/tinyobjloader)
-# target_include_directories(TestApp PUBLIC ../../3rdParty/stb)
+target_include_directories(TestApp PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 target_link_libraries(TestApp PRIVATE GarnishEngine imgui)
