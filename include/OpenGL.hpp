@@ -16,6 +16,7 @@
 
 struct OGLVertex3d {
     glm::vec3 pos;
+    glm::vec3 color;
     glm::vec2 texCoord;
     OGLVertex3d() = default;
 };

@@ -1,5 +1,6 @@
 #include "test_app.h"
 #include "ogl_renderer.hpp"
+#include "shader_program.hpp"
 
 
 int main() {
@@ -16,19 +17,19 @@ int main() {
 
     auto camera_entity = app.get_controller().create_entity_with_components(Camera());
 
-    auto mesH =
+    auto meshInstance =
         dynamic_cast<garnish::OpenGLRenderDevice*>(app.getRenderDevice().get())
             ->setup_mesh("Models/viking_room.obj");
     auto tex =
         dynamic_cast<garnish::OpenGLRenderDevice*>(app.getRenderDevice().get())
             ->load_texture("Textures/viking_room.png");
-
+    std::cerr << tex.id;
     app.get_controller().create_entity_with_components(Camera());
 
     auto vikingRoom = app.get_controller().create_entity_with_components(
         drawable{
-            .VAO = static_cast<int>(mesH.VAO),
-            .size = static_cast<int>(mesH.numIndicies)
+            .VAO = static_cast<int>(meshInstance.VAO),
+            .size = static_cast<int>(meshInstance.numIndicies)
         },
         tex
     );

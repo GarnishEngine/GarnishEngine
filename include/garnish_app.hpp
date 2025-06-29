@@ -59,12 +59,12 @@ class App {
 
    private:
     std::unique_ptr<RenderDevice> renderDevice;
-    SDL_Window* window;
     ECSController ecsController;
     bool shouldClose = false;
     int32_t width;
     int32_t height;
     uint32_t fps;
+    SDL_Window* window;
     virtual void init();
     void init_imgui();
     void terminate_imgui();

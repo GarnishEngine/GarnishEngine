@@ -24,7 +24,8 @@ struct rawmesh {
 };
 class OpenGLRenderDevice : public RenderDevice {
    public:
-    OpenGLRenderDevice() {}
+    OpenGLRenderDevice();
+        
     OpenGLRenderDevice(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice& operator=(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice(OpenGLRenderDevice&&) = delete;
@@ -37,7 +38,7 @@ class OpenGLRenderDevice : public RenderDevice {
     void update(ECSController& world) override;
 
     uint64_t get_flags() override;
-
+    void set_shader();
     // mesh & texture helpers (from ogl_renderer.cc)
     Mesh setup_mesh(
         const std::vector<OGLVertex3d>& vertices,

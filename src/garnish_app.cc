@@ -26,7 +26,6 @@ App::App(CreateInfo createInfo)
     RenderDevice::InitInfo info;
         switch (createInfo.backend) {
             case RenderingBackend::OpenGL:
-                window = init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
                 if (!window) throw std::runtime_error("wtf");
                 info = {
                     .nativeWindow = window,
@@ -70,9 +69,7 @@ void App::run() {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        glViewport(0, 0, width, height);
-        glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
         ecsController.update_all();
 
