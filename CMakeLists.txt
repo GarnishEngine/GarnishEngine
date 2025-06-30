@@ -59,14 +59,6 @@ else()
     message(FATAL_ERROR "RENDER_API must be OpenGL or Vulkan")
 endif()
 
-find_package(Vulkan REQUIRED)
-add_subdirectory(3rdParty/vk-bootstrap EXCLUDE_FROM_ALL)
-add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
-
-list(APPEND GARNISH_PRIVATE_LIBS
-    Vulkan::Vulkan
-    vk-bootstrap::vk-bootstrap
-    GPUOpen::VulkanMemoryAllocator)
 
 file(GLOB_RECURSE SRC src/*.cc)
 add_library(GarnishEngine STATIC ${SRC})
