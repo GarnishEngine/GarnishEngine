@@ -6,14 +6,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(GARNISH_PRIVATE_LIBS "") 
 # Settings
 
+file(GLOB_RECURSE ENGINE_SRC
+     src/*.cc
+     src/*.cpp)
+list(FILTER ENGINE_SRC EXCLUDE REGEX ".*/Rendering/[^/]+/.*")
+
 option(_BUILD_EXAMPLES "Build Examples" ON)
 
+add_library(GarnishEngine STATIC)
 
 # 3rdParty libraries
-add_subdirectory(3rdParty/SDL EXCLUDE_FROM_ALL)
-add_subdirectory(3rdParty/glm EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/SDL           EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/glm           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
-add_subdirectory(GarnishECS EXCLUDE_FROM_ALL)
+add_subdirectory(GarnishECS             EXCLUDE_FROM_ALL)
 
 file(GLOB IMGUI_SOURCES
         "3rdParty/imgui/*.h"
@@ -26,51 +32,81 @@ target_include_directories(imgui PUBLIC 3rdParty/imgui
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
 list(APPEND GARNISH_PRIVATE_LIBS SDL3::SDL3 glm::glm GarnishECS imgui)
 
-set(RENDER_API "OpenGL" CACHE STRING "Choose rendering backend")
-set_property(CACHE RENDER_API PROPERTY STRINGS OpenGL Vulkan)
-option(_VULKAN_RENDERING "Use Vulkan" OFF)
-option(_OPENGL_RENDERING "Use OpenGL" ON)
-if(RENDER_API STREQUAL "OpenGL")
-    set(_OPENGL_RENDERING ON)
-    set(_VULKAN_RENDERING OFF)
-
-    find_package(GLEW REQUIRED)
-    find_package(OpenGL REQUIRED)
-
-    list(APPEND GARNISH_PRIVATE_LIBS GLEW::GLEW)
-    if (APPLE)
-    list(APPEND GARNISH_PRIVATE_LIBS "-framework OpenGL")
-    else()
-    list(APPEND GARNISH_PRIVATE_LIBS GL)
-    endif()
-elseif(RENDER_API STREQUAL "Vulkan")
-    set(_OPENGL_RENDERING OFF)
-    set(_VULKAN_RENDERING ON)
-
-    find_package(Vulkan REQUIRED)
-    add_subdirectory(3rdParty/vk-bootstrap EXCLUDE_FROM_ALL)
-    add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
-
-    list(APPEND GARNISH_PRIVATE_LIBS
-        Vulkan::Vulkan
-        vk-bootstrap::vk-bootstrap
-        GPUOpen::VulkanMemoryAllocator)
-else()
-    message(FATAL_ERROR "RENDER_API must be OpenGL or Vulkan")
-endif()
-
-
-file(GLOB_RECURSE SRC src/*.cc)
-add_library(GarnishEngine STATIC ${SRC})
 target_include_directories(GarnishEngine
     PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include          
+    ${CMAKE_CURRENT_SOURCE_DIR}/include     
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering     
     3rdParty/tinyobjloader
     3rdParty/stb
     GarnishECS/include
 )
 
+set(RENDER_BACKENDS "OpenGL" "Vulkan"              
+    CACHE STRING "Semicolon-separated list of rendering back-ends to build")
+
+set_property(CACHE RENDER_BACKENDS PROPERTY STRINGS
+             "OpenGL" "Vulkan")
+
+macro(backends_contains name result)
+    list(FIND RENDER_BACKENDS "${name}" _idx)
+    if(_idx EQUAL -1)
+        set(${result} FALSE)
+    else()
+        set(${result} TRUE)
+    endif()
+endmacro()
+
+backends_contains("OpenGL" USE_OPENGL)
+if(USE_OPENGL)
+    file(GLOB_RECURSE OPENGL_SRC  src/Rendering/OpenGL/*.cc)
+    list(APPEND ENGINE_SRC ${OPENGL_SRC})
+
+    find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+
+    list(APPEND GARNISH_PRIVATE_LIBS GLEW::GLEW)
+    if(APPLE)
+        list(APPEND GARNISH_PRIVATE_LIBS "-framework OpenGL")
+    else()
+        list(APPEND GARNISH_PRIVATE_LIBS GL)
+    endif()
+
+    target_include_directories(GarnishEngine PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/OpenGL)
+
+    target_compile_definitions(GarnishEngine PUBLIC _OPENGL_RENDERING)
+endif()
+
+
+backends_contains("Vulkan" USE_VULKAN)
+if(USE_VULKAN)
+    file(GLOB_RECURSE VULKAN_SRC src/Rendering/VulkanBackend/*.cc)
+    list(APPEND ENGINE_SRC ${VULKAN_SRC})
+    find_package(Vulkan REQUIRED)
+
+    # add_subdirectory(3rdParty/vk-bootstrap          EXCLUDE_FROM_ALL)
+    add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
+
+    list(APPEND GARNISH_PRIVATE_LIBS
+        Vulkan::Vulkan
+        # vk-bootstrap::vk-bootstrap
+        GPUOpen::VulkanMemoryAllocator)
+
+    target_include_directories(GarnishEngine PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/VulkanBackend)
+
+    target_compile_definitions(GarnishEngine PUBLIC _VULKAN_RENDERING)
+endif()
+
+if(NOT USE_OPENGL AND NOT USE_VULKAN)
+    message(FATAL_ERROR "RENDER_BACKENDS must contain at least one of: OpenGL, Vulkan")
+endif()
+
+target_sources(GarnishEngine PRIVATE ${ENGINE_SRC})
+target_compile_definitions(GarnishEngine PUBLIC
+    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
 target_link_libraries(GarnishEngine PRIVATE ${GARNISH_PRIVATE_LIBS})
+# target_sources(GarnishEngine PRIVATE "src/shared.cc")
 
 set_target_properties(GarnishEngine PROPERTIES
   PUBLIC_HEADER "include/garnish.hpp"

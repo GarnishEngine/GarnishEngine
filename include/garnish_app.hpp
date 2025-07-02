@@ -11,7 +11,6 @@
 #include "camera.hpp"
 #include "ecs_controller.h"
 #include "garnish_mesh.hpp"
-#include "garnish_sprite.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl3.h"
@@ -19,7 +18,15 @@
 #include "shader_program.hpp"
 
 namespace garnish {
-enum class RenderingBackend : uint8_t { OpenGL, Vulkan };
+enum class RenderingBackend : uint8_t {
+#ifdef _OPENGL_RENDERING
+    OpenGL,
+#endif
+#ifdef _VULKAN_RENDERING
+    Vulkan,
+#endif
+
+};
 using hrclock = std::chrono::high_resolution_clock;
 using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
@@ -29,17 +36,17 @@ using std::chrono::duration_cast;
 class App {
    public:
     struct CreateInfo {
-        RenderingBackend backend;  
+        RenderingBackend backend;
         uint32_t width;
         uint32_t height;
         uint32_t targetFps = 144;
     };
     App(CreateInfo createInfo = {
-            .backend=RenderingBackend::OpenGL,
-            .width=800,
-            .height=600,
-            .targetFps=144
-    });
+            .backend = RenderingBackend::OpenGL,
+            .width = 800,
+            .height = 600,
+            .targetFps = 144
+        });
     virtual ~App();
     App(const App&) = delete;
     App& operator=(const App&) = delete;
@@ -52,7 +59,7 @@ class App {
     virtual bool handle_poll_event();
     virtual void handle_all_events();
     void swap_window();
-    std::unique_ptr<RenderDevice>& getRenderDevice() { return renderDevice; }
+    std::unique_ptr<RenderDevice>& get_render_device() { return renderDevice; }
 
     SDL_Window*& get_window();
     ECSController& get_controller() { return ecsController; }
@@ -69,7 +76,7 @@ class App {
     void init_imgui();
     void terminate_imgui();
     SDL_Window* init_window(int64_t flags);
-    std::unique_ptr<RenderDevice> makeRenderDevice(RenderingBackend backend);
+    std::unique_ptr<RenderDevice> make_render_device(RenderingBackend backend);
     //  Window garnishWindow;
 };
 }  // namespace garnish

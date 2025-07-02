@@ -1,10 +1,10 @@
 #include "test_app.h"
+
 #include "ogl_renderer.hpp"
 #include "shader_program.hpp"
 
-
 int main() {
-    garnish::App app{ };
+    garnish::App app{};
 
     auto i = app.get_controller().register_system<ImGuiSystem>(0);
     auto c = app.get_controller().register_system<CameraSystem>(0);
@@ -15,14 +15,17 @@ int main() {
     app.get_controller().register_component<drawable>();
     app.get_controller().register_component<texture>();
 
-    auto camera_entity = app.get_controller().create_entity_with_components(Camera());
+    auto camera_entity =
+        app.get_controller().create_entity_with_components(Camera());
 
-    auto meshInstance =
-        dynamic_cast<garnish::OpenGLRenderDevice*>(app.getRenderDevice().get())
-            ->setup_mesh("Models/viking_room.obj");
-    auto tex =
-        dynamic_cast<garnish::OpenGLRenderDevice*>(app.getRenderDevice().get())
-            ->load_texture("Textures/viking_room.png");
+    auto meshInstance = dynamic_cast<garnish::OpenGLRenderDevice*>(
+                            app.get_render_device().get()
+    )
+                            ->setup_mesh("Models/viking_room.obj");
+    auto tex = dynamic_cast<garnish::OpenGLRenderDevice*>(
+                   app.get_render_device().get()
+    )
+                   ->load_texture("Textures/viking_room.png");
     std::cerr << tex.id;
     app.get_controller().create_entity_with_components(Camera());
 
@@ -37,12 +40,9 @@ int main() {
     // // TODO 3d mesh
     //  = app.get_controller().create_entity();
 
-
     // garnish::Mesh gMesh;
     // garnish::Texture texture;
     // texture.load_texture();
-
-
 
     app.run();
 }

@@ -1,15 +1,17 @@
 #pragma once
+#include <stb_image.h>
+#include <tiny_obj_loader.h>
+
 #include <OpenGL.hpp>
 #include <garnish_app.hpp>
 #include <render_device.hpp>
-
-#include "framebuffer.hpp"
-#include "SDL3/SDL_video.h"
-#include "shader_program.hpp"
-#include <vector>
 #include <string>
-#include "garnish_mesh.hpp"
+#include <vector>
+
+#include "SDL3/SDL_video.h"
+#include "framebuffer.hpp"
 #include "garnish_texture.hpp"
+#include "shader_program.hpp"
 
 namespace garnish {
 struct drawable {
@@ -24,8 +26,7 @@ struct rawmesh {
 };
 class OpenGLRenderDevice : public RenderDevice {
    public:
-    OpenGLRenderDevice();
-        
+    OpenGLRenderDevice() = default;
     OpenGLRenderDevice(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice& operator=(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice(OpenGLRenderDevice&&) = delete;
@@ -37,7 +38,7 @@ class OpenGLRenderDevice : public RenderDevice {
     void cleanup() override;
     void update(ECSController& world) override;
 
-    uint64_t get_flags() override;
+    // uint64_t get_flags() override;
     void set_shader();
     // mesh & texture helpers (from ogl_renderer.cc)
     Mesh setup_mesh(

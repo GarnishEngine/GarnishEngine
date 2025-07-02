@@ -9,13 +9,8 @@
 #include "garnish_mesh.hpp"
 #include "garnish_texture.hpp"
 #include "shader_program.hpp"
-#include "stb_image.h"
-
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 
 namespace garnish {
-    OpenGLRenderDevice::OpenGLRenderDevice()  {}
 void draw(int VAO, int size, int texture) {
     glBindVertexArray(VAO);  // Dont need this because we only have
     // one VAO
@@ -37,7 +32,7 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
         std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
         return false;
     }
-    
+
     if (glewInit() != GLEW_OK) {
         throw std::runtime_error("GLEW failed to initialize");
     }
@@ -76,7 +71,6 @@ void OpenGLRenderDevice::update(ECSController& world) {
         auto dra = world.get_component<drawable>(entity);
         auto tex = world.get_component<texture>(entity);
 
-
         glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // mShader.use();
@@ -90,9 +84,9 @@ void OpenGLRenderDevice::update(ECSController& world) {
     }
 }
 void OpenGLRenderDevice::cleanup() {}
-uint64_t OpenGLRenderDevice::get_flags() {
-    return SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-}
+// uint64_t OpenGLRenderDevice::get_flags() {
+//     return SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+// }
 
 Mesh OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     auto rawmesh = load_mesh(mesh_path);
@@ -100,9 +94,9 @@ Mesh OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 }
 
 Mesh OpenGLRenderDevice::setup_mesh(
-        const std::vector<OGLVertex3d>& vertices,
-        const std::vector<uint32_t>& indices
-    ) {
+    const std::vector<OGLVertex3d>& vertices,
+    const std::vector<uint32_t>& indices
+) {
     Mesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);
     glGenBuffers(1, &mesh.VBO);
@@ -204,7 +198,7 @@ rawmesh OpenGLRenderDevice::load_mesh(const std::string& mesh_path) {
             indices.push_back(indices.size());
         }
     }
-    return rawmesh{.vertices=vertices, .indices=indices};
+    return rawmesh{.vertices = vertices, .indices = indices};
 }
 texture OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     int mTexWidth, mTexHeight, nrChannels = 0;

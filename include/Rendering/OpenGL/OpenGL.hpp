@@ -1,14 +1,12 @@
 #pragma once
-// glew.h Must be included before SDL_opengl.h
-
 #include <cstddef>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include <shared.hpp>
 #include <vector>
 
 #define GLEW_STATIC
 #define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
 
+// glew.h Must be included before SDL_opengl.h
 #include <GL/glew.h>
 #include <SDL3/SDL_opengl.h>
 
@@ -21,7 +19,7 @@ struct OGLVertex3d {
     OGLVertex3d() = default;
 };
 
-struct BaseTexture {
+struct OGLTexture {
     unsigned int id;
     std::string type;
 };

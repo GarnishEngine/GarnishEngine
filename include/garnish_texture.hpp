@@ -3,15 +3,12 @@
 #include <string>
 
 #include "OpenGL.hpp"
-#include "stb_image.h"
 
 namespace garnish {
 class Texture {
    public:
-    bool load_texture(const std::string& texturePath);
-    void bind();
-    void unbind();
-    void cleanup();
+    void bind() { glBindTexture(GL_TEXTURE_2D, texture); }
+    void unbind() { glBindTexture(GL_TEXTURE_2D, 0); }
 
    private:
     GLuint texture = -1;

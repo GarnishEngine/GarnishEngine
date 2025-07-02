@@ -17,9 +17,8 @@ class RenderDevice : garnish::System {
     virtual void set_size(unsigned int width, unsigned int height) = 0;
     virtual bool draw() = 0;
     virtual void cleanup() = 0;
-    virtual uint64_t get_flags() = 0;
+    // virtual uint64_t get_flags() = 0;
     void update(ECSController& world) override = 0;
-
     SDL_Window* window;
 };
 }  // namespace garnish
