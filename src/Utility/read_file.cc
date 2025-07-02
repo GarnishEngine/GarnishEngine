@@ -12,13 +12,14 @@ std::vector<char> read_file(const std::string& path) {
     }
 
     auto fileSize = static_cast<std::streamsize>(file.tellg());
-    std::vector<char> buffer(fileSize + 1);
+    std::vector<char> buffer(fileSize);
 
     file.seekg(0);
     file.read(buffer.data(), fileSize);
-    buffer[fileSize] = '\0';
 
     file.close();
+    if (buffer.size() & 3) buffer.resize((buffer.size() + 3) & ~3);
+
     return buffer;
 }
 }  // namespace garnish

@@ -230,14 +230,17 @@ uint32_t VulkanRenderDevice::setup_mesh(const std::string& mesh_path) {
 }
 
 bool VulkanRenderDevice::create_instance() {
-    VULKAN_HPP_DEFAULT_DISPATCHER.init();
+    vk::detail::DynamicLoader dl;
+    auto vkGetInstanceProcAddr =
+        dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     vk::ApplicationInfo applicationInfo{
         "Garnish",
         vk::makeApiVersion(0, 1, 1, 0),
         "GarnishEngine",
         vk::makeApiVersion(0, 1, 1, 0),
-        vk::makeApiVersion(0, 1, 0, 0),
+        VK_API_VERSION_1_2,
         nullptr
     };
 
@@ -284,7 +287,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debugMessageFunc(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
     vk::DebugUtilsMessengerCallbackDataEXT const* pCallbackData,
-    void* /*pUserData*/
+    void*
 ) {
     std::ostringstream message;
 
@@ -349,17 +352,30 @@ bool VulkanRenderDevice::setup_debug_messenger() {
     return true;
 }
 bool VulkanRenderDevice::pick_physical_device() {
-    std::vector physicalDevices = gvInstance.enumeratePhysicalDevices({});
+    std::vector physicalDevices = gvInstance.enumeratePhysicalDevices();
     if (physicalDevices.size() == 0) {
         throw std::runtime_error("no physical devices for vulkan");
     }
 
-    gvPhysicalDevice = physicalDevices[0];
+    gvPhysicalDevice = nullptr;
+    for (auto& physicalDevice : physicalDevices) {
+        if (is_device_suitable(physicalDevice)) {
+            gvPhysicalDevice = physicalDevice;
+            msaaSamples = max_usable_sample_count();
+            break;
+        }
+    }
+
+    if (!gvPhysicalDevice) {
+        // NOTICE, I BAKED IN PORTABILITY BIT THAT MIGHT NOT WORK
+        throw std::runtime_error("no suitable physical device");
+    }
+
     return true;
 }
 
 bool VulkanRenderDevice::create_logical_device() {
-    QueueFamilyIndices indices = find_queue_families();
+    QueueFamilyIndices indices = find_queue_families(gvPhysicalDevice);
 
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {
@@ -432,7 +448,7 @@ bool VulkanRenderDevice::create_swap_chain() {
     vk::PresentModeKHR presentModes{VK_PRESENT_MODE_MAILBOX_KHR};
     vk::Extent2D extent = create_extent();
 
-    QueueFamilyIndices indices = find_queue_families();
+    QueueFamilyIndices indices = find_queue_families(gvPhysicalDevice);
     std::array<uint32_t, 2> queueFamilyIndices{
         indices.graphicsFamily.value(),
         indices.presentFamily.value()
@@ -517,9 +533,9 @@ bool VulkanRenderDevice::cleanup_swap_chain() {
 bool VulkanRenderDevice::create_image_views() {
     swapChainImageViews.resize(swapChainImages.size());
 
-    for (auto& image : swapChainImages) {
-        create_image_view(
-            image,
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+        swapChainImageViews[i] = create_image_view(
+            swapChainImages[i],
             gvSwapChainImageFormat,
             vk::ImageAspectFlagBits::eColor,
             1
@@ -557,14 +573,20 @@ bool VulkanRenderDevice::create_descriptor_set_layout() {
     vk::DescriptorSetLayoutBinding texArrayBinding{
         1,  // binding = 1
         vk::DescriptorType::eCombinedImageSampler,
-        VK_SHADER_UNUSED_KHR,  // descriptorCount = runtime-sized
+        maxTextures,
         vk::ShaderStageFlagBits::eFragment,
     };
-    vk::DescriptorBindingFlags flags =
-        vk::DescriptorBindingFlagBits::ePartiallyBound |
-        vk::DescriptorBindingFlagBits::eVariableDescriptorCount;
 
-    vk::DescriptorSetLayoutBindingFlagsCreateInfo flagInfo{1, &flags};
+    std::array<vk::DescriptorBindingFlags, 2> bindingFlags = {
+        vk::DescriptorBindingFlags{},  // UBO: no special flags
+        vk::DescriptorBindingFlagBits::ePartiallyBound |
+            vk::DescriptorBindingFlagBits::eVariableDescriptorCount
+    };
+
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo flagInfo{
+        2,
+        bindingFlags.data()
+    };
 
     std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
         uboLayoutBinding,
@@ -633,17 +655,6 @@ bool VulkanRenderDevice::create_render_pass() {
         },
         vk::AttachmentDescription{
             {},
-            gvSwapChainImageFormat,
-            msaaSamples,
-            vk::AttachmentLoadOp::eClear,
-            vk::AttachmentStoreOp::eStore,
-            vk::AttachmentLoadOp::eDontCare,
-            vk::AttachmentStoreOp::eDontCare,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eColorAttachmentOptimal
-        },
-        vk::AttachmentDescription{
-            {},
             find_depth_format(),
             msaaSamples,
             vk::AttachmentLoadOp::eClear,
@@ -651,8 +662,20 @@ bool VulkanRenderDevice::create_render_pass() {
             vk::AttachmentLoadOp::eDontCare,
             vk::AttachmentStoreOp::eDontCare,
             vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eDepthAttachmentOptimal
-        }
+            vk::ImageLayout::eDepthStencilAttachmentOptimal
+        },
+        vk::AttachmentDescription{
+            {},
+            gvSwapChainImageFormat,
+            vk::SampleCountFlagBits::e1,
+            vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp::eStore,
+            vk::AttachmentLoadOp::eDontCare,
+            vk::AttachmentStoreOp::eDontCare,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal
+        },
+
     };
     vk::RenderPassCreateInfo
         renderPassInfo{{}, 3, attachments.data(), 1, &subpass, 1, &dependency};
@@ -885,7 +908,8 @@ bool VulkanRenderDevice::create_framebuffers() {
 }
 
 bool VulkanRenderDevice::create_command_pool() {
-    QueueFamilyIndices queueFamilyIndices = find_queue_families();
+    QueueFamilyIndices queueFamilyIndices =
+        find_queue_families(gvPhysicalDevice);
 
     vk::CommandPoolCreateInfo poolInfo{
         vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
@@ -945,7 +969,7 @@ uint32_t VulkanRenderDevice::create_texture_image(
         texWidth,
         texHeight,
         mipLevels,
-        vk::SampleCountFlagBits::e1,
+        msaaSamples,
         vk::Format::eR8G8B8A8Srgb,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferSrc |
@@ -1762,15 +1786,15 @@ void VulkanRenderDevice::generate_mipmaps(
     end_single_time_commands(commandBuffer);
 }
 
-VulkanRenderDevice::QueueFamilyIndices
-VulkanRenderDevice::find_queue_families() {
+VulkanRenderDevice::QueueFamilyIndices VulkanRenderDevice::find_queue_families(
+    vk::PhysicalDevice& device
+) {
     QueueFamilyIndices indices;
-    auto queueFamilies = gvPhysicalDevice.getQueueFamilyProperties();
+    auto queueFamilies = device.getQueueFamilyProperties();
 
     int i = 0;
     for (const auto& queueFamily : queueFamilies) {
-        vk::Bool32 presentSupport =
-            gvPhysicalDevice.getSurfaceSupportKHR(i, gvSurface);
+        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, gvSurface);
         if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphicsFamily = i;
         }
@@ -1833,6 +1857,68 @@ vk::ShaderModule VulkanRenderDevice::create_shader_module(
     return gvDevice.createShaderModule(
         {{}, code.size(), reinterpret_cast<const uint32_t*>(code.data())}
     );
+}
+
+bool VulkanRenderDevice::check_device_extension_support(
+    vk::PhysicalDevice& device
+) {
+    auto availableExtensions = device.enumerateDeviceExtensionProperties();
+
+    std::set<std::string> requiredExtensions(
+        deviceExtensions.begin(),
+        deviceExtensions.end()
+    );
+    // std::cerr << "ee\n";
+    for (const auto& extension : availableExtensions) {
+        // std::cerr << extension.extensionName << '\n';
+        requiredExtensions.erase(extension.extensionName);
+    }
+    // std::cerr << "ee\n";
+
+    return requiredExtensions.empty();
+}
+
+bool VulkanRenderDevice::is_device_suitable(vk::PhysicalDevice& device) {
+    QueueFamilyIndices indices = find_queue_families(device);
+
+    bool extensionsSupported = check_device_extension_support(device);
+
+    bool swapChainAdequate = false;
+    if (extensionsSupported) {
+        SwapChainSupportDetails swapChainSupport{
+            .capabilities = device.getSurfaceCapabilitiesKHR(gvSurface),
+            .formats = device.getSurfaceFormatsKHR(gvSurface),
+            .presentModes = device.getSurfacePresentModesKHR(gvSurface)
+        };
+        swapChainAdequate = !swapChainSupport.formats.empty() &&
+                            !swapChainSupport.presentModes.empty();
+    }
+
+    vk::PhysicalDeviceFeatures supportedFeatures = device.getFeatures();
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+           supportedFeatures.samplerAnisotropy;
+}
+
+vk::SampleCountFlagBits VulkanRenderDevice::max_usable_sample_count() const {
+    const auto props = gvPhysicalDevice.getProperties();
+    const auto counts = props.limits.framebufferColorSampleCounts &
+                        props.limits.framebufferDepthSampleCounts;
+
+    if (counts & vk::SampleCountFlagBits::e64)
+        return vk::SampleCountFlagBits::e32;
+    if (counts & vk::SampleCountFlagBits::e32)
+        return vk::SampleCountFlagBits::e32;
+    if (counts & vk::SampleCountFlagBits::e16)
+        return vk::SampleCountFlagBits::e16;
+    if (counts & vk::SampleCountFlagBits::e8)
+        return vk::SampleCountFlagBits::e8;
+    if (counts & vk::SampleCountFlagBits::e4)
+        return vk::SampleCountFlagBits::e4;
+    if (counts & vk::SampleCountFlagBits::e2)
+        return vk::SampleCountFlagBits::e2;
+
+    return vk::SampleCountFlagBits::e1;
 }
 
 }  // namespace garnish

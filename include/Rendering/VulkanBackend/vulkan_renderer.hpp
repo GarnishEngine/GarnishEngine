@@ -17,7 +17,7 @@ const std::vector<const char*> validationLayers = {
 
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    "VK_KHR_portability_subset"
+    // "VK_KHR_portability_subset"
 };
 
 struct GVMesh {
@@ -82,7 +82,7 @@ class VulkanRenderDevice : public RenderDevice {
     vk::RenderPass gvRenderPass;
     vk::PipelineLayout gvPipelineLayout;
     vk::Pipeline gvPipeline;
-    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
+    vk::SampleCountFlagBits msaaSamples;
 
     vk::DescriptorPool gvDescriptorPool;
     vk::DescriptorSetLayout gvDescriptorSetLayout;
@@ -131,7 +131,7 @@ class VulkanRenderDevice : public RenderDevice {
 
     bool framebufferResized = false;
     uint32_t currentFrame = 0;
-    const uint32_t maxTextures = 1024;
+    const uint32_t maxTextures = 16;
     const bool enableValidationLayers = true;
 
     struct UniformBufferObject {
@@ -160,11 +160,17 @@ class VulkanRenderDevice : public RenderDevice {
     bool create_instance();
     bool setup_debug_messenger();
     bool create_surface();
+
     bool pick_physical_device();
+    bool check_device_extension_support(vk::PhysicalDevice& device);
+    bool is_device_suitable(vk::PhysicalDevice& device);
+    [[nodiscard]] vk::SampleCountFlagBits max_usable_sample_count() const;
     bool create_logical_device();
+
     bool create_swap_chain();
     bool recreate_swap_chain();
     bool cleanup_swap_chain();
+
     bool create_image_views();
     vk::ImageView create_image_view(
         vk::Image image,
@@ -215,7 +221,7 @@ class VulkanRenderDevice : public RenderDevice {
 
     void draw_frame(ECSController& world);
 
-    QueueFamilyIndices find_queue_families();
+    QueueFamilyIndices find_queue_families(vk::PhysicalDevice& device);
     vk::Extent2D create_extent();
     vk::ShaderModule create_shader_module(const std::vector<char>& code);
     vk::CommandBuffer begin_single_time_commands();
