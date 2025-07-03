@@ -14,11 +14,12 @@ class RenderDevice : garnish::System {
         bool vsync = false;
     };
     virtual bool init(InitInfo& info) = 0;
-    virtual void set_size(unsigned int width, unsigned int height) = 0;
-    virtual bool draw() = 0;
+    virtual bool draw_frame(ECSController& world) = 0;
     virtual void cleanup() = 0;
-    // virtual uint64_t get_flags() = 0;
+    virtual uint32_t setup_mesh(const std::string& mesh_path) = 0;
+    virtual uint32_t load_texture(const std::string& texture_path) = 0;
     void update(ECSController& world) override = 0;
-    SDL_Window* window;
+
+    SDL_Window* window = nullptr;
 };
 }  // namespace garnish

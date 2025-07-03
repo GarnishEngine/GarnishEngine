@@ -10,7 +10,6 @@
 
 #include "camera.hpp"
 #include "ecs_controller.h"
-#include "garnish_mesh.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl3.h"

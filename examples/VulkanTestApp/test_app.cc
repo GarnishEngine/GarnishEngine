@@ -14,15 +14,11 @@ int main() {
     };
     app.get_controller().register_component<Renderable>();
 
-    uint32_t meshHandle = dynamic_cast<garnish::VulkanRenderDevice*>(
-                              app.get_render_device().get()
-    )
-                              ->setup_mesh("Models/viking_room.obj");
+    uint32_t meshHandle =
+        app.get_render_device()->setup_mesh("Models/viking_room.obj");
 
-    uint32_t texHandle = dynamic_cast<garnish::VulkanRenderDevice*>(
-                             app.get_render_device().get()
-    )
-                             ->create_texture_image("Textures/viking_room.png");
+    uint32_t texHandle =
+        app.get_render_device()->load_texture("Textures/viking_room.png");
 
     auto vikingRoom = app.get_controller().create_entity_with_components(
         Renderable{.meshHandle = meshHandle, .texHandle = texHandle}

@@ -1,25 +1,16 @@
 #include "ogl_renderer.hpp"
 
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 
 #include "OpenGL.hpp"
 #include "SDL3/SDL_video.h"
 #include "ecs_common.h"
 #include "garnish_app.hpp"
-#include "garnish_mesh.hpp"
-#include "garnish_texture.hpp"
 #include "shader_program.hpp"
 
 namespace garnish {
-void draw(int VAO, int size, int texture) {
-    glBindVertexArray(VAO);  // Dont need this because we only have
-    // one VAO
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-}
-
 bool OpenGLRenderDevice::init(InitInfo& info) {
     window = static_cast<SDL_Window*>(info.nativeWindow);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -38,19 +29,14 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
         throw std::runtime_error("GLEW failed to initialize");
     }
 
-    set_size(info.width, info.height);
-
+    glViewport(0, 0, info.width, info.height);
     // SDL_GL_SetSwapInterval(info.vsync ? 1 : 0); maybe one day
 
     glEnable(GL_DEPTH_TEST);
     return true;
 }
 
-void OpenGLRenderDevice::set_size(unsigned int width, unsigned int height) {
-    glViewport(0, 0, width, height);
-}
-
-bool OpenGLRenderDevice::draw() {
+bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     // glClearDepth(1.0f);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -90,9 +76,6 @@ void OpenGLRenderDevice::update(ECSController& world) {
     SDL_GL_SwapWindow(window);
 }
 void OpenGLRenderDevice::cleanup() {}
-// uint64_t OpenGLRenderDevice::get_flags() {
-//     return SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-// }
 
 uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     std::vector<OGLVertex3d> vertices;
@@ -191,12 +174,6 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     meshes.push_back(mesh);
     return meshes.size() - 1;
-}
-
-void OpenGLRenderDevice::delete_mesh(Mesh mesh) {
-    glDeleteVertexArrays(1, &mesh.VAO);
-    glDeleteBuffers(1, &mesh.VBO);
-    glDeleteBuffers(1, &mesh.EBO);
 }
 
 uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {

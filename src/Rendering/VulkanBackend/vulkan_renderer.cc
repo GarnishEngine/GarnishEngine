@@ -21,6 +21,7 @@ bool VulkanRenderDevice::init(InitInfo& info) {
     init_vulkan();
     return true;
 }
+
 bool VulkanRenderDevice::init_vulkan() {
     create_instance();
     setup_debug_messenger();
@@ -44,7 +45,7 @@ bool VulkanRenderDevice::init_vulkan() {
 
     create_descriptor_pool();
     create_descriptor_sets();
-    create_texture_image("Textures/viking_room.png");
+    load_texture("Textures/viking_room.png");
 
     create_command_buffers();
     create_sync_objects();
@@ -931,9 +932,7 @@ bool VulkanRenderDevice::create_command_pool() {
     return true;
 }
 
-uint32_t VulkanRenderDevice::create_texture_image(
-    const std::string& TEXTURE_PATH
-) {
+uint32_t VulkanRenderDevice::load_texture(const std::string& TEXTURE_PATH) {
     int texWidth = 0;
     int texHeight = 0;
     int texChannels = 0;
@@ -1606,7 +1605,7 @@ void VulkanRenderDevice::update_uniform_buffer(uint32_t currentImage) {
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-void VulkanRenderDevice::draw_frame(ECSController& world) {
+bool VulkanRenderDevice::draw_frame(ECSController& world) {
     gvDevice.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -1620,7 +1619,7 @@ void VulkanRenderDevice::draw_frame(ECSController& world) {
 
     if (aquireResult == vk::Result::eErrorOutOfDateKHR) {
         recreate_swap_chain();
-        return;
+        return false;
     } else if (aquireResult != vk::Result::eSuccess &&
                aquireResult != vk::Result::eSuboptimalKHR) {
         throw std::runtime_error("failed to acquire swap chain image!");
@@ -1668,6 +1667,7 @@ void VulkanRenderDevice::draw_frame(ECSController& world) {
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    return true;
 }
 
 void VulkanRenderDevice::generate_mipmaps(

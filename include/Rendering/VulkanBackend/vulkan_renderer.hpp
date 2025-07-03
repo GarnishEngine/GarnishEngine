@@ -45,14 +45,11 @@ class VulkanRenderDevice : public RenderDevice {
     ~VulkanRenderDevice() = default;
 
     bool init(InitInfo& info) override;
-    bool init_vulkan();
-    void set_size(unsigned int width, unsigned int height) override {}
-    bool draw() override { return true; }
+    bool draw_frame(ECSController& world) override;
     void cleanup() override;
-    // uint64_t get_flags() override;
     void update(ECSController& world) override;
-    uint32_t setup_mesh(const std::string& mesh_path);
-    uint32_t create_texture_image(const std::string& TEXTURE_PATH);
+    uint32_t setup_mesh(const std::string& mesh_path) override;
+    uint32_t load_texture(const std::string& TEXTURE_PATH) override;
 
     // void delete_mesh(Mesh mesh);
     // rawmesh load_mesh(const std::string& mesh_path);
@@ -150,6 +147,7 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vk::SurfaceFormatKHR> formats;
         std::vector<vk::PresentModeKHR> presentModes;
     };
+    bool init_vulkan();
 
     bool create_instance();
     bool setup_debug_messenger();
@@ -212,8 +210,6 @@ class VulkanRenderDevice : public RenderDevice {
         uint32_t imageIndex,
         ECSController& world
     );
-
-    void draw_frame(ECSController& world);
 
     QueueFamilyIndices find_queue_families(vk::PhysicalDevice& device);
     vk::Extent2D create_extent();
