@@ -83,13 +83,10 @@ if(USE_VULKAN)
     file(GLOB_RECURSE VULKAN_SRC src/Rendering/VulkanBackend/*.cc)
     list(APPEND ENGINE_SRC ${VULKAN_SRC})
     find_package(Vulkan REQUIRED)
-
-    # add_subdirectory(3rdParty/vk-bootstrap          EXCLUDE_FROM_ALL)
     add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
 
     list(APPEND GARNISH_PRIVATE_LIBS
         Vulkan::Vulkan
-        # vk-bootstrap::vk-bootstrap
         GPUOpen::VulkanMemoryAllocator)
 
     target_include_directories(GarnishEngine PUBLIC
