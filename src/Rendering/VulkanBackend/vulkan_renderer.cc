@@ -335,6 +335,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debugMessageFunc(
     std::cout << message.str() << std::endl;
     return false;
 }
+
 bool VulkanRenderDevice::setup_debug_messenger() {
     if (!enableValidationLayers) return false;
     auto pfnVkCreateDebugUtilsMessengerEXT =
@@ -434,6 +435,17 @@ bool VulkanRenderDevice::create_surface() {
     return true;
 }
 
+vk::SurfaceFormatKHR choose_surface_format(
+    const std::vector<vk::SurfaceFormatKHR>& formats
+) {
+    for (auto& f : formats) {
+        if (f.format == vk::Format::eB8G8R8A8Srgb &&
+            f.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            return f;
+        }
+    }
+    return formats[0];
+}
 bool VulkanRenderDevice::create_swap_chain() {
     SwapChainSupportDetails swapChainSupport{
         .capabilities = gvPhysicalDevice.getSurfaceCapabilitiesKHR(gvSurface),
@@ -446,7 +458,8 @@ bool VulkanRenderDevice::create_swap_chain() {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
 
-    vk::SurfaceFormatKHR surfaceFormat = swapChainSupport.formats[0];
+    vk::SurfaceFormatKHR surfaceFormat =
+        choose_surface_format(swapChainSupport.formats);
     vk::PresentModeKHR presentModes{VK_PRESENT_MODE_FIFO_KHR};
     vk::Extent2D extent = create_extent();
 
