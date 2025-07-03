@@ -12,8 +12,7 @@ int main() {
     // auto s = app.get_controller().register_system<SpriteSystem>(0);
 
     app.get_controller().register_component<Camera>();
-    app.get_controller().register_component<drawable>();
-    app.get_controller().register_component<texture>();
+    app.get_controller().register_component<Renderable>();
 
     auto camera_entity =
         app.get_controller().create_entity_with_components(Camera());
@@ -26,15 +25,11 @@ int main() {
                    app.get_render_device().get()
     )
                    ->load_texture("Textures/viking_room.png");
-    std::cerr << tex.id;
+
     app.get_controller().create_entity_with_components(Camera());
 
     auto vikingRoom = app.get_controller().create_entity_with_components(
-        drawable{
-            .VAO = static_cast<int>(meshInstance.VAO),
-            .size = static_cast<int>(meshInstance.numIndicies)
-        },
-        tex
+        Renderable{.meshHandle = meshInstance, .texHandle = tex}
     );
 
     // // TODO 3d mesh

@@ -17,7 +17,7 @@ const std::vector<const char*> validationLayers = {
 
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    // "VK_KHR_portability_subset"
+    "VK_KHR_portability_subset"
 };
 
 struct GVMesh {
@@ -33,11 +33,6 @@ struct GVTexture {
     vk::DeviceMemory textureMemory;
     vk::ImageView textureImageView;
     vk::Sampler textureFormat;
-};
-
-struct Renderable {
-    uint32_t meshHandle;
-    uint32_t texHandle;
 };
 
 class VulkanRenderDevice : public RenderDevice {
@@ -90,7 +85,6 @@ class VulkanRenderDevice : public RenderDevice {
     std::vector<vk::DescriptorSet> descriptorSets;
 
     vk::CommandPool gvCommandPool;
-    vk::CommandBuffer gvCommandBuffer;
     std::vector<vk::CommandBuffer> commandBuffers;
 
     vk::Semaphore gvPresentSemaphore;
@@ -225,7 +219,7 @@ class VulkanRenderDevice : public RenderDevice {
     vk::Extent2D create_extent();
     vk::ShaderModule create_shader_module(const std::vector<char>& code);
     vk::CommandBuffer begin_single_time_commands();
-    void end_single_time_commands(vk::CommandBuffer commandBuffer);
+    void end_single_time_commands(vk::CommandBuffer& commandBuffer);
     // TODO maybe seperate parameters below into differens structs
     void create_image(
         uint32_t width,

@@ -3,6 +3,7 @@
 #include <tiny_obj_loader.h>
 
 #include <OpenGL.hpp>
+#include <cstdint>
 #include <garnish_app.hpp>
 #include <render_device.hpp>
 #include <string>
@@ -14,15 +15,13 @@
 #include "shader_program.hpp"
 
 namespace garnish {
-struct drawable {
-    int VAO, size;
-};
-struct texture {
-    unsigned int id;
-};
-struct rawmesh {
-    std::vector<OGLVertex3d> vertices;
-    std::vector<uint32_t> indices;
+
+using OGLTexture = uint32_t;
+struct OGLMesh {
+    uint32_t VAO;
+    uint32_t VBO;
+    uint32_t EBO;
+    uint32_t size;
 };
 class OpenGLRenderDevice : public RenderDevice {
    public:
@@ -41,19 +40,18 @@ class OpenGLRenderDevice : public RenderDevice {
     // uint64_t get_flags() override;
     void set_shader();
     // mesh & texture helpers (from ogl_renderer.cc)
-    Mesh setup_mesh(
-        const std::vector<OGLVertex3d>& vertices,
-        const std::vector<uint32_t>& indices
-    );
-    Mesh setup_mesh(const std::string& mesh_path);
+
+    uint32_t setup_mesh(const std::string& mesh_path);
     void delete_mesh(Mesh mesh);
-    rawmesh load_mesh(const std::string& mesh_path);
-    texture load_texture(const std::string& texture_path);
+    uint32_t load_texture(const std::string& texture_path);
 
    private:
     // ShaderProgram mShader;
     // Framebuffer mFramebuffer;
     // int mTriangleCount = 0;
+    std::vector<OGLTexture> textures;
+    std::vector<OGLMesh> meshes;
+
     SDL_GLContext glContext = nullptr;
 };
 

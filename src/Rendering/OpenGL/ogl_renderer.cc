@@ -1,6 +1,7 @@
 #include "ogl_renderer.hpp"
 
 #include <cstdint>
+#include <stdexcept>
 
 #include "OpenGL.hpp"
 #include "SDL3/SDL_video.h"
@@ -67,18 +68,22 @@ bool OpenGLRenderDevice::draw() {
 }
 
 void OpenGLRenderDevice::update(ECSController& world) {
-    for (Entity& entity : world.get_entities<drawable, texture>()) {
-        auto dra = world.get_component<drawable>(entity);
-        auto tex = world.get_component<texture>(entity);
+    for (Entity& entity : world.get_entities<Renderable>()) {
+        auto dra = world.get_component<Renderable>(entity);
 
         glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // mShader.use();
-        glBindTexture(GL_TEXTURE_2D, tex.id);
+        glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle]);
 
-        glBindVertexArray(dra.VAO);
+        glBindVertexArray(meshes[dra.meshHandle].VAO);
 
-        glDrawElements(GL_TRIANGLES, dra.size, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(
+            GL_TRIANGLES,
+            meshes[dra.meshHandle].size,
+            GL_UNSIGNED_INT,
+            nullptr
+        );
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
     }
@@ -88,20 +93,50 @@ void OpenGLRenderDevice::cleanup() {}
 //     return SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 // }
 
-Mesh OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
-    auto rawmesh = load_mesh(mesh_path);
-    return setup_mesh(rawmesh.vertices, rawmesh.indices);
-}
+uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
+    std::vector<OGLVertex3d> vertices;
+    std::vector<uint32_t> indices;
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
 
-Mesh OpenGLRenderDevice::setup_mesh(
-    const std::vector<OGLVertex3d>& vertices,
-    const std::vector<uint32_t>& indices
-) {
-    Mesh mesh{};
+    if (!tinyobj::LoadObj(
+            &attrib,
+            &shapes,
+            &materials,
+            &warn,
+            &err,
+            mesh_path.c_str()
+        )) {
+        throw std::runtime_error(warn + err);
+    }
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            OGLVertex3d vert{};
+            vert.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vert.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0F - attrib.texcoords[2 * index.texcoord_index + 1]
+            };
+            vert.color = {1.0F, 1.0F, 1.0F};
+            vertices.push_back(vert);
+
+            indices.push_back(indices.size());
+        }
+    }
+
+    OGLMesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);
     glGenBuffers(1, &mesh.VBO);
     glGenBuffers(1, &mesh.EBO);
-    mesh.numIndicies = indices.size();
+
     glBindVertexArray(mesh.VAO);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
 
@@ -151,7 +186,8 @@ Mesh OpenGLRenderDevice::setup_mesh(
     );
 
     glBindVertexArray(0);
-    return mesh;
+    meshes.push_back(mesh);
+    return meshes.size() - 1;
 }
 
 void OpenGLRenderDevice::delete_mesh(Mesh mesh) {
@@ -160,47 +196,7 @@ void OpenGLRenderDevice::delete_mesh(Mesh mesh) {
     glDeleteBuffers(1, &mesh.EBO);
 }
 
-rawmesh OpenGLRenderDevice::load_mesh(const std::string& mesh_path) {
-    std::vector<OGLVertex3d> vertices;
-    std::vector<uint32_t> indices;
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(
-            &attrib,
-            &shapes,
-            &materials,
-            &warn,
-            &err,
-            mesh_path.c_str()
-        )) {
-        throw std::runtime_error(warn + err);
-    }
-
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            OGLVertex3d vert{};
-            vert.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
-
-            vert.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0F - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-            vert.color = {1.0F, 1.0F, 1.0F};
-            vertices.push_back(vert);
-
-            indices.push_back(indices.size());
-        }
-    }
-    return rawmesh{.vertices = vertices, .indices = indices};
-}
-texture OpenGLRenderDevice::load_texture(const std::string& texture_path) {
+uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     int mTexWidth, mTexHeight, nrChannels = 0;
     unsigned int texID = -1;
     // stbi_set_flip_vertically_on_load(true);
@@ -214,7 +210,7 @@ texture OpenGLRenderDevice::load_texture(const std::string& texture_path) {
 
     if (!textureData) {
         stbi_image_free(textureData);
-        return texture{texID};
+        throw std::runtime_error("texture load failed");
     }
 
     glGenTextures(1, &texID);
@@ -246,7 +242,8 @@ texture OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(textureData);
 
-    return texture{texID};
+    textures.push_back(texID);
+    return textures.size() - 1;
 }
 
 }  // namespace garnish
