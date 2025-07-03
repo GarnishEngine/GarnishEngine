@@ -87,6 +87,7 @@ void OpenGLRenderDevice::update(ECSController& world) {
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
     }
+    SDL_GL_SwapWindow(window);
 }
 void OpenGLRenderDevice::cleanup() {}
 // uint64_t OpenGLRenderDevice::get_flags() {
@@ -184,8 +185,10 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         sizeof(OGLVertex3d),
         (void*)offsetof(OGLVertex3d, texCoord)
     );
-
     glBindVertexArray(0);
+
+    mesh.size = indices.size();
+
     meshes.push_back(mesh);
     return meshes.size() - 1;
 }

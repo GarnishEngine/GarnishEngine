@@ -15,41 +15,43 @@ static float pitch = 0;
 static float x = 0;
 static float y = 0;
 
-class ImGuiSystem : public System {
-   public:
-    void update(ECSController& world) override {
-        ImGui::ShowDemoWindow();
+// class ImGuiSystem : public System {
+//    public:
+//     void update(ECSController& world) override {
+//         ImGui::ShowDemoWindow();
 
-        static float f = 0.0f;
-        static int counter = 0;
+//         static float f = 0.0f;
+//         static int counter = 0;
 
-        ImGui::Begin("Hello, world!");  // Create a window called "Hello,
-                                        // world!" and append into it.
+//         ImGui::Begin("Hello, world!");  // Create a window called "Hello,
+//                                         // world!" and append into it.
 
-        ImGui::Text("This is some useful text.");  // Display some text (you can
-                                                   // use a format strings too)
+//         ImGui::Text("This is some useful text.");  // Display some text (you
+//         can
+//                                                    // use a format strings
+//                                                    too)
 
-        if (ImGui::Button(
-                "Button"
-            ))  // Buttons return true when clicked (most widgets
-                // return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
-        ImGui::Text("pitch = %f", pitch);
-        ImGui::Text("yaw = %f", yaw);
-        ImGui::Text("x = %f", x);
-        ImGui::Text("y = %f", y);
+//         if (ImGui::Button(
+//                 "Button"
+//             ))  // Buttons return true when clicked (most widgets
+//                 // return true when edited/activated)
+//             counter++;
+//         ImGui::SameLine();
+//         ImGui::Text("counter = %d", counter);
+//         ImGui::Text("pitch = %f", pitch);
+//         ImGui::Text("yaw = %f", yaw);
+//         ImGui::Text("x = %f", x);
+//         ImGui::Text("y = %f", y);
 
-        ImGuiIO& io = ImGui::GetIO();
-        ImGui::Text(
-            "Application average %.3f ms/frame (%.1f FPS)",
-            1000.0f / io.Framerate,
-            io.Framerate
-        );
-        ImGui::End();
-    }
-};
+//         ImGuiIO& io = ImGui::GetIO();
+//         ImGui::Text(
+//             "Application average %.3f ms/frame (%.1f FPS)",
+//             1000.0f / io.Framerate,
+//             io.Framerate
+//         );
+//         ImGui::End();
+//     }
+// };
 class CameraSystem : public System {
    public:
     std::unique_ptr<ShaderProgram> shaderProgram;

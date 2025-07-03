@@ -33,6 +33,12 @@ App::App(CreateInfo createInfo)
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+            SDL_GL_SetAttribute(
+                SDL_GL_CONTEXT_PROFILE_MASK,
+                SDL_GL_CONTEXT_PROFILE_CORE
+            );
             window = init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
             if (!window) throw std::runtime_error("wtf");
             info = {
@@ -154,13 +160,6 @@ void App::handle_all_events() {
 SDL_Window* App::init_window(int64_t flags) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    // SDL_GL_SetAttribute(
-    //     SDL_GL_CONTEXT_PROFILE_MASK,
-    //     SDL_GL_CONTEXT_PROFILE_CORE
-    // );
-
     return SDL_CreateWindow("hello window", width, height, flags);
 }
 
@@ -189,7 +188,6 @@ void App::terminate_imgui() {
 }
 void App::swap_window() {
     assert(window != nullptr);
-    SDL_GL_SwapWindow(window);
 }
 std::unique_ptr<RenderDevice> App::make_render_device(
     RenderingBackend backend

@@ -6,7 +6,7 @@
 int main() {
     garnish::App app{};
 
-    auto i = app.get_controller().register_system<ImGuiSystem>(0);
+    // auto i = app.get_controller().register_system<ImGuiSystem>(0);
     auto c = app.get_controller().register_system<CameraSystem>(0);
     // auto m = app.get_controller().register_system<MeshSystem>(0);
     // auto s = app.get_controller().register_system<SpriteSystem>(0);
@@ -34,10 +34,6 @@ int main() {
 
     // // TODO 3d mesh
     //  = app.get_controller().create_entity();
-
-    // garnish::Mesh gMesh;
-    // garnish::Texture texture;
-    // texture.load_texture();
 
     app.run();
 }
