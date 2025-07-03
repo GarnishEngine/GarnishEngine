@@ -153,10 +153,12 @@ uint32_t VulkanRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     gvMeshes.push_back(
         GVMesh{
-            .firstVertex = static_cast<uint32_t>(vertices.size()),
-            .vertexCount = 1,
-            .firstIndex = 1,
-            .indexCount = 1
+            .firstVertex =
+                static_cast<uint32_t>(totalVertexBytes / sizeof(GVVertex3d)),
+            .vertexCount = static_cast<uint32_t>(vertices.size()),
+            .firstIndex =
+                static_cast<uint32_t>(totalIndexBytes / sizeof(uint32_t)),
+            .indexCount = static_cast<uint32_t>(indices.size())
         }
     );
 
@@ -197,20 +199,20 @@ uint32_t VulkanRenderDevice::setup_mesh(const std::string& mesh_path) {
         indices.data(),
         (size_t)indexBufferSize
     );
-
     gvDevice.unmapMemory(indexStagingBufferMemory);
+
     copy_buffer(
         vertexStagingBuffer,
         vertexBuffer,
         vertexBufferSize,
-        sizeof(GVVertex3d) * vertices.size()
+        totalVertexBytes
     );
 
     copy_buffer(
         indexStagingBuffer,
         indexBuffer,
         indexBufferSize,
-        sizeof(uint32_t) * indices.size()
+        totalIndexBytes
     );
 
     gvDevice.destroyBuffer(vertexStagingBuffer);
@@ -218,16 +220,7 @@ uint32_t VulkanRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     gvDevice.destroyBuffer(indexStagingBuffer);
     gvDevice.freeMemory(indexStagingBufferMemory);
-    gvMeshes.push_back(
-        GVMesh{
-            .firstVertex = static_cast<uint32_t>(vertices.size()),
-            .vertexCount =
-                static_cast<uint32_t>(totalVertexBytes / sizeof(GVVertex3d)),
-            .firstIndex = static_cast<uint32_t>(indices.size()),
-            .indexCount =
-                static_cast<uint32_t>(totalIndexBytes / sizeof(uint32_t))
-        }
-    );
+
     totalVertexBytes += sizeof(GVVertex3d) * vertices.size();
     totalIndexBytes += sizeof(uint32_t) * vertices.size();
     return gvMeshes.size() - 1;
