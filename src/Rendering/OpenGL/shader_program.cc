@@ -1,10 +1,11 @@
 #include "shader_program.hpp"
 
+#include <GL/glew.h>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
 #include <vector>
 
-#include "OpenGL.hpp"
 #include "read_file.hpp"
 
 namespace garnish {

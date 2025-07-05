@@ -1,15 +1,20 @@
+#include "garnish_app.hpp"
+
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
 
 #include <cstddef>
-#include <cstdint>
-#include <garnish_app.hpp>
 #include <memory>
 #include <render_device.hpp>
 #include <stdexcept>
 #include <thread>
 
 #ifdef _OPENGL_RENDERING
+#include <imgui_impl_opengl3.h>
+
 #include <ogl_renderer.hpp>
 #endif
 #ifdef _VULKAN_RENDERING
@@ -186,9 +191,7 @@ void App::terminate_imgui() {
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 }
-void App::swap_window() {
-    assert(window != nullptr);
-}
+
 std::unique_ptr<RenderDevice> App::make_render_device(
     RenderingBackend backend
 ) {

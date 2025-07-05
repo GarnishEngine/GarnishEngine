@@ -1,16 +1,12 @@
 #pragma once
 
-#include <stb_image.h>
-#include <tiny_obj_loader.h>
-
-#include <Vulkan.hpp>
-#include <chrono>
-#include <cstddef>
 #include <cstdint>
+#include <shared.hpp>
 #include <vector>
+#include <vulkan/vulkan.hpp>
 
-#include "read_file.hpp"
 #include "render_device.hpp"
+
 namespace garnish {
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -18,22 +14,8 @@ const std::vector<const char*> validationLayers = {
 
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    "VK_KHR_portability_subset"
-};
-
-struct GVMesh {
-    uint32_t firstVertex;
-    uint32_t vertexCount;
-    uint32_t firstIndex;
-    uint32_t indexCount;
-};
-
-struct GVTexture {
-    uint32_t mipLevels;
-    vk::Image textureImage;
-    vk::DeviceMemory textureMemory;
-    vk::ImageView textureImageView;
-    vk::Sampler textureFormat;
+    "VK_KHR_portability_subset",  // THIS MIGHT NOT WORK FOR YOU!!
+    VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 };
 
 class VulkanRenderDevice : public RenderDevice {
@@ -50,13 +32,30 @@ class VulkanRenderDevice : public RenderDevice {
     void cleanup() override;
     void update(ECSController& world) override;
     uint32_t setup_mesh(const std::string& mesh_path) override;
-    uint32_t load_texture(const std::string& TEXTURE_PATH) override;
+    uint32_t load_texture(const std::string& path) override;
 
     // void delete_mesh(Mesh mesh);
     // rawmesh load_mesh(const std::string& mesh_path);
     // texture load_texture(const std::string& texture_path);
 
    private:
+    const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    const uint32_t bufferDefaultSize = 1024 * 1024;
+    const bool enableValidationLayers = true;
+
+    struct GVMesh {
+        uint32_t firstVertex;
+        uint32_t vertexCount;
+        uint32_t firstIndex;
+        uint32_t indexCount;
+    };
+    struct GVTexture {
+        uint32_t mipLevels;
+        vk::Image textureImage;
+        vk::DeviceMemory textureMemory;
+        vk::ImageView textureImageView;
+    };
+
     vk::Instance gvInstance;
     vk::DebugUtilsMessengerEXT gvDebugMessenger;
     vk::SurfaceKHR gvSurface;
@@ -83,7 +82,7 @@ class VulkanRenderDevice : public RenderDevice {
     std::vector<vk::DescriptorSet> descriptorSets;
 
     vk::CommandPool gvCommandPool;
-    std::vector<vk::CommandBuffer> commandBuffers;
+    std::vector<vk::CommandBuffer> gvCommandBuffers;
 
     vk::Semaphore gvPresentSemaphore;
     vk::Semaphore gvRenderSemaphore;
@@ -105,26 +104,28 @@ class VulkanRenderDevice : public RenderDevice {
     vk::Buffer indexBuffer;
     vk::DeviceMemory vertexBufferMemory;
     vk::DeviceMemory indexBufferMemory;
+
+    vk::Sampler gvTextureSampler;
     std::vector<GVMesh> gvMeshes;
     std::vector<GVTexture> gvTextures;
+    std::unordered_map<size_t, uint32_t> loadedTextures;
+    uint32_t textureLimit;
 
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
 
     uint32_t mipLevels = 0;
-    uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
     // VmaAllocation gvTextureAllocation;
 
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<vk::Fence> inFlightFences;
+    std::vector<vk::Fence> imageInFlight;
 
     bool framebufferResized = false;
     uint32_t currentFrame = 0;
-    const uint32_t maxTextures = 16;
-    const bool enableValidationLayers = true;
 
     struct UniformBufferObject {
         alignas(16) glm::mat4 model;
@@ -260,4 +261,57 @@ class VulkanRenderDevice : public RenderDevice {
         uint32_t mipLevels
     );
 };
+struct GVVertex3d {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+
+    static vk::VertexInputBindingDescription getBindingDescription() {
+        vk::VertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(GVVertex3d);
+        bindingDescription.inputRate = vk::VertexInputRate::eVertex;
+
+        return bindingDescription;
+    }
+
+    static std::array<vk::VertexInputAttributeDescription, 3>
+    getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 3>
+            attributeDescriptions{};
+
+        attributeDescriptions[0].binding = 0;
+        attributeDescriptions[0].location = 0;
+        attributeDescriptions[0].format = vk::Format::eR32G32B32Sfloat;
+        attributeDescriptions[0].offset = offsetof(GVVertex3d, pos);
+
+        attributeDescriptions[1].binding = 0;
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = vk::Format::eR32G32B32Sfloat;
+        attributeDescriptions[1].offset = offsetof(GVVertex3d, color);
+
+        attributeDescriptions[2].binding = 0;
+        attributeDescriptions[2].location = 2;
+        attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
+        attributeDescriptions[2].offset = offsetof(GVVertex3d, texCoord);
+
+        return attributeDescriptions;
+    }
+    bool operator==(const GVVertex3d& other) const {
+        return pos == other.pos && color == other.color &&
+               texCoord == other.texCoord;
+    }
+};
 }  // namespace garnish
+
+namespace std {
+template <>
+struct hash<garnish::GVVertex3d> {
+    size_t operator()(garnish::GVVertex3d const& vertex) const {
+        return ((hash<glm::vec3>()(vertex.pos) ^
+                 (hash<glm::vec3>()(vertex.color) << 1)) >>
+                1) ^
+               (hash<glm::vec2>()(vertex.texCoord) << 1);
+    }
+};
+}  // namespace std

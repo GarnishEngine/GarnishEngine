@@ -1,21 +1,18 @@
 #pragma once
-#include <stb_image.h>
-#include <tiny_obj_loader.h>
-
-#include <OpenGL.hpp>
-#include <cstdint>
-#include <garnish_app.hpp>
-#include <render_device.hpp>
-#include <string>
+#include <shared.hpp>
 #include <vector>
 
-#include "SDL3/SDL_video.h"
-#include "framebuffer.hpp"
-#include "shader_program.hpp"
+#define GLEW_STATIC
+#define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
+
+#include <GL/glew.h>
+#include <SDL3/SDL_opengl.h>
+
+#include <cstdint>
+
+#include "render_device.hpp"
 
 namespace garnish {
-
-using OGLTexture = uint32_t;
 
 class OpenGLRenderDevice : public RenderDevice {
    public:
@@ -36,12 +33,19 @@ class OpenGLRenderDevice : public RenderDevice {
     uint32_t load_texture(const std::string& texture_path) override;
 
    private:
+    struct OGLVertex3d {
+        glm::vec3 pos;
+        glm::vec3 color;
+        glm::vec2 texCoord;
+        OGLVertex3d() = default;
+    };
     struct OGLMesh {
         uint32_t VAO;
         uint32_t VBO;
         uint32_t EBO;
         uint32_t size;
     };
+    using OGLTexture = uint32_t;
 
     // ShaderProgram mShader;
     // Framebuffer mFramebuffer;

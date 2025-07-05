@@ -1,16 +1,19 @@
 #include "ogl_renderer.hpp"
 
-#include <cstdint>
+#include <SDL3/SDL_video.h>
+#include <ecs_controller.h>
+#include <stb_image.h>
+#include <tiny_obj_loader.h>
+
 #include <iostream>
 #include <stdexcept>
 
-#include "OpenGL.hpp"
-#include "SDL3/SDL_video.h"
-#include "ecs_common.h"
-#include "garnish_app.hpp"
-#include "shader_program.hpp"
-
 namespace garnish {
+using hrclock = std::chrono::high_resolution_clock;
+using tp = std::chrono::time_point<hrclock>;
+using ms = std::chrono::duration<double, std::milli>;
+using us = std::chrono::microseconds;
+
 bool OpenGLRenderDevice::init(InitInfo& info) {
     window = static_cast<SDL_Window*>(info.nativeWindow);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
