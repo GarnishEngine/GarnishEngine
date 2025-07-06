@@ -18,16 +18,13 @@ int main() {
     auto meshInstance =
         app.get_render_device()->setup_mesh("Models/viking_room.obj");
     auto tex =
-        app.get_render_device().get()->load_texture("Textures/viking_room.png");
+        app.get_render_device()->load_texture("Textures/viking_room.png");
 
     app.get_controller().create_entity_with_components(Camera());
 
     auto vikingRoom = app.get_controller().create_entity_with_components(
         Renderable{.meshHandle = meshInstance, .texHandle = tex}
     );
-
-    // // TODO 3d mesh
-    //  = app.get_controller().create_entity();
 
     app.run();
 }

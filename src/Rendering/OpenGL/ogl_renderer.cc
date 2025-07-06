@@ -5,9 +5,9 @@
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
-#include <chrono>
 
 namespace garnish {
 using hrclock = std::chrono::high_resolution_clock;
@@ -17,26 +17,35 @@ using us = std::chrono::microseconds;
 
 bool OpenGLRenderDevice::init(InitInfo& info) {
     window = static_cast<SDL_Window*>(info.nativeWindow);
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(
         SDL_GL_CONTEXT_PROFILE_MASK,
         SDL_GL_CONTEXT_PROFILE_CORE
     );
+
     glContext = SDL_GL_CreateContext(window);
     if (!glContext) {
         std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
         return false;
     }
 
+    SDL_GL_MakeCurrent(window, glContext);
+
     if (glewInit() != GLEW_OK) {
         throw std::runtime_error("GLEW failed to initialize");
     }
 
     glViewport(0, 0, info.width, info.height);
+    glEnable(GL_DEPTH_TEST);
     // SDL_GL_SetSwapInterval(info.vsync ? 1 : 0); maybe one day
 
-    glEnable(GL_DEPTH_TEST);
+    shaderProgram = std::make_unique<ShaderProgram>(
+        "shaders/shader.vert",
+        "shaders/shader.frag"
+    );
+    // shaderProgram->use();
     return true;
 }
 
@@ -69,6 +78,11 @@ void OpenGLRenderDevice::update(ECSController& world) {
 }
 
 void OpenGLRenderDevice::cleanup() {}
+
+bool OpenGLRenderDevice::set_uniform(glm::mat4 mvp) {
+    shaderProgram->set_uniform("mvp", mvp);
+    return true;
+}
 
 uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     std::vector<OGLVertex3d> vertices;

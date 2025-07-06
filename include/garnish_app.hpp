@@ -1,9 +1,9 @@
 #pragma once
 #include <SDL3/SDL_video.h>
-#include <ecs_controller.h>
 
 #include <memory>
 
+#include "ecs_controller.h"
 #include "render_device.hpp"
 
 namespace garnish {
@@ -14,7 +14,6 @@ enum class RenderingBackend : uint8_t {
 #ifdef _VULKAN_RENDERING
     Vulkan,
 #endif
-
 };
 
 class App {

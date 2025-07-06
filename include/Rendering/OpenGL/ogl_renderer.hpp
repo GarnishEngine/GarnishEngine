@@ -1,4 +1,5 @@
 #pragma once
+#include <shader_program.hpp>
 #include <shared.hpp>
 #include <vector>
 
@@ -26,6 +27,7 @@ class OpenGLRenderDevice : public RenderDevice {
     bool draw_frame(ECSController& world) override;
     void cleanup() override;
     void update(ECSController& world) override;
+    bool set_uniform(glm::mat4 mvp) override;
     void set_shader();
 
     uint32_t setup_mesh(const std::string& mesh_path) override;
@@ -47,7 +49,7 @@ class OpenGLRenderDevice : public RenderDevice {
     };
     using OGLTexture = uint32_t;
 
-    // ShaderProgram mShader;
+    std::unique_ptr<ShaderProgram> shaderProgram;
     // Framebuffer mFramebuffer;
     // int mTriangleCount = 0;
     std::vector<OGLTexture> textures;

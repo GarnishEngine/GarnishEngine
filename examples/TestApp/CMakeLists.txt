@@ -9,4 +9,5 @@ add_executable(TestApp test_app.cc)
 target_include_directories(TestApp PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
-target_link_libraries(TestApp PRIVATE GarnishEngine imgui)
+target_link_libraries(TestApp PRIVATE GarnishEngine imgui -fsanitize=address,undefined)
+target_compile_options(TestApp PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)

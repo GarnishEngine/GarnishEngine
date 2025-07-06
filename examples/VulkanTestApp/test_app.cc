@@ -12,7 +12,13 @@ int main() {
          .height = 600,
          .targetFps = 144}
     };
+    auto c = app.get_controller().register_system<CameraSystem>(0);
+
     app.get_controller().register_component<Renderable>();
+    app.get_controller().register_component<Camera>();
+
+    auto camera_entity =
+        app.get_controller().create_entity_with_components(Camera());
 
     uint32_t meshHandle =
         app.get_render_device()->setup_mesh("Models/viking_room.obj");
@@ -23,13 +29,6 @@ int main() {
     auto vikingRoom = app.get_controller().create_entity_with_components(
         Renderable{.meshHandle = meshHandle, .texHandle = texHandle}
     );
-
-    // // TODO 3d mesh
-    //  = app.get_controller().create_entity();
-
-    // garnish::Mesh gMesh;
-    // garnish::Texture texture;
-    // texture.load_texture();
 
     app.run();
 }

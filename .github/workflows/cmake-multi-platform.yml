@@ -69,7 +69,7 @@ jobs:
     - name:  Install Linux deps
       if: runner.os == 'Linux'
       run: >
-        sudo apt-get install libglew-dev libglm-dev
+        sudo apt-get install libglew-dev libglm-dev libvulkan-dev vulkan-tools
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
@@ -87,11 +87,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -D_VULKAN_RENDERING=OFF
         -DSDL_UNIX_CONSOLE_BUILD=ON
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DRENDERING_BACKENDS="OpenGL;Vulkan"
         -S ${{ github.workspace }}
 
     - name: Build

@@ -22,6 +22,7 @@ class VulkanRenderDevice : public RenderDevice {
 
     bool init(InitInfo& info) override;
     bool draw_frame(ECSController& world) override;
+    bool set_uniform(glm::mat4 mvp) override;
     void cleanup() override;
     void update(ECSController& world) override;
     uint32_t setup_mesh(const std::string& mesh_path) override;
@@ -53,11 +54,6 @@ class VulkanRenderDevice : public RenderDevice {
         vk::ImageView textureImageView;
     };
 
-    struct UniformBufferObject {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-    };
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
@@ -71,6 +67,10 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vk::SurfaceFormatKHR> formats;
         std::vector<vk::PresentModeKHR> presentModes;
     };
+    struct UniformBufferObject {
+        alignas(16) glm::mat4 mvp;
+    };
+    UniformBufferObject ubo{};
 
     vk::DebugUtilsMessengerEXT gvDebugMessenger;
 

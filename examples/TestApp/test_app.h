@@ -2,12 +2,15 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 
+#include <algorithm>
 #include <camera.hpp>
 #include <garnish_app.hpp>
 #include <limits>
 #include <memory>
 #include <shader_program.hpp>
-#include <algorithm>
+
+#include "ecs_controller.h"
+#include "render_device.hpp"
 
 const int32_t FRAME_RATE = 90;
 
@@ -56,16 +59,8 @@ static float y = 0;
 // };
 class CameraSystem : public System {
    public:
-    std::unique_ptr<ShaderProgram> shaderProgram;
     int32_t WIDTH = 600;
     int32_t HEIGHT = 800;
-
-    CameraSystem() {
-        shaderProgram = std::make_unique<ShaderProgram>(
-            "shaders/shader.vert",
-            "shaders/shader.frag"
-        );
-    }
 
     void update(ECSController& world) override {
         auto cam_ent = world.get_entities<
@@ -130,14 +125,7 @@ class CameraSystem : public System {
             pitch = cam.pitch;
             yaw = cam.yaw;
 
-            shaderProgram->use();
             cam.lastMousePos = mousePos;
-
-            // for (auto& ent : ecs->get_entities<Sprite>()) {
-            //     auto s = ecs->get_component<Sprite>(ent);
-            //     s.draw();
-            // }
-            // });
         } else {
             cam.held = false;
         }
@@ -163,7 +151,6 @@ class CameraSystem : public System {
         );
 
         glm::mat4 mvp = projection * cam.view_matrix() * model;
-
-        shaderProgram->set_uniform("mvp", mvp);
+        world.get<RenderDevice*>()->set_uniform(mvp);
     }
 };

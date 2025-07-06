@@ -1632,33 +1632,6 @@ bool VulkanRenderDevice::create_sync_objects() {
 }
 
 void VulkanRenderDevice::update_uniform_buffer(uint32_t currentImage) {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                     currentTime - startTime
-    )
-                     .count();
-
-    UniformBufferObject ubo{};
-    ubo.model = glm::rotate(
-        glm::mat4(1.0F),
-        time * glm::radians(90.0F),
-        glm::vec3(0.0F, 0.0F, 1.0F)
-    );
-    ubo.view = glm::lookAt(
-        glm::vec3(2.0F, 2.0F, 2.0F),
-        glm::vec3(0.0F, 0.0F, 0.0F),
-        glm::vec3(0.0F, 0.0F, 1.0F)
-    );
-    ubo.proj = glm::perspective(
-        glm::radians(45.0F),
-        gvSwapChainExtent.width / (float)gvSwapChainExtent.height,
-        0.1f,
-        10.0F
-    );
-    ubo.proj[1][1] *= -1;
-
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
@@ -1999,5 +1972,8 @@ vk::SampleCountFlagBits VulkanRenderDevice::max_usable_sample_count() const {
 
     return vk::SampleCountFlagBits::e1;
 }
-
+bool VulkanRenderDevice::set_uniform(glm::mat4 mvp) {
+    ubo.mvp = mvp;
+    return true;
+}
 }  // namespace garnish

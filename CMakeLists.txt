@@ -7,7 +7,6 @@ set(GARNISH_PRIVATE_LIBS "")
 
 option(ENABLE_SANITIZERS "Enable address/UB sanitizers" OFF)
 
-
 option(_BUILD_EXAMPLES "Build Examples" ON)
 
 set(RENDER_BACKENDS "OpenGL" "Vulkan"              
@@ -44,8 +43,8 @@ file(GLOB IMGUI_SOURCES
         "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
 add_library(imgui STATIC ${IMGUI_SOURCES})
 
-target_include_directories(imgui PUBLIC 3rdParty/imgui
-                                        3rdParty/imgui/backends)
+target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui/backends)
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
 list(APPEND GARNISH_PRIVATE_LIBS SDL3::SDL3 glm::glm GarnishECS imgui)
 
@@ -53,9 +52,9 @@ target_include_directories(GarnishEngine
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include     
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering     
-    3rdParty/tinyobjloader
-    3rdParty/stb
-    GarnishECS/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
+    ${CMAKE_CURRENT_SOURCE_DIR}/GarnishECS/include
 )
 
 macro(backends_contains name result)
@@ -95,6 +94,7 @@ if(USE_VULKAN)
     list(APPEND ENGINE_SRC ${VULKAN_SRC})
 
     find_package(Vulkan REQUIRED)
+    
     target_include_directories(GarnishEngine PRIVATE ${Vulkan_INCLUDE_DIRS})
 
     add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
@@ -116,6 +116,7 @@ endif()
 target_sources(GarnishEngine PRIVATE ${ENGINE_SRC})
 target_compile_definitions(GarnishEngine PUBLIC
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+
 target_link_libraries(GarnishEngine PRIVATE ${GARNISH_PRIVATE_LIBS})
 
 set_target_properties(GarnishEngine PROPERTIES

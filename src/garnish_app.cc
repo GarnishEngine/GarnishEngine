@@ -76,6 +76,7 @@ App::App(CreateInfo createInfo)
         default:
             throw std::runtime_error("not valid backend");
     }
+    ecsController.set(renderDevice.get());
     // init_imgui();
 }
 

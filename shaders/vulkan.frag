@@ -2,7 +2,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_samplerless_texture_functions : enable
 
-layout(set = 0, binding = 0) uniform UBO { mat4 mvp; } ubo;
+layout(set = 0, binding = 0) uniform UniformBufferObject { mat4 mvp; } ubo;
 layout(set = 0, binding = 1) uniform sampler texSampler;
 layout(set = 0, binding = 2) uniform texture2D textures[];
 
