@@ -40,23 +40,6 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
 }
 
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
-    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    // glClearDepth(1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glEnable(GL_CULL_FACE);
-    // glEnable(GL_DEPTH_TEST);
-
-    // mShader.use();
-    // glBindTexture(GL_TEXTURE_2D, TexID);
-    // glBindVertexArray(VAO);
-
-    // glDrawElements(GL_TRIANGLES, indicies, GL_UNSIGNED_INT, nullptr);
-    // glBindTexture(GL_TEXTURE_2D, 0);
-    // glBindVertexArray(0);
-    return true;
-}
-
-void OpenGLRenderDevice::update(ECSController& world) {
     for (Entity& entity : world.get_entities<Renderable>()) {
         auto dra = world.get_component<Renderable>(entity);
 
@@ -77,7 +60,13 @@ void OpenGLRenderDevice::update(ECSController& world) {
         glBindVertexArray(0);
     }
     SDL_GL_SwapWindow(window);
+    return true;
 }
+
+void OpenGLRenderDevice::update(ECSController& world) {
+    draw_frame(world);
+}
+
 void OpenGLRenderDevice::cleanup() {}
 
 uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {

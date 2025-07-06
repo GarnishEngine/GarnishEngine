@@ -4,14 +4,29 @@ project(GarnishEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(GARNISH_PRIVATE_LIBS "") 
-# Settings
+
+option(ENABLE_SANITIZERS "Enable address/UB sanitizers" OFF)
+
+if(ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_library(sanitizers INTERFACE)
+    target_compile_options(sanitizers INTERFACE
+        -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(sanitizers INTERFACE
+        -fsanitize=address,undefined)
+    link_libraries(sanitizers)
+endif()
+option(_BUILD_EXAMPLES "Build Examples" ON)
+
+set(RENDER_BACKENDS "OpenGL" "Vulkan"              
+    CACHE STRING "Semicolon-separated list of rendering back-ends to build")
+
+set_property(CACHE RENDER_BACKENDS PROPERTY STRINGS
+             "OpenGL" "Vulkan")
 
 file(GLOB_RECURSE ENGINE_SRC
      src/*.cc
      src/*.cpp)
 list(FILTER ENGINE_SRC EXCLUDE REGEX ".*/Rendering/[^/]+/.*")
-
-option(_BUILD_EXAMPLES "Build Examples" ON)
 
 add_library(GarnishEngine STATIC)
 
@@ -27,6 +42,7 @@ file(GLOB IMGUI_SOURCES
         "3rdParty/imgui/backends/imgui_impl_opengl3.cpp"
         "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
 add_library(imgui STATIC ${IMGUI_SOURCES})
+
 target_include_directories(imgui PUBLIC 3rdParty/imgui
                                         3rdParty/imgui/backends)
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
@@ -40,12 +56,6 @@ target_include_directories(GarnishEngine
     3rdParty/stb
     GarnishECS/include
 )
-
-set(RENDER_BACKENDS "OpenGL" "Vulkan"              
-    CACHE STRING "Semicolon-separated list of rendering back-ends to build")
-
-set_property(CACHE RENDER_BACKENDS PROPERTY STRINGS
-             "OpenGL" "Vulkan")
 
 macro(backends_contains name result)
     list(FIND RENDER_BACKENDS "${name}" _idx)
