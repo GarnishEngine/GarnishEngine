@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <chrono>
 
 namespace garnish {
 using hrclock = std::chrono::high_resolution_clock;
