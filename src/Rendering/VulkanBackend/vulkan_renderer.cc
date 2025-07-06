@@ -257,8 +257,20 @@ bool VulkanRenderDevice::create_instance() {
         sdlExtensions,
         sdlExtensions + sdlExtensionCount
     );
+
     extensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
-    extensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
+
+    auto instExts = vk::enumerateInstanceExtensionProperties();
+    for (auto& ext : instExts) {
+        if (strcmp(
+                ext.extensionName,
+                vk::KHRPortabilityEnumerationExtensionName
+            ) == 0) {
+            extensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
+            deviceExtensions.push_back("VK_KHR_portability_subset");
+        }
+    }
+
     if (enableValidationLayers) {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
@@ -285,7 +297,12 @@ bool VulkanRenderDevice::create_instance() {
     }
 
     if (!haveValidationLayer) {
-        std::cout << "ERROR: missing one or more needed validation layers" << std::endl; // TODO should throw an error
+        std::cerr
+            << "ERROR: missing one or more needed validation layers\n";  // TODO
+                                                                         // should
+                                                                         // throw
+                                                                         // an
+                                                                         // error
         return false;
     }
 

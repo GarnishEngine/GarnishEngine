@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 #include <shared.hpp>
 #include <vector>
@@ -10,12 +9,6 @@
 namespace garnish {
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
-};
-
-const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    "VK_KHR_portability_subset",  // THIS MIGHT NOT WORK FOR YOU!!
-    VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 };
 
 class VulkanRenderDevice : public RenderDevice {
@@ -39,6 +32,10 @@ class VulkanRenderDevice : public RenderDevice {
     // texture load_texture(const std::string& texture_path);
 
    private:
+    std::vector<const char*> deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+    };
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t bufferDefaultSize = 1024 * 1024;
     const bool enableValidationLayers = true;

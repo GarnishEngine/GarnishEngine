@@ -114,7 +114,6 @@ target_sources(GarnishEngine PRIVATE ${ENGINE_SRC})
 target_compile_definitions(GarnishEngine PUBLIC
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
 target_link_libraries(GarnishEngine PRIVATE ${GARNISH_PRIVATE_LIBS})
-# target_sources(GarnishEngine PRIVATE "src/shared.cc")
 
 set_target_properties(GarnishEngine PROPERTIES
   PUBLIC_HEADER "include/garnish.hpp"
