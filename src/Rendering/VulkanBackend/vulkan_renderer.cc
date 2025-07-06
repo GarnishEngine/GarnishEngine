@@ -267,13 +267,13 @@ bool VulkanRenderDevice::create_instance() {
                 vk::KHRPortabilityEnumerationExtensionName
             ) == 0) {
             extensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
-            deviceExtensions.push_back("VK_KHR_portability_subset");
         }
     }
 
     if (enableValidationLayers) {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
+
     uint32_t layerCount = enableValidationLayers
                               ? static_cast<uint32_t>(validationLayers.size())
                               : 0;
@@ -297,12 +297,8 @@ bool VulkanRenderDevice::create_instance() {
     }
 
     if (!haveValidationLayer) {
-        std::cerr
-            << "ERROR: missing one or more needed validation layers\n";  // TODO
-                                                                         // should
-                                                                         // throw
-                                                                         // an
-                                                                         // error
+        std::cerr  // TODO should throw an error
+            << "ERROR: missing one or more needed validation layers\n";
         return false;
     }
 
@@ -397,11 +393,21 @@ bool VulkanRenderDevice::pick_physical_device() {
     }
 
     if (!gvPhysicalDevice) {
-        // NOTICE, I BAKED IN PORTABILITY BIT THAT MIGHT NOT WORK
         throw std::runtime_error("no suitable physical device");
     }
-    auto props2 = gvPhysicalDevice.getProperties2();
+
+    const auto props2 = gvPhysicalDevice.getProperties2();
     textureLimit = props2.properties.limits.maxPerStageDescriptorSampledImages;
+
+    auto availableExtensions =
+        gvPhysicalDevice.enumerateDeviceExtensionProperties();
+
+    for (const auto& extension : availableExtensions) {
+        if (strcmp(extension.extensionName, "VK_KHR_portability_subset") == 0) {
+            deviceExtensions.push_back("VK_KHR_portability_subset");
+            break;
+        }
+    }
 
     return true;
 }
@@ -1934,7 +1940,8 @@ vk::ShaderModule VulkanRenderDevice::create_shader_module(
 bool VulkanRenderDevice::check_device_extension_support(
     vk::PhysicalDevice& device
 ) {
-    auto availableExtensions = device.enumerateDeviceExtensionProperties();
+    const auto availableExtensions =
+        device.enumerateDeviceExtensionProperties();
 
     std::set<std::string> requiredExtensions(
         deviceExtensions.begin(),

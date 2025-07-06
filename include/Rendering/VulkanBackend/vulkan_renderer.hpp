@@ -53,11 +53,33 @@ class VulkanRenderDevice : public RenderDevice {
         vk::ImageView textureImageView;
     };
 
-    vk::Instance gvInstance;
+    struct UniformBufferObject {
+        alignas(16) glm::mat4 model;
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 proj;
+    };
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+
+        bool isComplete() {
+            return graphicsFamily.has_value() && presentFamily.has_value();
+        }
+    };
+    struct SwapChainSupportDetails {
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
+
     vk::DebugUtilsMessengerEXT gvDebugMessenger;
+
+    vk::Instance gvInstance;
     vk::SurfaceKHR gvSurface;
+
     vk::PhysicalDevice gvPhysicalDevice;
     vk::Device gvDevice;
+
     vk::Queue gvGraphicsQueue;
     vk::Queue gvPresentQueue;
 
@@ -124,28 +146,6 @@ class VulkanRenderDevice : public RenderDevice {
     bool framebufferResized = false;
     uint32_t currentFrame = 0;
 
-    struct UniformBufferObject {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-    };
-    // UniformBufferObject ubo;
-
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
-
-        bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
-        }
-    };
-    QueueFamilyIndices queueFamilyIndicies;
-
-    struct SwapChainSupportDetails {
-        vk::SurfaceCapabilitiesKHR capabilities;
-        std::vector<vk::SurfaceFormatKHR> formats;
-        std::vector<vk::PresentModeKHR> presentModes;
-    };
     bool init_vulkan();
 
     bool create_instance();

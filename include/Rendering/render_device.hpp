@@ -12,6 +12,7 @@ class RenderDevice : garnish::System {
         uint32_t width;
         uint32_t height;
         bool vsync = false;
+        void* pNext;
     };
     virtual bool init(InitInfo& info) = 0;
     virtual bool draw_frame(ECSController& world) = 0;
