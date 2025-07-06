@@ -7,14 +7,7 @@ set(GARNISH_PRIVATE_LIBS "")
 
 option(ENABLE_SANITIZERS "Enable address/UB sanitizers" OFF)
 
-if(ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    add_library(sanitizers INTERFACE)
-    target_compile_options(sanitizers INTERFACE
-        -fsanitize=address,undefined -fno-omit-frame-pointer)
-    target_link_options(sanitizers INTERFACE
-        -fsanitize=address,undefined)
-    link_libraries(sanitizers)
-endif()
+
 option(_BUILD_EXAMPLES "Build Examples" ON)
 
 set(RENDER_BACKENDS "OpenGL" "Vulkan"              
@@ -30,6 +23,14 @@ list(FILTER ENGINE_SRC EXCLUDE REGEX ".*/Rendering/[^/]+/.*")
 
 add_library(GarnishEngine STATIC)
 
+if(ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_library(sanitizers INTERFACE)
+    target_compile_options(sanitizers INTERFACE
+        -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(sanitizers INTERFACE
+        -fsanitize=address,undefined)
+    target_link_libraries(sanitizers)
+endif()
 # 3rdParty libraries
 add_subdirectory(3rdParty/SDL           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm           EXCLUDE_FROM_ALL)
