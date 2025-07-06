@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 namespace garnish {
