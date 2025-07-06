@@ -10,6 +10,7 @@
 #include <SDL3/SDL_opengl.h>
 
 #include <cstdint>
+#include <memory>
 
 #include "render_device.hpp"
 
