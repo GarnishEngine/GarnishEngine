@@ -283,6 +283,12 @@ bool VulkanRenderDevice::create_instance() {
             break;
         }
     }
+
+    if (!haveValidationLayer) {
+        std::cout << "ERROR: missing one or more needed validation layers" << std::endl; // TODO should throw an error
+        return false;
+    }
+
     gvInstance = vk::createInstance(instanceCreateInfo, nullptr);
     VULKAN_HPP_DEFAULT_DISPATCHER.init(gvInstance);
     return true;
@@ -423,7 +429,7 @@ bool VulkanRenderDevice::create_logical_device() {
         static_cast<uint32_t>(deviceExtensions.size()),
         deviceExtensions.data(),
         &deviceFeatures,
-        indexingFeatures
+        &indexingFeatures
     };
 
     gvDevice = gvPhysicalDevice.createDevice(createInfo);
