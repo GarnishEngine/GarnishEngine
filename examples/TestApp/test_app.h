@@ -7,6 +7,8 @@
 #include <limits>
 #include <memory>
 #include <shader_program.hpp>
+#include <algorithm>
+
 const int32_t FRAME_RATE = 90;
 
 using namespace garnish;
