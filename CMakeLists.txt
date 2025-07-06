@@ -93,7 +93,10 @@ backends_contains("Vulkan" USE_VULKAN)
 if(USE_VULKAN)
     file(GLOB_RECURSE VULKAN_SRC src/Rendering/VulkanBackend/*.cc)
     list(APPEND ENGINE_SRC ${VULKAN_SRC})
+
     find_package(Vulkan REQUIRED)
+    target_include_directories(GarnishEngine PRIVATE ${Vulkan_INCLUDE_DIRS})
+
     add_subdirectory(3rdParty/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
 
     list(APPEND GARNISH_PRIVATE_LIBS
