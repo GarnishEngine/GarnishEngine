@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 project(TestApp)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(TestApp test_app.cc)
 
-target_include_directories(TestApp PUBLIC ../../src)
+target_include_directories(TestApp PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
-target_include_directories(TestApp PUBLIC ../../3rdParty/SDL)
-target_include_directories(TestApp PUBLIC ../../3rdParty/glm)
-target_include_directories(TestApp PUBLIC ../../3rdParty/tinyobjloader)
-target_include_directories(TestApp PUBLIC ../../3rdParty/stb)
-
-target_link_libraries(TestApp GarnishEngine)
+target_link_libraries(TestApp PRIVATE GarnishEngine imgui -fsanitize=address,undefined)
+target_compile_options(TestApp PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
