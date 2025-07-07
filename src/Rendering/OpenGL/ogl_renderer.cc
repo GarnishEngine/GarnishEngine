@@ -3,7 +3,6 @@
 #include <SDL3/SDL_video.h>
 #include <ecs_controller.h>
 #include <stb_image.h>
-#include <tiny_obj_loader.h>
 
 #include <chrono>
 #include <iostream>
@@ -85,44 +84,44 @@ bool OpenGLRenderDevice::set_uniform(glm::mat4 mvp) {
     return true;
 }
 
-uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
-    std::vector<OGLVertex3d> vertices;
-    std::vector<uint32_t> indices;
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(
-            &attrib,
-            &shapes,
-            &materials,
-            &warn,
-            &err,
-            mesh_path.c_str()
-        )) {
-        throw std::runtime_error(warn + err);
-    }
-
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            OGLVertex3d vert{};
-            vert.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
-
-            vert.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0F - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-            vert.color = {1.0F, 1.0F, 1.0F};
-            vertices.push_back(vert);
-
-            indices.push_back(indices.size());
-        }
-    }
+uint32_t OpenGLRenderDevice::setup_mesh(const std::vector<float>& vertices, const std::vector<uint32_t>& indices) {
+    // std::vector<OGLVertex3d> vertices;
+    // std::vector<uint32_t> indices;
+    // tinyobj::attrib_t attrib;
+    // std::vector<tinyobj::shape_t> shapes;
+    // std::vector<tinyobj::material_t> materials;
+    // std::string warn, err;
+    //
+    // if (!tinyobj::LoadObj(
+    //         &attrib,
+    //         &shapes,
+    //         &materials,
+    //         &warn,
+    //         &err,
+    //         mesh_path.c_str()
+    //     )) {
+    //     throw std::runtime_error(warn + err);
+    // }
+    //
+    // for (const auto& shape : shapes) {
+    //     for (const auto& index : shape.mesh.indices) {
+    //         OGLVertex3d vert{};
+    //         vert.pos = {
+    //             attrib.vertices[3 * index.vertex_index + 0],
+    //             attrib.vertices[3 * index.vertex_index + 1],
+    //             attrib.vertices[3 * index.vertex_index + 2]
+    //         };
+    //
+    //         vert.texCoord = {
+    //             attrib.texcoords[2 * index.texcoord_index + 0],
+    //             1.0F - attrib.texcoords[2 * index.texcoord_index + 1]
+    //         };
+    //         vert.color = {1.0F, 1.0F, 1.0F};
+    //         vertices.push_back(vert);
+    //
+    //         indices.push_back(indices.size());
+    //     }
+    // }
 
     OGLMesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);
@@ -134,7 +133,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(OGLVertex3d),
+        vertices.size() * 8 * sizeof(float), // 8 = 3 positions + 2 texture coords + 3 colours (rgb) // TODO This should not be hardcoded
         vertices.data(),
         GL_STATIC_DRAW
     );
@@ -142,7 +141,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        indices.size() * sizeof(unsigned int),
+        indices.size() * sizeof(uint32_t),
         indices.data(),
         GL_STATIC_DRAW
     );
@@ -154,28 +153,32 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, pos)
+        8 * sizeof(float),  // Total length of one vertex
+        (void*)0            // Offset from start
     );
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, color)
-    );
+
     // vertex3d texture coords
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(
-        2,
+        1,
         2,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, texCoord)
+        8 * sizeof(float),  // Total length of one vertex
+        (void*)3            // Offset from start
     );
+
+    // Color
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),  // Total length of one vertex
+        (void*)5            // Offset from start
+    );
+
     glBindVertexArray(0);
 
     mesh.size = indices.size();

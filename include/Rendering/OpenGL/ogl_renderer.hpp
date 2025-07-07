@@ -31,7 +31,9 @@ class OpenGLRenderDevice : public RenderDevice {
     bool set_uniform(glm::mat4 mvp) override;
     void set_shader();
 
-    uint32_t setup_mesh(const std::string& mesh_path) override;
+    using RenderDevice::setup_mesh;
+
+    uint32_t setup_mesh(const std::vector<float>& vertices, const std::vector<uint32_t>& indices) override;
     // void delete_mesh(uint32_t meshHandle);
     uint32_t load_texture(const std::string& texture_path) override;
 

@@ -25,7 +25,10 @@ class VulkanRenderDevice : public RenderDevice {
     bool set_uniform(glm::mat4 mvp) override;
     void cleanup() override;
     void update(ECSController& world) override;
-    uint32_t setup_mesh(const std::string& mesh_path) override;
+
+    using RenderDevice::setup_mesh;
+
+    uint32_t setup_mesh(const std::vector<float>& vertices, const std::vector<uint32_t>& indices) override;
     uint32_t load_texture(const std::string& path) override;
 
     // void delete_mesh(Mesh mesh);

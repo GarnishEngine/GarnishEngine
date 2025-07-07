@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <stdexcept>
+
 #include <SDL3/SDL_video.h>
 
 #include <glm/fwd.hpp>
@@ -21,7 +24,15 @@ class RenderDevice : garnish::System {
     virtual bool set_uniform(glm::mat4 mvp) = 0;
     virtual void cleanup() = 0;
 
-    virtual uint32_t setup_mesh(const std::string& mesh_path) = 0;
+    virtual uint32_t setup_mesh(const std::vector<float>& vertices, const std::vector<uint32_t>& indices) = 0;
+
+    enum class Primitive{
+        CUBE
+    };
+
+    uint32_t setup_mesh(const std::string& mesh_path);
+    uint32_t setup_mesh(const Primitive& primitive);
+
     virtual uint32_t load_texture(const std::string& texture_path) = 0;
 
     void update(ECSController& world) override = 0;
