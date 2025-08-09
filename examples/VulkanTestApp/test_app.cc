@@ -1,16 +1,19 @@
 #include "test_app.h"
 
 #include <cstdint>
+#include <ecs_controller.h>
+#include <shared.hpp>
+// Include via rendering namespace path rooted at src/Rendering
+#include <VulkanBackend/vulkan_renderer.hpp>
 
-#include "shader_program.hpp"
-#include "vulkan_renderer.hpp"
+using namespace garnish; 
 
 int main() {
     garnish::App app{
         {.backend = RenderingBackend::Vulkan,
-         .width = 800,
-         .height = 600,
-         .targetFps = 144}
+         .width = garnish::App::DEFAULT_WIDTH,
+         .height = garnish::App::DEFAULT_HEIGHT,
+         .targetFps = garnish::App::DEFAULT_TARGET_FPS}
     };
     auto c = app.get_controller().register_system<CameraSystem>(0);
 

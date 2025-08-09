@@ -1,12 +1,17 @@
 #pragma once
-#include <SDL3/SDL_video.h>
 
+#include <SDL3/SDL_video.h>
+#include <glm/vec2.hpp>
+#include <cstdint>
 #include <memory>
 
-#include "ecs_controller.h"
-#include "render_device.hpp"
+#include <ecs_controller.h>
+#include <Rendering/render_device.hpp>
+#include "Utility/sdl_raii.hpp"
 
 namespace garnish {
+class RenderDevice;
+
 enum class RenderingBackend : uint8_t {
 #ifdef _OPENGL_RENDERING
     OpenGL,
@@ -18,47 +23,54 @@ enum class RenderingBackend : uint8_t {
 
 class App {
    public:
+    static constexpr uint32_t DEFAULT_WIDTH = 800;
+    static constexpr uint32_t DEFAULT_HEIGHT = 600;
+    static constexpr uint32_t DEFAULT_TARGET_FPS = 144;
+
     struct CreateInfo {
-        RenderingBackend backend;
-        uint32_t width;
-        uint32_t height;
-        uint32_t targetFps = 144;
+        RenderingBackend backend = RenderingBackend::OpenGL;
+        uint32_t width = DEFAULT_WIDTH;
+        uint32_t height = DEFAULT_HEIGHT;
+        uint32_t targetFps = DEFAULT_TARGET_FPS;
     };
     App(CreateInfo createInfo = {
             .backend = RenderingBackend::OpenGL,
-            .width = 800,
-            .height = 600,
-            .targetFps = 144
+            .width = DEFAULT_WIDTH,
+            .height = DEFAULT_HEIGHT,
+            .targetFps = DEFAULT_TARGET_FPS
         });
-    virtual ~App();
+    virtual ~App() noexcept;
     App(const App&) = delete;
     App& operator=(const App&) = delete;
     App(App&&) = delete;
     App& operator=(App&&) = delete;
-    void pair_window_size(int32_t* width, int32_t* height) {
-        // SDL_GetWindowSize(window, width, height);
-    }
+
     virtual void run();
     virtual bool handle_poll_event();
     virtual void handle_all_events();
-    std::unique_ptr<RenderDevice>& get_render_device() { return renderDevice; }
 
-    SDL_Window*& get_window();
-    ECSController& get_controller() { return ecsController; }
+    std::unique_ptr<RenderDevice>& get_render_device() noexcept { return renderDevice; }
+    const std::unique_ptr<RenderDevice>& get_render_device() const noexcept { return renderDevice; }
+
+    SDL_Window* get_window() noexcept { return window.get(); }
+    const SDL_Window* get_window() const noexcept { return window.get(); }
+
+    ECSController& get_controller() noexcept { return ecsController; }
+    const ECSController& get_controller() const noexcept { return ecsController; }
 
    private:
     std::unique_ptr<RenderDevice> renderDevice;
     ECSController ecsController;
     bool shouldClose = false;
-    int32_t width;
-    int32_t height;
+    uint32_t width;
+    uint32_t height;
     uint32_t fps;
-    SDL_Window* window;
+    UniqueSDLWindow window;
     virtual void init();
     void init_imgui();
     void terminate_imgui();
-    SDL_Window* init_window(int64_t flags);
+    SDL_Window* init_window(int64_t flags) const;
     std::unique_ptr<RenderDevice> make_render_device(RenderingBackend backend);
-    //  Window garnishWindow;
+    void refresh_window_size();
 };
 }  // namespace garnish

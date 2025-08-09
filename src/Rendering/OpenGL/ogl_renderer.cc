@@ -9,8 +9,16 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <cstddef>
+
 
 namespace garnish {
+namespace { 
+void* buffer_offset(std::size_t offset) {
+    return reinterpret_cast<void*>(offset); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+}
+}
+
 using hrclock = std::chrono::high_resolution_clock;
 using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
@@ -26,27 +34,26 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
         SDL_GL_CONTEXT_PROFILE_CORE
     );
 
-    glContext = SDL_GL_CreateContext(window);
-    if (!glContext) {
+    auto* raw = SDL_GL_CreateContext(window); // was 'auto raw'
+    if (!raw) {
         std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
         return false;
     }
+    glContext.reset(raw);
 
-    SDL_GL_MakeCurrent(window, glContext);
+    SDL_GL_MakeCurrent(window, glContext.get());
 
     if (glewInit() != GLEW_OK) {
         throw std::runtime_error("GLEW failed to initialize");
     }
 
-    glViewport(0, 0, info.width, info.height);
+    glViewport(0, 0, static_cast<GLsizei>(info.width), static_cast<GLsizei>(info.height));
     glEnable(GL_DEPTH_TEST);
-    // SDL_GL_SetSwapInterval(info.vsync ? 1 : 0); maybe one day
 
     shaderProgram = std::make_unique<ShaderProgram>(
         "shaders/shader.vert",
         "shaders/shader.frag"
     );
-    // shaderProgram->use();
     return true;
 }
 
@@ -57,7 +64,7 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
         glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // mShader.use();
-        glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle]);
+        glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle].id);
 
         glBindVertexArray(meshes[dra.meshHandle].VAO);
 
@@ -91,7 +98,8 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
+    std::string warn;
+    std::string err;
 
     if (!tinyobj::LoadObj(
             &attrib,
@@ -108,14 +116,14 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         for (const auto& index : shape.mesh.indices) {
             OGLVertex3d vert{};
             vert.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
+                attrib.vertices[(3 * index.vertex_index) + 0],
+                attrib.vertices[(3 * index.vertex_index) + 1],
+                attrib.vertices[(3 * index.vertex_index) + 2]
             };
 
             vert.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0F - attrib.texcoords[2 * index.texcoord_index + 1]
+                attrib.texcoords[(2 * index.texcoord_index) + 0],
+                1.0F - attrib.texcoords[(2 * index.texcoord_index) + 1]
             };
             vert.color = {1.0F, 1.0F, 1.0F};
             vertices.push_back(vert);
@@ -134,7 +142,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(OGLVertex3d),
+        static_cast<GLsizeiptr>(vertices.size() * sizeof(OGLVertex3d)),
         vertices.data(),
         GL_STATIC_DRAW
     );
@@ -142,7 +150,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        indices.size() * sizeof(unsigned int),
+        static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)),
         indices.data(),
         GL_STATIC_DRAW
     );
@@ -155,7 +163,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         GL_FLOAT,
         GL_FALSE,
         sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, pos)
+        buffer_offset(offsetof(OGLVertex3d, pos))
     );
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(
@@ -164,7 +172,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         GL_FLOAT,
         GL_FALSE,
         sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, color)
+        buffer_offset(offsetof(OGLVertex3d, color))
     );
     // vertex3d texture coords
     glEnableVertexAttribArray(2);
@@ -174,18 +182,20 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         GL_FLOAT,
         GL_FALSE,
         sizeof(OGLVertex3d),
-        (void*)offsetof(OGLVertex3d, texCoord)
+        buffer_offset(offsetof(OGLVertex3d, texCoord)) // removed pointer arithmetic
     );
     glBindVertexArray(0);
 
-    mesh.size = indices.size();
+    mesh.size = static_cast<GLsizei>(indices.size());
 
-    meshes.push_back(mesh);
+    meshes.push_back(std::move(mesh));
     return meshes.size() - 1;
 }
 
 uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
-    int mTexWidth, mTexHeight, nrChannels = 0;
+    int mTexWidth = 0;
+    int mTexHeight = 0; 
+    int nrChannels = 0;
     unsigned int texID = -1;
     // stbi_set_flip_vertically_on_load(true);
     unsigned char* textureData = stbi_load(
@@ -230,7 +240,7 @@ uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(textureData);
 
-    textures.push_back(texID);
+    textures.emplace_back(texID);
     return textures.size() - 1;
 }
 

@@ -1,16 +1,15 @@
 #include "pong.h"
 
 #include <cstdint>
-
-#include "shader_program.hpp"
-#include "vulkan_renderer.hpp"
+#include <shared.hpp>
+#include <VulkanBackend/vulkan_renderer.hpp>
 
 int main() {
     garnish::App app{
         {.backend = RenderingBackend::Vulkan,
-         .width = 800,
-         .height = 600,
-         .targetFps = 144}
+         .width = garnish::App::DEFAULT_WIDTH,
+         .height = garnish::App::DEFAULT_HEIGHT,
+         .targetFps = garnish::App::DEFAULT_TARGET_FPS}
     };
     app.get_controller().register_component<Renderable>();
 
@@ -23,13 +22,6 @@ int main() {
     auto vikingRoom = app.get_controller().create_entity_with_components(
         Renderable{.meshHandle = meshHandle, .texHandle = texHandle}
     );
-
-    // // TODO 3d mesh
-    //  = app.get_controller().create_entity();
-
-    // garnish::Mesh gMesh;
-    // garnish::Texture texture;
-    // texture.load_texture();
 
     app.run();
 }

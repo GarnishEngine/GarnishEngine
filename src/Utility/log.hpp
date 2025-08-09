@@ -1,9 +1,11 @@
-#include <chrono>
-#include <ctime>
+#pragma once
+
 #include <fstream>
-#include <iostream>
-#include <string>
 
 namespace garnish {
-inline std::ofstream log("log.txt");
+// Initialize log file for engine logging
+inline std::ofstream& get_log() {
+    static std::ofstream log_file("log.txt");
+    return log_file;
+}
 }

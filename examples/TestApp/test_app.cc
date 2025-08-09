@@ -1,7 +1,6 @@
 #include "test_app.h"
 
-#include "ogl_renderer.hpp"
-#include "shader_program.hpp"
+#include <Rendering/OpenGL/shader_program.hpp>
 
 int main() {
     garnish::App app{};

@@ -3,14 +3,13 @@
 #include <SDL3/SDL_video.h>
 
 #include <algorithm>
-#include <camera.hpp>
+#include <Utility/camera.hpp>
 #include <garnish_app.hpp>
 #include <limits>
-#include <memory>
-#include <shader_program.hpp>
+#include <Rendering/OpenGL/shader_program.hpp>
+#include <shared.hpp>
 
-#include "ecs_controller.h"
-#include "render_device.hpp"
+#include <ecs_controller.h>
 
 const int32_t FRAME_RATE = 90;
 
@@ -24,18 +23,18 @@ static float y = 0;
 //    public:
 //     void update(ECSController& world) override {
 //         ImGui::ShowDemoWindow();
-
+//
 //         static float f = 0.0f;
 //         static int counter = 0;
-
+//
 //         ImGui::Begin("Hello, world!");  // Create a window called "Hello,
-//                                         // world!" and append into it.
-
+//                                         // world! and append into it.
+//
 //         ImGui::Text("This is some useful text.");  // Display some text (you
 //         can
 //                                                    // use a format strings
 //                                                    too)
-
+//
 //         if (ImGui::Button(
 //                 "Button"
 //             ))  // Buttons return true when clicked (most widgets
@@ -47,7 +46,7 @@ static float y = 0;
 //         ImGui::Text("yaw = %f", yaw);
 //         ImGui::Text("x = %f", x);
 //         ImGui::Text("y = %f", y);
-
+//
 //         ImGuiIO& io = ImGui::GetIO();
 //         ImGui::Text(
 //             "Application average %.3f ms/frame (%.1f FPS)",

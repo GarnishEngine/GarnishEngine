@@ -11,6 +11,8 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
+struct TextureSize { int32_t width; int32_t height; }; // added for generate_mipmaps
+
 class VulkanRenderDevice : public RenderDevice {
    public:
     VulkanRenderDevice() = default;
@@ -40,6 +42,8 @@ class VulkanRenderDevice : public RenderDevice {
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t bufferDefaultSize = 1024 * 1024;
     const bool enableValidationLayers = true;
+    static constexpr float kSampleRateShadingMinFraction = 0.2F; // replaces magic number
+    static constexpr size_t kMat4Align = 16; // alignment constant
 
     struct GVMesh {
         uint32_t firstVertex;
@@ -68,7 +72,7 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vk::PresentModeKHR> presentModes;
     };
     struct UniformBufferObject {
-        alignas(16) glm::mat4 mvp;
+        alignas(kMat4Align) glm::mat4 mvp;
     };
     UniformBufferObject ubo{};
 
@@ -93,7 +97,7 @@ class VulkanRenderDevice : public RenderDevice {
     vk::RenderPass gvRenderPass;
     vk::PipelineLayout gvPipelineLayout;
     vk::Pipeline gvPipeline;
-    vk::SampleCountFlagBits msaaSamples;
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     vk::DescriptorPool gvDescriptorPool;
     vk::DescriptorSetLayout gvDescriptorSetLayout;
@@ -128,7 +132,7 @@ class VulkanRenderDevice : public RenderDevice {
     std::vector<GVMesh> gvMeshes;
     std::vector<GVTexture> gvTextures;
     std::unordered_map<size_t, uint32_t> loadedTextures;
-    uint32_t textureLimit;
+    uint32_t textureLimit = 0;
 
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -253,11 +257,11 @@ class VulkanRenderDevice : public RenderDevice {
     void generate_mipmaps(
         vk::Image image,
         vk::Format imageFormat,
-        int32_t texWidth,
-        int32_t texHeight,
+        TextureSize size,
         uint32_t mipLevels
     );
 };
+
 struct GVVertex3d {
     glm::vec3 pos;
     glm::vec3 color;
