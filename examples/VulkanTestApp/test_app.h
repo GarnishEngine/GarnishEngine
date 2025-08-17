@@ -19,11 +19,8 @@ float y = 0.0f;
 }
 
 class CameraSystem : public garnish::System {
-   public:
-    int32_t WIDTH = 600;
-    int32_t HEIGHT = 800;
-
-    void update(garnish::ECSController& world) override {
+    public:
+     void update(garnish::ECSController& world) override {
         auto cam_ent = world.get_entities<garnish::Camera>()[0];  // TODO this is really janky, need to do
                                     // something about the camera
         auto& cam = world.get_component<garnish::Camera>(cam_ent);
@@ -90,29 +87,6 @@ class CameraSystem : public garnish::System {
             cam.held = false;
         }
 
-        glm::mat4 model{1.0f};
-        model = glm::translate(model, glm::vec3{0.0f, -0.3f, 2.0f});
 
-        model = glm::rotate(
-            model,
-            glm::radians(-90.0f),
-            glm::vec3{1.0f, 0.0f, 0.0f}
-        );
-        model = glm::rotate(
-            model,
-            glm::radians(-135.0f),
-            glm::vec3{0.0f, 0.0f, 1.0f}
-        );
-
-        glm::mat4 projection = glm::perspective(
-            glm::radians(45.0f),
-            (float)WIDTH / (float)HEIGHT,
-            0.1f,
-            10.0f
-        );
-        projection[1][1] *= -1;
-
-        glm::mat4 mvp = projection * cam.view_matrix() * model;
-        world.get<garnish::RenderDevice*>()->set_uniform(mvp);
     }
 };

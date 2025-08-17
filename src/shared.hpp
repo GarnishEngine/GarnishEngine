@@ -10,7 +10,13 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+namespace garnish {
 struct Renderable {
     uint32_t meshHandle;
     uint32_t texHandle;
 };
+struct Transform {
+    glm::vec3 position{0.0F};
+    glm::quat rotation{1.0F, 0.0F, 0.0F, 0.0F};
+};
+}

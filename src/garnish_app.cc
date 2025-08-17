@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <thread>
 #include <chrono>
+#include "Physics/physics_system.hpp"
 
 #ifdef _OPENGL_RENDERING
 #include <imgui_impl_opengl3.h>
@@ -75,13 +76,14 @@ App::App(CreateInfo createInfo)
             throw std::runtime_error("not valid backend");
     }
     ecsController.set(renderDevice.get());
+    ecsController.register_system<PhysicsSystem>(0);
 }
 
 App::~App() noexcept {
     if (renderDevice) {
         renderDevice->cleanup();
     }
-    // UniqueSDLWindow will destroy window automatically
+
     SDL_Quit();
 }
 

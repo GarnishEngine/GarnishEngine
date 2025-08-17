@@ -6,13 +6,14 @@
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
-#include <chrono>
 #include <cstddef>
 #include <iostream>
 #include <read_file.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <span> 
+#include <Utility/camera.hpp>
+#include <Physics/physics_system.hpp> 
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -97,6 +98,7 @@ bool VulkanRenderDevice::init_vulkan() {
     create_vertex_buffer();
     create_index_buffer();
     create_uniform_buffers();
+    create_model_buffers(kInitialModelCapacity);
 
     create_descriptor_pool();
     create_descriptor_sets();
@@ -125,6 +127,8 @@ void VulkanRenderDevice::cleanup() {
         gvDevice.destroyBuffer(uniformBuffers[i], nullptr);
         gvDevice.freeMemory(uniformBuffersMemory[i], nullptr);
     }
+
+    destroy_model_buffers();
 
     gvDevice.destroyDescriptorPool(gvDescriptorPool, nullptr);
     gvDevice.destroyDescriptorSetLayout(gvDescriptorSetLayout, nullptr);
@@ -614,51 +618,20 @@ vk::ImageView VulkanRenderDevice::create_image_view(
 }
 
 bool VulkanRenderDevice::create_descriptor_set_layout() {
-    vk::DescriptorSetLayoutBinding uboBinding{
-        0,  // binding = 0
-        vk::DescriptorType::eUniformBuffer,
-        1,
-        vk::ShaderStageFlagBits::eVertex
+    // binding 0: camera UBO, binding 1: model storage buffer, binding 2: sampler, binding 3: sampled image array
+    vk::DescriptorSetLayoutBinding camBinding{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex};
+    vk::DescriptorSetLayoutBinding modelBinding{1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex};
+    vk::DescriptorSetLayoutBinding sampBinding{2, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment, &gvTextureSampler};
+    vk::DescriptorSetLayoutBinding imgBinding{3, vk::DescriptorType::eSampledImage, textureLimit, vk::ShaderStageFlagBits::eFragment};
+    std::array bindings{camBinding, modelBinding, sampBinding, imgBinding};
+    std::array bindingFlags{
+        vk::DescriptorBindingFlags{},
+        vk::DescriptorBindingFlags{},
+        vk::DescriptorBindingFlags{},
+        vk::DescriptorBindingFlags{vk::DescriptorBindingFlagBits::ePartiallyBound | vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::eUpdateAfterBind}
     };
-
-    vk::DescriptorSetLayoutBinding sampBinding{
-        1,  // binding = 1
-        vk::DescriptorType::eSampler,
-        1,
-        vk::ShaderStageFlagBits::eFragment,
-        &gvTextureSampler
-    };
-
-    vk::DescriptorSetLayoutBinding imgBinding{
-        2,  // binding = 2
-        vk::DescriptorType::eSampledImage,
-        textureLimit,
-        vk::ShaderStageFlagBits::eFragment
-    };
-
-    std::array bindings{uboBinding, sampBinding, imgBinding};
-
-    std::array bindingFlags = {
-        vk::DescriptorBindingFlags{},  // binding = 0
-        vk::DescriptorBindingFlags{},  // binding = 1
-        vk::DescriptorBindingFlags{
-            vk::DescriptorBindingFlagBits::ePartiallyBound |
-            vk::DescriptorBindingFlagBits::eVariableDescriptorCount |
-            vk::DescriptorBindingFlagBits::eUpdateAfterBind
-        }  // binding = 3
-    };
-    vk::DescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{
-        bindings.size(),
-        bindingFlags.data()
-    };
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{
-        vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
-        bindings.size(),
-        bindings.data(),
-        &flagsInfo
-    };
-
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{bindings.size(), bindingFlags.data()};
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool, bindings.size(), bindings.data(), &flagsInfo};
     gvDescriptorSetLayout = gvDevice.createDescriptorSetLayout(layoutInfo);
     return true;
 }
@@ -845,11 +818,9 @@ bool VulkanRenderDevice::create_graphics_pipeline() {
         dynamicStates.data()
     };
 
-    vk::PushConstantRange pcRange{
-        vk::ShaderStageFlagBits::eFragment,
-        0,
-        sizeof(uint32_t)
-    };
+    // Push constants: texture index + model index
+    struct PC { uint32_t texIndex; uint32_t modelIndex; };
+    vk::PushConstantRange pcRange{vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex, 0, sizeof(PC)};
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
         {},
@@ -857,7 +828,6 @@ bool VulkanRenderDevice::create_graphics_pipeline() {
         &gvDescriptorSetLayout,
         1,
         &pcRange
-
     };
 
     gvPipelineLayout = gvDevice.createPipelineLayout(pipelineLayoutInfo);
@@ -1178,7 +1148,7 @@ void VulkanRenderDevice::create_index_buffer() {
 }
 
 void VulkanRenderDevice::create_uniform_buffers() {
-    vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+    vk::DeviceSize bufferSize = sizeof(CameraUBO);
 
     uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1199,20 +1169,56 @@ void VulkanRenderDevice::create_uniform_buffers() {
     }
 }
 
+void VulkanRenderDevice::create_model_buffers(uint32_t minCapacity) {
+    modelBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    modelBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    modelBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+    modelBufferCapacity = std::max(minCapacity, kInitialModelCapacity);
+    vk::DeviceSize bufferSize = static_cast<vk::DeviceSize>(modelBufferCapacity) * sizeof(glm::mat4);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+        create_buffer(bufferSize, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, modelBuffers[i], modelBuffersMemory[i]);
+        modelBuffersMapped[i] = gvDevice.mapMemory(modelBuffersMemory[i], 0, bufferSize);
+    }
+}
+
+void VulkanRenderDevice::destroy_model_buffers() {
+    for (size_t i = 0; i < modelBuffers.size(); ++i) {
+        if (modelBuffers[i]) {
+            gvDevice.unmapMemory(modelBuffersMemory[i]);
+            gvDevice.destroyBuffer(modelBuffers[i]);
+            gvDevice.freeMemory(modelBuffersMemory[i]);
+        }
+    }
+    modelBuffers.clear();
+    modelBuffersMemory.clear();
+    modelBuffersMapped.clear();
+    modelBufferCapacity = 0;
+}
+
+void VulkanRenderDevice::ensure_model_capacity(uint32_t requiredModelCount) {
+    if (requiredModelCount <= modelBufferCapacity) return;
+    uint32_t newCap = modelBufferCapacity;
+    while (newCap < requiredModelCount) newCap *= 2;
+    destroy_model_buffers();
+    create_model_buffers(newCap);
+    update_descriptor_sets();
+}
+
+void VulkanRenderDevice::update_camera_buffer(uint32_t currentImage) {
+    memcpy(uniformBuffersMapped[currentImage], &cameraUbo, sizeof(CameraUBO));
+}
+
+void VulkanRenderDevice::update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models) {
+    auto bytes = models.size() * sizeof(glm::mat4);
+    memcpy(modelBuffersMapped[currentImage], models.data(), bytes);
+}
+
 bool VulkanRenderDevice::create_descriptor_pool() {
     std::array poolSizes{
-        vk::DescriptorPoolSize{
-            vk::DescriptorType::eUniformBuffer,
-            MAX_FRAMES_IN_FLIGHT
-        },  // binding = 1
-        vk::DescriptorPoolSize{
-            vk::DescriptorType::eSampler,
-            MAX_FRAMES_IN_FLIGHT
-        },  // binding = 2
-        vk::DescriptorPoolSize{
-            vk::DescriptorType::eSampledImage,
-            textureLimit * MAX_FRAMES_IN_FLIGHT
-        }  // binding = 3
+        vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, MAX_FRAMES_IN_FLIGHT},
+        vk::DescriptorPoolSize{vk::DescriptorType::eStorageBuffer, MAX_FRAMES_IN_FLIGHT},
+        vk::DescriptorPoolSize{vk::DescriptorType::eSampler, MAX_FRAMES_IN_FLIGHT},
+        vk::DescriptorPoolSize{vk::DescriptorType::eSampledImage, textureLimit * MAX_FRAMES_IN_FLIGHT}
     };
 
     vk::DescriptorPoolCreateInfo poolInfo{
@@ -1255,57 +1261,32 @@ bool VulkanRenderDevice::create_descriptor_sets() {
 }
 
 void VulkanRenderDevice::update_descriptor_sets() {
-    if (gvTextures.empty()) return;
-
+    if (descriptorSets.empty()) return;
     std::vector<vk::DescriptorImageInfo> imageInfos(gvTextures.size());
     for (uint32_t i = 0; i < gvTextures.size(); ++i) {
-        imageInfos[i] = vk::DescriptorImageInfo{
-            VK_NULL_HANDLE,
-            gvTextures[i].textureImageView,
-            vk::ImageLayout::eShaderReadOnlyOptimal
-        };
+        imageInfos[i] = vk::DescriptorImageInfo{VK_NULL_HANDLE, gvTextures[i].textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal};
     }
-
-    std::vector<vk::DescriptorBufferInfo> uboInfos(MAX_FRAMES_IN_FLIGHT);
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        uboInfos[i] = vk::DescriptorBufferInfo{
-            uniformBuffers[i],
-            0,
-            sizeof(UniformBufferObject)
-        };
+    std::vector<vk::DescriptorBufferInfo> camInfos(MAX_FRAMES_IN_FLIGHT);
+    std::vector<vk::DescriptorBufferInfo> modelInfos(MAX_FRAMES_IN_FLIGHT);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+        camInfos[i] = vk::DescriptorBufferInfo{uniformBuffers[i], 0, sizeof(CameraUBO)};
+        if (!modelBuffers.empty()) {
+            modelInfos[i] = vk::DescriptorBufferInfo{modelBuffers[i], 0, static_cast<vk::DeviceSize>(modelBufferCapacity) * sizeof(glm::mat4)};
+        }
     }
-
-    std::vector<vk::WriteDescriptorSet> descriptorWrites;
-    descriptorWrites.reserve(static_cast<size_t>(MAX_FRAMES_IN_FLIGHT) * 2);
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vk::WriteDescriptorSet bufWrite{
-            descriptorSets[i],
-            0,
-            0,
-            1,
-            vk::DescriptorType::eUniformBuffer,
-            {},
-            &uboInfos[i]
-        };
-        vk::WriteDescriptorSet imgWrite{
-            descriptorSets[i],
-            2,
-            0,
-            static_cast<uint32_t>(gvTextures.size()),
-            vk::DescriptorType::eSampledImage,
-            imageInfos.data()
-        };
-
-        descriptorWrites.push_back(bufWrite);
-        descriptorWrites.push_back(imgWrite);
+    std::vector<vk::WriteDescriptorSet> writes;
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+        writes.emplace_back(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &camInfos[i]);
+        if (!modelBuffers.empty()) {
+            writes.emplace_back(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &modelInfos[i]);
+        }
+        if (!gvTextures.empty()) {
+            writes.emplace_back(descriptorSets[i], 3, 0, static_cast<uint32_t>(gvTextures.size()), vk::DescriptorType::eSampledImage, imageInfos.data());
+        }
     }
-
-    gvDevice.updateDescriptorSets(
-        static_cast<uint32_t>(descriptorWrites.size()),
-        descriptorWrites.data(),
-        0,
-        nullptr
-    );
+    if (!writes.empty()) {
+        gvDevice.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+    }
 }
 
 void VulkanRenderDevice::create_buffer(
@@ -1414,14 +1395,12 @@ void VulkanRenderDevice::transition_image_layout(
         newLayout == vk::ImageLayout::eTransferDstOptimal) {
         src = vk::AccessFlagBits::eNone;
         dst = vk::AccessFlagBits::eTransferWrite;
-
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eTransfer;
     } else if (oldLayout == vk::ImageLayout::eTransferDstOptimal &&
                newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
         src = vk::AccessFlagBits::eTransferWrite;
         dst = vk::AccessFlagBits::eShaderRead;
-
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     } else if (oldLayout == vk::ImageLayout::eUndefined &&
@@ -1429,7 +1408,6 @@ void VulkanRenderDevice::transition_image_layout(
         src = vk::AccessFlagBits::eNone;
         dst = vk::AccessFlagBits::eDepthStencilAttachmentRead |
               vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = destinationStage =
             vk::PipelineStageFlagBits::eEarlyFragmentTests;
@@ -1554,39 +1532,66 @@ void VulkanRenderDevice::record_command_buffer(
     vk::Rect2D scissor{{0, 0}, gvSwapChainExtent};
 
     commandBuffer.setScissor(0, 1, &scissor);
-    for (auto e : world.get_entities<Renderable>()) {
+
+    glm::mat4 view{1.0F};
+    glm::mat4 proj{1.0F};
+    auto cameras = world.get_entities<garnish::Camera>();
+    if (!cameras.empty()) {
+        auto& cam = world.get_component<garnish::Camera>(cameras[0]);
+        view = cam.view_matrix();
+        constexpr float kFovDeg = 45.0F;
+        constexpr float kNear = 0.1F;
+        constexpr float kFar = 100.0F;
+        proj = glm::perspective(glm::radians(kFovDeg), static_cast<float>(gvSwapChainExtent.width) / static_cast<float>(gvSwapChainExtent.height), kNear, kFar);
+        proj[1][1] *= -1.0F;
+    }
+    cameraUbo.view = view;
+    cameraUbo.proj = proj;
+
+    auto entities = world.get_entities<Renderable, Transform>();
+    std::vector<glm::mat4> modelMatrices;
+
+    modelMatrices.reserve(entities.size());
+
+    for (auto e : entities) {
+        const auto& tf = world.get_component<Transform>(e);
+        glm::mat4 model{1.0F};
+        model = glm::translate(model, tf.position);
+        model *= glm::mat4_cast(tf.rotation);
+        modelMatrices.push_back(model);
+    }
+
+    ensure_model_capacity(static_cast<uint32_t>(modelMatrices.size()));
+    update_model_buffer(currentFrame, modelMatrices);
+
+    // Bind descriptor sets once
+    commandBuffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        gvPipelineLayout,
+        0,
+        1,
+        &descriptorSets[currentFrame],
+        0,
+        nullptr
+    );
+
+    uint32_t modelIdx = 0;
+    for (auto e : entities) {
         const auto& r = world.get_component<Renderable>(e);
         const auto& msh = gvMeshes[r.meshHandle];
-
-        vk::DeviceSize vByteOffset =
-            static_cast<vk::DeviceSize>(msh.firstVertex) * sizeof(GVVertex3d);
-
+        vk::DeviceSize vByteOffset = static_cast<vk::DeviceSize>(msh.firstVertex) * sizeof(GVVertex3d);
         commandBuffer.bindVertexBuffers(0, 1, &vertexBuffer, &vByteOffset);
-        commandBuffer.bindIndexBuffer(
-            indexBuffer,
-            static_cast<vk::DeviceSize>(msh.firstIndex) * sizeof(uint32_t),
-            vk::IndexType::eUint32
-        );
-
-        commandBuffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            gvPipelineLayout,
-            0,
-            1,
-            &descriptorSets[currentFrame],
-            0,
-            nullptr
-        );
-
+        commandBuffer.bindIndexBuffer(indexBuffer, static_cast<vk::DeviceSize>(msh.firstIndex) * sizeof(uint32_t), vk::IndexType::eUint32);
+        struct PC { uint32_t texIndex; uint32_t modelIndex; } pc{.texIndex=r.texHandle, .modelIndex=modelIdx};
         commandBuffer.pushConstants(
             gvPipelineLayout,
-            vk::ShaderStageFlagBits::eFragment,
+            vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex,
             0,
-            sizeof(uint32_t),
-            &r.texHandle
+            sizeof(PC),
+            &pc
         );
-
         commandBuffer.drawIndexed(msh.indexCount, 1, 0, 0, 0);
+        ++modelIdx;
     }
 
     commandBuffer.endRenderPass();
@@ -1613,10 +1618,6 @@ bool VulkanRenderDevice::create_sync_objects() {
     }
 
     return true;
-}
-
-void VulkanRenderDevice::update_uniform_buffer(uint32_t currentImage) {
-    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
 bool VulkanRenderDevice::draw_frame(ECSController& world) {
@@ -1650,8 +1651,7 @@ bool VulkanRenderDevice::draw_frame(ECSController& world) {
     gvCommandBuffers[currentFrame].reset();
 
     record_command_buffer(gvCommandBuffers[currentFrame], imageIndex, world);
-
-    update_uniform_buffer(currentFrame);
+    update_camera_buffer(currentFrame);
     const std::array<vk::Semaphore,1> waitSemaphores{imageAvailableSemaphores[currentFrame]};
     const std::array<vk::PipelineStageFlags,1> waitStages{vk::PipelineStageFlagBits::eColorAttachmentOutput};
     const std::array<vk::Semaphore,1> signalSemaphores{renderFinishedSemaphores[imageIndex]};
@@ -1911,9 +1911,5 @@ vk::SampleCountFlagBits VulkanRenderDevice::max_usable_sample_count() const {
     if (counts & vk::SampleCountFlagBits::e2) { return vk::SampleCountFlagBits::e2; }
 
     return vk::SampleCountFlagBits::e1;
-}
-bool VulkanRenderDevice::set_uniform(glm::mat4 mvp) {
-    ubo.mvp = mvp;
-    return true;
 }
 }  // namespace garnish

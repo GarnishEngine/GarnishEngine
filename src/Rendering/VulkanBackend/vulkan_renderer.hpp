@@ -11,7 +11,7 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-struct TextureSize { int32_t width; int32_t height; }; // added for generate_mipmaps
+struct TextureSize { int32_t width; int32_t height; };
 
 class VulkanRenderDevice : public RenderDevice {
    public:
@@ -24,15 +24,10 @@ class VulkanRenderDevice : public RenderDevice {
 
     bool init(InitInfo& info) override;
     bool draw_frame(ECSController& world) override;
-    bool set_uniform(glm::mat4 mvp) override;
     void cleanup() override;
     void update(ECSController& world) override;
     uint32_t setup_mesh(const std::string& mesh_path) override;
     uint32_t load_texture(const std::string& path) override;
-
-    // void delete_mesh(Mesh mesh);
-    // rawmesh load_mesh(const std::string& mesh_path);
-    // texture load_texture(const std::string& texture_path);
 
    private:
     std::vector<const char*> deviceExtensions = {
@@ -42,8 +37,8 @@ class VulkanRenderDevice : public RenderDevice {
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t bufferDefaultSize = 1024 * 1024;
     const bool enableValidationLayers = true;
-    static constexpr float kSampleRateShadingMinFraction = 0.2F; // replaces magic number
-    static constexpr size_t kMat4Align = 16; // alignment constant
+    static constexpr float kSampleRateShadingMinFraction = 0.2F;
+    static constexpr size_t kMat4Align = 16;
 
     struct GVMesh {
         uint32_t firstVertex;
@@ -71,10 +66,17 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vk::SurfaceFormatKHR> formats;
         std::vector<vk::PresentModeKHR> presentModes;
     };
-    struct UniformBufferObject {
-        alignas(kMat4Align) glm::mat4 mvp;
+    struct CameraUBO {
+        alignas(kMat4Align) glm::mat4 view;
+        alignas(kMat4Align) glm::mat4 proj;
     };
-    UniformBufferObject ubo{};
+    CameraUBO cameraUbo{};
+
+    std::vector<vk::Buffer> modelBuffers;
+    std::vector<vk::DeviceMemory> modelBuffersMemory;
+    std::vector<void*> modelBuffersMapped;
+    uint32_t modelBufferCapacity = 0;
+    static constexpr uint32_t kInitialModelCapacity = 256;
 
     vk::DebugUtilsMessengerEXT gvDebugMessenger;
 
@@ -119,7 +121,6 @@ class VulkanRenderDevice : public RenderDevice {
     vk::Image depthImage;
     vk::DeviceMemory depthImageMemory;
     vk::ImageView depthImageView;
-    // VmaAllocation gvDepthAllocation;
     vk::DeviceSize totalVertexBytes = 0;
     vk::DeviceSize totalIndexBytes = 0;
 
@@ -139,8 +140,6 @@ class VulkanRenderDevice : public RenderDevice {
     std::vector<void*> uniformBuffersMapped;
 
     uint32_t mipLevels = 0;
-
-    // VmaAllocation gvTextureAllocation;
 
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
@@ -202,7 +201,11 @@ class VulkanRenderDevice : public RenderDevice {
     void create_vertex_buffer();
     void create_index_buffer();
     void create_uniform_buffers();
-    void update_uniform_buffer(uint32_t currentImage);
+    void create_model_buffers(uint32_t minCapacity);
+    void destroy_model_buffers();
+    void ensure_model_capacity(uint32_t requiredModelCount);
+    void update_camera_buffer(uint32_t currentImage);
+    void update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models);
 
     bool create_descriptor_pool();
     bool create_descriptor_sets();

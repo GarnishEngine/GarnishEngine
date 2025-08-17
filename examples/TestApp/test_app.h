@@ -120,7 +120,7 @@ class CameraSystem : public System {
             cam.right = glm::normalize(glm::cross(cam.forward, cam.up));
 
             x = cam.position.x;
-            y = cam.position.x;
+            y = cam.position.y;
             pitch = cam.pitch;
             yaw = cam.yaw;
 
@@ -128,28 +128,5 @@ class CameraSystem : public System {
         } else {
             cam.held = false;
         }
-        glm::mat4 model{1.0f};
-        model = glm::translate(model, glm::vec3{0.0f, -0.3f, 3.0f});
-
-        model = glm::rotate(
-            model,
-            glm::radians(-90.0f),
-            glm::vec3{1.0f, 0.0f, 0.0f}
-        );
-        model = glm::rotate(
-            model,
-            glm::radians(-135.0f),
-            glm::vec3{0.0f, 0.0f, 1.0f}
-        );
-
-        glm::mat4 projection = glm::perspective(
-            glm::radians(60.0f),
-            (float)WIDTH / (float)HEIGHT,
-            0.01f,
-            1000.0f
-        );
-
-        glm::mat4 mvp = projection * cam.view_matrix() * model;
-        world.get<RenderDevice*>()->set_uniform(mvp);
     }
 };

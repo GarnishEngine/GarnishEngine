@@ -10,6 +10,8 @@
 #include <memory>
 #include <stdexcept>
 #include <cstddef>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 
 namespace garnish {
@@ -58,22 +60,47 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
 }
 
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
-    for (Entity& entity : world.get_entities<Renderable>()) {
-        auto dra = world.get_component<Renderable>(entity);
+    // Acquire camera (first one if multiple)
+    glm::mat4 view{1.0F};
+    glm::mat4 proj{1.0F};
+    auto cameras = world.get_entities<garnish::Camera>();
+    if (!cameras.empty()) {
+        auto &cam = world.get_component<garnish::Camera>(cameras[0]);
+        view = cam.view_matrix();
+    }
+    int w = 0;
+    int h = 0;
+    SDL_GetWindowSize(window, &w, &h);
+    if (h == 0) h = 1;
+    constexpr float kFovDeg = 60.0F;
+    constexpr float kNear = 0.01F;
+    constexpr float kFar = 1000.0F;
+    proj = glm::perspective(
+        glm::radians(kFovDeg),
+        static_cast<float>(w) / static_cast<float>(h),
+        kNear,
+        kFar
+    );
 
-        glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // mShader.use();
+    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    shaderProgram->use();
+
+    auto entities = world.get_entities<Renderable>();
+    for (Entity entity : entities) {
+        auto &dra = world.get_component<Renderable>(entity);
+        glm::mat4 model{1.0F};
+        if (world.has_component<Transform>(entity)) {
+            auto &tf = world.get_component<Transform>(entity);
+            model = glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
+        }
+        glm::mat4 mvp = proj * view * model;
+        shaderProgram->set_uniform("mvp", mvp);
+
         glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle].id);
-
         glBindVertexArray(meshes[dra.meshHandle].VAO);
-
-        glDrawElements(
-            GL_TRIANGLES,
-            meshes[dra.meshHandle].size,
-            GL_UNSIGNED_INT,
-            nullptr
-        );
+        glDrawElements(GL_TRIANGLES, meshes[dra.meshHandle].size, GL_UNSIGNED_INT, nullptr);
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
     }
@@ -87,10 +114,6 @@ void OpenGLRenderDevice::update(ECSController& world) {
 
 void OpenGLRenderDevice::cleanup() {}
 
-bool OpenGLRenderDevice::set_uniform(glm::mat4 mvp) {
-    shaderProgram->set_uniform("mvp", mvp);
-    return true;
-}
 
 uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
     std::vector<OGLVertex3d> vertices;

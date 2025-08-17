@@ -2,6 +2,8 @@
 #include <shader_program.hpp>
 #include <shared.hpp>
 #include <vector>
+#include <Utility/camera.hpp>
+#include <Physics/physics_system.hpp>
 
 #define GLEW_STATIC
 #define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
@@ -29,7 +31,6 @@ class OpenGLRenderDevice : public RenderDevice {
     bool draw_frame(ECSController& world) override;
     void cleanup() override;
     void update(ECSController& world) override;
-    bool set_uniform(glm::mat4 mvp) override;
     void set_shader();
 
     uint32_t setup_mesh(const std::string& mesh_path) override;

@@ -5,7 +5,7 @@
 #include <glm/fwd.hpp>
 #include <string>
 
-#include "../../GarnishECS/include/system.h"  // ensure System base is visible
+#include <system.h>
 
 namespace garnish {
 class ECSController;  // forward declaration
@@ -22,7 +22,6 @@ class RenderDevice : public garnish::System {
     };
     virtual bool init(InitInfo& info) = 0;
     virtual bool draw_frame(ECSController& world) = 0;
-    virtual bool set_uniform(glm::mat4 mvp) = 0;
     virtual void cleanup() = 0;
 
     virtual uint32_t setup_mesh(const std::string& mesh_path) = 0;
