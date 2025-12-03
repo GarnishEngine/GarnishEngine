@@ -38,11 +38,28 @@ endif()
 add_subdirectory(3rdParty/SDL           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
-add_subdirectory(GarnishECS             EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/GarnishECS    EXCLUDE_FROM_ALL)
 
-# ImGui core + conditional backends
-file(GLOB IMGUI_CORE
-    3rdParty/imgui/imgui*.cpp
+file(GLOB IMGUI_SOURCES
+        "3rdParty/imgui/*.h"
+        "3rdParty/imgui/*.cpp"
+        "3rdParty/imgui/backends/imgui_impl_opengl3.cpp"
+        "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
+target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui/backends)
+target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
+list(APPEND GARNISH_PRIVATE_LIBS SDL3::SDL3 glm::glm GarnishECS imgui)
+
+target_include_directories(GarnishEngine
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include     
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering     
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/GarnishECS/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glm
 )
 set(IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_sdl3.cpp)
 if(USE_OPENGL)
