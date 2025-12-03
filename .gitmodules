@@ -19,9 +19,6 @@
 [submodule "3rdParty/GarnishECS"]
 	path = GarnishECS
 	url = git@github.com:GarnishEngine/GarnishECS.git
-[submodule "GarnishECS"]
-	path = GarnishECS
-	url = git@github.com:GarnishEngine/GarnishECS.git
 [submodule "3rdParty/VulkanMemoryAllocator"]
 	path = 3rdParty/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
