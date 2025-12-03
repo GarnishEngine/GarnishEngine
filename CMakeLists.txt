@@ -121,6 +121,7 @@ target_include_directories(GarnishEngine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/GarnishECS/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src            # TODO: migrate public headers out of src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering  # TODO: migrate public headers out of src
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glm
 )
 # Private includes internal to the engine
 target_include_directories(GarnishEngine PRIVATE
