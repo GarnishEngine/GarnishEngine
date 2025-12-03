@@ -55,6 +55,7 @@ target_include_directories(GarnishEngine
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/GarnishECS/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glm
 )
 
 macro(backends_contains name result)
