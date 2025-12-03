@@ -65,7 +65,6 @@ set(IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_sdl3.cpp)
 if(USE_OPENGL)
     list(APPEND IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_opengl3.cpp)
 endif()
-add_library(imgui STATIC ${IMGUI_CORE} ${IMGUI_BACKENDS})
 
 target_include_directories(imgui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
