@@ -34,7 +34,7 @@ endif()
 add_subdirectory(3rdParty/SDL           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
-add_subdirectory(GarnishECS             EXCLUDE_FROM_ALL)
+add_subdirectory(3rdParty/GarnishECS    EXCLUDE_FROM_ALL)
 
 file(GLOB IMGUI_SOURCES
         "3rdParty/imgui/*.h"
@@ -54,7 +54,7 @@ target_include_directories(GarnishEngine
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering     
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
-    ${CMAKE_CURRENT_SOURCE_DIR}/GarnishECS/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/GarnishECS/include
 )
 
 macro(backends_contains name result)
