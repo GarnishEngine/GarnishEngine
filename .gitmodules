@@ -17,7 +17,7 @@
 	path = 3rdParty/glew
 	url = https://github.com/nigels-com/glew
 [submodule "3rdParty/GarnishECS"]
-	path = GarnishECS
+	path = 3rdParty/GarnishECS
 	url = git@github.com:GarnishEngine/GarnishECS.git
 [submodule "3rdParty/VulkanMemoryAllocator"]
 	path = 3rdParty/VulkanMemoryAllocator
