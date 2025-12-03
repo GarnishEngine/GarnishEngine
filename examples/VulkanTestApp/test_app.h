@@ -1,26 +1,27 @@
+#pragma once
+
 #include <algorithm>
 #include <garnish_app.hpp>
+#include <ecs_controller.h>
+#include <system.h>
 #include <limits>
-
+#include <Utility/camera.hpp>
+#include <shared.hpp>
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_mouse.h"
-#include "camera.hpp"
 
-const int32_t FRAME_RATE = 90;
+namespace {
+constexpr int32_t FRAME_RATE = 90;
+float yaw = 0.0f;
+float pitch = 0.0f;
+float x = 0.0f;
+float y = 0.0f;
+}
 
-using namespace garnish;
-static float yaw = 0.0f;
-static float pitch = 0;
-static float x = 0;
-static float y = 0;
-class CameraSystem : public System {
-   public:
-    int32_t WIDTH = 600;
-    int32_t HEIGHT = 800;
-
-    void update(ECSController& world) override {
-        auto cam_ent = world.get_entities<
-            garnish::Camera>()[0];  // TODO this is really janky, need to do
+class CameraSystem : public garnish::System {
+    public:
+     void update(garnish::ECSController& world) override {
+        auto cam_ent = world.get_entities<garnish::Camera>()[0];  // TODO this is really janky, need to do
                                     // something about the camera
         auto& cam = world.get_component<garnish::Camera>(cam_ent);
         if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
@@ -86,29 +87,6 @@ class CameraSystem : public System {
             cam.held = false;
         }
 
-        glm::mat4 model{1.0f};
-        model = glm::translate(model, glm::vec3{0.0f, -0.3f, 2.0f});
 
-        model = glm::rotate(
-            model,
-            glm::radians(-90.0f),
-            glm::vec3{1.0f, 0.0f, 0.0f}
-        );
-        model = glm::rotate(
-            model,
-            glm::radians(-135.0f),
-            glm::vec3{0.0f, 0.0f, 1.0f}
-        );
-
-        glm::mat4 projection = glm::perspective(
-            glm::radians(45.0f),
-            (float)WIDTH / (float)HEIGHT,
-            0.1f,
-            10.0f
-        );
-        projection[1][1] *= -1;
-
-        glm::mat4 mvp = projection * cam.view_matrix() * model;
-        world.get<RenderDevice*>()->set_uniform(mvp);
     }
 };

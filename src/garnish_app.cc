@@ -7,26 +7,25 @@
 #include <imgui_impl_sdl3.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <render_device.hpp>
 #include <stdexcept>
 #include <thread>
+#include <chrono>
+#include "Physics/physics_system.hpp"
 
 #ifdef _OPENGL_RENDERING
 #include <imgui_impl_opengl3.h>
 
-#include <ogl_renderer.hpp>
+#include "ogl_renderer.hpp"
 #endif
 #ifdef _VULKAN_RENDERING
 #include <SDL3/SDL_vulkan.h>
 
-#include <vulkan_renderer.hpp>
+#include "vulkan_renderer.hpp"
 #endif
 
 namespace garnish {
-using namespace std::chrono_literals;
-using namespace std::chrono;
-
 App::App(CreateInfo createInfo)
     : width(createInfo.width),
       height(createInfo.height),
@@ -34,7 +33,7 @@ App::App(CreateInfo createInfo)
       renderDevice(make_render_device(createInfo.backend)),
       window(nullptr) {
     init();
-    RenderDevice::InitInfo info;
+    RenderDevice::InitInfo info{}; // value-initialize
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
@@ -44,12 +43,12 @@ App::App(CreateInfo createInfo)
                 SDL_GL_CONTEXT_PROFILE_MASK,
                 SDL_GL_CONTEXT_PROFILE_CORE
             );
-            window = init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-            if (!window) throw std::runtime_error("wtf");
+            window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
+            if (!window) throw std::runtime_error("Failed to create OpenGL window");
             info = {
-                .nativeWindow = window,
-                .width = static_cast<uint32_t>(width),
-                .height = static_cast<uint32_t>(height),
+                .nativeWindow = window.get(),
+                .width = width,
+                .height = height,
                 .vsync = false
             };
             renderDevice->init(info);
@@ -58,15 +57,15 @@ App::App(CreateInfo createInfo)
 
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
-            window = init_window(
+            window.reset(init_window(
                 SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
                 SDL_WINDOW_RESIZABLE
-            );
-            if (!window) throw std::runtime_error("wtf vulkan");
+            ));
+            if (!window) throw std::runtime_error("Failed to create Vulkan window");
             info = {
-                .nativeWindow = window,
-                .width = static_cast<uint32_t>(width),
-                .height = static_cast<uint32_t>(height),
+                .nativeWindow = window.get(),
+                .width = width,
+                .height = height,
                 .vsync = false
             };
             renderDevice->init(info);
@@ -77,42 +76,31 @@ App::App(CreateInfo createInfo)
             throw std::runtime_error("not valid backend");
     }
     ecsController.set(renderDevice.get());
-    // init_imgui();
+    ecsController.register_system<PhysicsSystem>(0);
 }
 
-App::~App() {
-    // terminate_imgui();
+App::~App() noexcept {
+    if (renderDevice) {
+        renderDevice->cleanup();
+    }
+
+    SDL_Quit();
 }
 
 void App::init() {}
 
 void App::run() {
-    auto nextFrame = high_resolution_clock::now();
-    auto frameTime = 1000000us / fps;
+    using clock = std::chrono::steady_clock;
+    auto nextFrame = clock::now();
+    constexpr auto MICROSECONDS_PER_SECOND = std::chrono::microseconds{1'000'000};
+    auto frameTime = MICROSECONDS_PER_SECOND / fps;
 
     while (!shouldClose) {
-        const auto frameStart = high_resolution_clock::now();
+        const auto frameStart = clock::now();
         if (frameStart > nextFrame + frameTime) nextFrame = frameStart;
-        duration<double> dt = frameStart - (nextFrame - frameTime);
-
-        // ImGui Prep Frame
-        // ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplSDL3_NewFrame();
-        // ImGui::NewFrame();
+        auto dt = frameStart - (nextFrame - frameTime);
 
         ecsController.update_all();
-
-        // ImGui Render Frame
-        // ImGui::Render();
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        // const ImGuiIO& io = ImGui::GetIO();
-        // if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        //     auto* currentContextBackup = SDL_GL_GetCurrentContext();
-        //     ImGui::UpdatePlatformWindows();
-        //     ImGui::RenderPlatformWindowsDefault();
-        //     SDL_GL_MakeCurrent(window, currentContextBackup);
-        // }
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -121,39 +109,26 @@ void App::run() {
                     shouldClose = true;
                     break;
                 case SDL_EVENT_WINDOW_RESIZED:
-                    pair_window_size(&width, &height);
-                    // glViewport(0, 0, width, height);
+                    refresh_window_size();
                     break;
                 default:
                     break;
             }
-
-            // ImGui_ImplSDL3_ProcessEvent(&event);
         }
         renderDevice->update(ecsController);
-        // swap_window();
         nextFrame += frameTime;
         std::this_thread::sleep_until(nextFrame);
     }
-    // terminate_imgui();
-
-    SDL_Quit();
 }
 
 bool App::handle_poll_event() {
-    SDL_Event* event = nullptr;
-    SDL_PollEvent(event);
-
-    // ImGui_ImplSDL3_ProcessEvent(event);
-    if (!event) {
+    SDL_Event event{};
+    if (!SDL_PollEvent(&event)) {
         return false;
     }
-    if (event->window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ||
+        event.type == SDL_EVENT_QUIT) {
         shouldClose = true;
-    }
-    if (event->window.type == SDL_EVENT_WINDOW_RESIZED) {
-        pair_window_size(&width, &height);
-        // glViewport(0, 0, width, height);
     }
     return true;
 }
@@ -163,10 +138,11 @@ void App::handle_all_events() {
     while (handle_poll_event()) {
     }
 }
-SDL_Window* App::init_window(int64_t flags) {
+
+SDL_Window* App::init_window(int64_t flags) const {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
-    return SDL_CreateWindow("hello window", width, height, flags);
+    return SDL_CreateWindow("hello window", static_cast<int>(width), static_cast<int>(height), flags);
 }
 
 void App::init_imgui() {
@@ -174,29 +150,28 @@ void App::init_imgui() {
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_DockingEnable;  // IF using Docking Branch
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL3_InitForOpenGL(window, SDL_GL_GetCurrentContext());
+#ifdef _OPENGL_RENDERING
+    ImGui_ImplSDL3_InitForOpenGL(window.get(), SDL_GL_GetCurrentContext());
     ImGui_ImplOpenGL3_Init();
+#endif
 }
 
 void App::terminate_imgui() {
+#ifdef _OPENGL_RENDERING
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
+#endif
     ImGui::DestroyContext();
 }
 
 std::unique_ptr<RenderDevice> App::make_render_device(
     RenderingBackend backend
 ) {
-    using namespace garnish;
     switch (backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
@@ -208,7 +183,14 @@ std::unique_ptr<RenderDevice> App::make_render_device(
 #endif
         default:
             throw std::runtime_error("no rendering device created");
-            return nullptr;
     }
+}
+
+void App::refresh_window_size() {
+    int w = 0;
+    int h = 0;
+    SDL_GetWindowSize(window.get(), &w, &h);
+    width = static_cast<uint32_t>(w);
+    height = static_cast<uint32_t>(h);
 }
 }  // namespace garnish
