@@ -50,6 +50,8 @@ CMakeUserPresets.json
 build/
 libGarnishEngine.a
 examples/TestApp/TestApp
+examples/VulkanTestApp/VulkanTestApp
+examples/Pong/Pong
 .DS_Store
 .clangd
 .idea
