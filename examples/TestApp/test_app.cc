@@ -11,7 +11,6 @@ int main() {
 
     app.get_controller().register_component<Camera>();
     app.get_controller().register_component<Renderable>();
-    app.get_controller().register_component<Transform>();
 
     auto camera_entity =
         app.get_controller().create_entity_with_components(Camera());

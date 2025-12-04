@@ -75,7 +75,12 @@ App::App(CreateInfo createInfo)
         default:
             throw std::runtime_error("not valid backend");
     }
+
     ecsController.set(renderDevice.get());
+
+    ecsController.register_component<RigidBody>();
+    ecsController.register_component<Transform>();
+
     ecsController.register_system<PhysicsSystem>(0);
 }
 
