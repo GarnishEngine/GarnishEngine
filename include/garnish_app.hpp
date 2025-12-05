@@ -32,12 +32,14 @@ class App {
         uint32_t width = DEFAULT_WIDTH;
         uint32_t height = DEFAULT_HEIGHT;
         uint32_t targetFps = DEFAULT_TARGET_FPS;
+        std::string assetPath = "";
     };
     App(CreateInfo createInfo = {
             .backend = RenderingBackend::OpenGL,
             .width = DEFAULT_WIDTH,
             .height = DEFAULT_HEIGHT,
-            .targetFps = DEFAULT_TARGET_FPS
+            .targetFps = DEFAULT_TARGET_FPS,
+            .assetPath = ""
         });
     virtual ~App() noexcept;
     App(const App&) = delete;

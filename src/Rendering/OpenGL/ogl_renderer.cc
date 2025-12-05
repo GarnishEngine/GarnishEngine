@@ -53,8 +53,8 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
     glEnable(GL_DEPTH_TEST);
 
     shaderProgram = std::make_unique<ShaderProgram>(
-        "shaders/shader.vert",
-        "shaders/shader.frag"
+        info.assetPath + "shaders/shader.vert",
+        info.assetPath + "shaders/shader.frag"
     );
     return true;
 }

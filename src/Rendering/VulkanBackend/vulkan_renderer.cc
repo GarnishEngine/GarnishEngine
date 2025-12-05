@@ -72,11 +72,11 @@ inline vk::SurfaceFormatKHR choose_surface_format(
 namespace garnish {
 bool VulkanRenderDevice::init(InitInfo& info) {
     window = static_cast<SDL_Window*>(info.nativeWindow);
-    init_vulkan();
+    init_vulkan(info);
     return true;
 }
 
-bool VulkanRenderDevice::init_vulkan() {
+bool VulkanRenderDevice::init_vulkan(InitInfo& info) {
     create_instance();
     setup_debug_messenger();
     create_surface();
@@ -89,7 +89,7 @@ bool VulkanRenderDevice::init_vulkan() {
     create_texture_sampler();
     create_render_pass();
     create_descriptor_set_layout();
-    create_graphics_pipeline();
+    create_graphics_pipeline(info.assetPath);
     create_command_pool();
     create_color_resources();
     create_depth_resources();
@@ -102,11 +102,11 @@ bool VulkanRenderDevice::init_vulkan() {
 
     create_descriptor_pool();
     create_descriptor_sets();
-    load_texture("Textures/viking_room.png");
+    load_texture(info.assetPath + "Textures/viking_room.png");
 
     create_command_buffers();
     create_sync_objects();
-    setup_mesh("Models/viking_room.obj");
+    setup_mesh(info.assetPath + "Models/viking_room.obj");
     return true;
 }
 
@@ -724,9 +724,9 @@ bool VulkanRenderDevice::create_render_pass() {
     return true;
 }
 
-bool VulkanRenderDevice::create_graphics_pipeline() {
-    auto vertShaderCode = read_file("shaders/vert.spv");
-    auto fragShaderCode = read_file("shaders/frag.spv");
+bool VulkanRenderDevice::create_graphics_pipeline(std::string assetPath) {
+    auto vertShaderCode = read_file(assetPath + "shaders/vert.spv");
+    auto fragShaderCode = read_file(assetPath + "shaders/frag.spv");
     vk::ShaderModule vertShaderModule = create_shader_module(vertShaderCode);
     vk::ShaderModule fragShaderModule = create_shader_module(fragShaderCode);
 

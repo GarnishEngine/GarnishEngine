@@ -49,7 +49,8 @@ App::App(CreateInfo createInfo)
                 .nativeWindow = window.get(),
                 .width = width,
                 .height = height,
-                .vsync = false
+                .vsync = false,
+                .assetPath = createInfo.assetPath
             };
             renderDevice->init(info);
             break;
@@ -66,7 +67,8 @@ App::App(CreateInfo createInfo)
                 .nativeWindow = window.get(),
                 .width = width,
                 .height = height,
-                .vsync = false
+                .vsync = false,
+                .assetPath = createInfo.assetPath
             };
             renderDevice->init(info);
             break;

@@ -149,7 +149,7 @@ class VulkanRenderDevice : public RenderDevice {
     bool framebufferResized = false;
     uint32_t currentFrame = 0;
 
-    bool init_vulkan();
+    bool init_vulkan(InitInfo& info);
 
     bool create_instance();
     bool setup_debug_messenger();
@@ -181,7 +181,7 @@ class VulkanRenderDevice : public RenderDevice {
     );
     vk::Format find_depth_format();
     bool create_descriptor_set_layout();
-    bool create_graphics_pipeline();
+    bool create_graphics_pipeline(std::string assetPath);
     bool create_command_pool();
 
     bool create_color_resources();

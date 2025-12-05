@@ -19,6 +19,7 @@ class RenderDevice : public garnish::System {
         uint32_t height{};
         bool vsync{};
         void* pNext{};
+        std::string assetPath{};
     };
     virtual bool init(InitInfo& info) = 0;
     virtual bool draw_frame(ECSController& world) = 0;
