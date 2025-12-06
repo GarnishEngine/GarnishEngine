@@ -7,6 +7,8 @@
 
 #include <system.h>
 
+#include "geometry.hpp"
+
 namespace garnish {
 class ECSController;  // forward declaration
 
@@ -25,7 +27,9 @@ class RenderDevice : public garnish::System {
     virtual bool draw_frame(ECSController& world) = 0;
     virtual void cleanup() = 0;
 
-    virtual uint32_t setup_mesh(const std::string& mesh_path) = 0;
+    virtual uint32_t setup_mesh(const Geometry& geometry) = 0;
+    // TODO this funciton should not be virtual, and should never be overrided, renderers should only override the above function that takes in Geometry
+    virtual uint32_t setup_mesh(const std::string& mesh_path);
     virtual uint32_t load_texture(const std::string& texture_path) = 0;
 
     void update(ECSController& world) override = 0;

@@ -33,6 +33,7 @@ class OpenGLRenderDevice : public RenderDevice {
     void update(ECSController& world) override;
     void set_shader();
 
+    uint32_t setup_mesh(const Geometry& geometry) override;
     uint32_t setup_mesh(const std::string& mesh_path) override;
     uint32_t load_texture(const std::string& texture_path) override;
 

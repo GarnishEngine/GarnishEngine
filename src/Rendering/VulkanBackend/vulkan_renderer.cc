@@ -164,6 +164,103 @@ void VulkanRenderDevice::update(ECSController& world) {
     draw_frame(world);
 }
 
+uint32_t VulkanRenderDevice::setup_mesh(const Geometry& geometry) {
+    std::cout << "ERROR: uint32_t setup_mesh(const Geometry& geometry) is not implemented for the vulkan backend yet!" << std::endl;
+    // TODO Here is an implementation that SHOULD work, but were dealing with vulkan here, and it has not been tested
+
+    return -1;
+
+    // std::vector<uint32_t> indices;
+    // std::vector<GVVertex3d> vertices;
+    // std::unordered_map<GVVertex3d, uint32_t> uniqueVertices{};
+
+    // indices.resize(geometry.indices.size());
+    // for (int i = 0; i < indices.size(); ++i) {
+    //     indices[i] = geometry.indices[i];
+    // }
+
+    // vertices.resize(geometry.vertices.size());
+    // for (int i = 0; i < vertices.size(); ++i) {
+    //     vertices[i].pos = geometry.vertices[i].position;
+    //     vertices[i].color = geometry.vertices[i].normal;
+    //     vertices[i].texCoord= geometry.vertices[i].uv;
+    // }
+
+    // gvMeshes.push_back(
+    //     GVMesh{
+    //         .firstVertex =
+    //             static_cast<uint32_t>(totalVertexBytes / sizeof(GVVertex3d)),
+    //         .vertexCount = static_cast<uint32_t>(vertices.size()),
+    //         .firstIndex =
+    //             static_cast<uint32_t>(totalIndexBytes / sizeof(uint32_t)),
+    //         .indexCount = static_cast<uint32_t>(indices.size())
+    //     }
+    // );
+
+    // vk::DeviceSize vertexBufferSize = sizeof(GVVertex3d) * vertices.size();
+    // vk::DeviceSize indexBufferSize = sizeof(uint32_t) * indices.size();
+
+    // vk::Buffer vertexStagingBuffer;
+    // vk::DeviceMemory vertexStagingBufferMemory;
+
+    // vk::Buffer indexStagingBuffer;
+    // vk::DeviceMemory indexStagingBufferMemory;
+
+    // create_buffer(
+    //     vertexBufferSize,
+    //     vk::BufferUsageFlagBits::eTransferSrc,
+    //     vk::MemoryPropertyFlagBits::eHostVisible |
+    //         vk::MemoryPropertyFlagBits::eHostCoherent,
+    //     vertexStagingBuffer,
+    //     vertexStagingBufferMemory
+    // );
+    // memcpy(
+    //     gvDevice.mapMemory(vertexStagingBufferMemory, 0, vertexBufferSize),
+    //     vertices.data(),
+    //     (size_t)vertexBufferSize
+    // );
+    // gvDevice.unmapMemory(vertexStagingBufferMemory);
+
+    // create_buffer(
+    //     indexBufferSize,
+    //     vk::BufferUsageFlagBits::eTransferSrc,
+    //     vk::MemoryPropertyFlagBits::eHostVisible |
+    //         vk::MemoryPropertyFlagBits::eHostCoherent,
+    //     indexStagingBuffer,
+    //     indexStagingBufferMemory
+    // );
+    // memcpy(
+    //     gvDevice.mapMemory(indexStagingBufferMemory, 0, indexBufferSize),
+    //     indices.data(),
+    //     (size_t)indexBufferSize
+    // );
+    // gvDevice.unmapMemory(indexStagingBufferMemory);
+
+    // copy_buffer(
+    //     vertexStagingBuffer,
+    //     vertexBuffer,
+    //     vertexBufferSize,
+    //     totalVertexBytes
+    // );
+
+    // copy_buffer(
+    //     indexStagingBuffer,
+    //     indexBuffer,
+    //     indexBufferSize,
+    //     totalIndexBytes
+    // );
+
+    // gvDevice.destroyBuffer(vertexStagingBuffer);
+    // gvDevice.freeMemory(vertexStagingBufferMemory);
+
+    // gvDevice.destroyBuffer(indexStagingBuffer);
+    // gvDevice.freeMemory(indexStagingBufferMemory);
+
+    // totalVertexBytes += sizeof(GVVertex3d) * vertices.size();
+    // totalIndexBytes += sizeof(uint32_t) * indices.size();
+    // return gvMeshes.size() - 1;
+}
+
 uint32_t VulkanRenderDevice::setup_mesh(const std::string& mesh_path) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
