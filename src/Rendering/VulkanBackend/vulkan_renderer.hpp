@@ -28,7 +28,7 @@ class VulkanRenderDevice : public RenderDevice {
     void update(ECSController& world) override;
 
     uint32_t setup_mesh(const Geometry& geometry) override; // TODO currently no implementation
-    uint32_t setup_mesh(const std::string& mesh_path) override;
+    uint32_t setup_mesh(const std::string& mesh_path) override; // TODO REMOVE
     uint32_t load_texture(const std::string& path) override;
 
    private:

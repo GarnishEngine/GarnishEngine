@@ -45,6 +45,7 @@ uint32_t RenderDevice::setup_mesh(const std::string& mesh_path) {
                 1.0F - attrib.texcoords[(2 * index.texcoord_index) + 1]
             };
 
+            vertices.push_back(vert);
             indices.push_back(indices.size());
         }
     }
