@@ -124,8 +124,6 @@ uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     glBindVertexArray(mesh.VAO);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
 
-    std::cout << "Vertex count: " << geometry.vertices.size() << std::endl;
-
     glBufferData(
         GL_ARRAY_BUFFER,
         static_cast<GLsizeiptr>(geometry.vertices.size() * sizeof(Vertex)),
