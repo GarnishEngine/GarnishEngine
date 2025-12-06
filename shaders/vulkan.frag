@@ -6,6 +6,10 @@ layout(set = 0, binding = 0) uniform UniformBufferObject { mat4 mvp; } ubo;
 layout(set = 0, binding = 1) uniform sampler texSampler;
 layout(set = 0, binding = 2) uniform texture2D textures[];
 
+// TODO this seems to be the correct version below, but this is vulkan
+// layout(set = 0, binding = 0) uniform UniformBufferObject { mat4 mvp; } ubo;
+// layout(set = 0, binding = 2) uniform sampler texSampler;
+// layout(set = 0, binding = 3) uniform texture2D textures[];
 
 layout(push_constant) uniform PC { uint texIndex; } pc;
 
