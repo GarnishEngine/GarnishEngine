@@ -1,6 +1,7 @@
 #include "physics_system.hpp"
 #include <chrono>
 #include <string>
+#include <iostream>
 #include "Utility/log.hpp"
 #include "ecs_common.h"
 
@@ -24,12 +25,77 @@ void PhysicsSystem::update(ECSController& world) {
 
         integrate(dt, rb, tf);
     }
+
+    auto collision_bodies = world.get_entities<Transform, RigidBody, SphereCollider>();
+
+    for (Entity& a : collision_bodies) {
+        for (Entity& b : collision_bodies) {
+            if (a == b) continue;
+
+            auto& tA = world.get_component<Transform>(a);
+            auto& rbA = world.get_component<RigidBody>(a);
+            auto& scA = world.get_component<SphereCollider>(a);
+
+            auto& tB = world.get_component<Transform>(b);
+            auto& rbB = world.get_component<RigidBody>(b);
+            auto& scB = world.get_component<SphereCollider>(b);
+
+            collide(tA, tB, rbA, rbB, scA, scB);
+        }
+    }
 }
+
 void PhysicsSystem::integrate(const float dt, RigidBody& rb, Transform& tf) {
     log_timed(std::to_string(tf.position.x) + " " + std::to_string(tf.position.y) + " " + std::to_string(tf.position.z) + " " + std::to_string(dt));
-    tf.position +=  rb.velocity * dt +
-                rb.acceleration * dt * dt * (1.0F / 2.0F);
+    tf.position += rb.velocity * dt + rb.acceleration * dt * dt * (1.0F / 2.0F);
     rb.velocity += rb.acceleration * dt;
     rb.velocity *= std::pow(rb.dampening, dt);
+}
+
+void PhysicsSystem::collide(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB) {
+    Collision col = findCollision(tA, tB, rbA, rbB, scA, scB);
+
+    if (!col.hasCollision) return;
+
+    const float percent = 0.1f;
+    const float slop = 0.01f;
+
+    glm::vec3 correction = col.normal * percent * std::max(col.depth - slop, 0.0f) / (rbA.inv_mass + rbB.inv_mass);
+
+    std::cout << "Adjustment: " << (rbA.inv_mass * correction).x << std::endl;
+
+    std::cout << "Correction.x: " << correction.x << std::endl;
+
+    tA.position -= rbA.inv_mass * correction;
+    tB.position += rbB.inv_mass * correction;
+}
+
+Collision PhysicsSystem::findCollision(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB) {
+    Collision col{ };
+
+    float distance = glm::distance(tA.position, tB.position);
+
+    if (distance > scA.radius + scB.radius) {
+        // No collision
+        col.hasCollision = false;
+
+        return col;
+    }
+
+    // Collision happend
+    col.hasCollision = true;
+
+    glm::vec3 AtoB = tB.position - tA.position;
+    AtoB = glm::normalize(AtoB);
+    col.a = tA.position + AtoB * scA.radius;
+
+    glm::vec3 BtoA = tA.position - tB.position;
+    BtoA = glm::normalize(BtoA);
+    col.b = tB.position + BtoA * scB.radius;
+
+    col.normal = glm::normalize(col.b - col.a);
+    col.depth = glm::length(col.b - col.a);
+
+    return col;
 }
 }  // namespace garnish
