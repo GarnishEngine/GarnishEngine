@@ -82,6 +82,7 @@ App::App(CreateInfo createInfo)
 
     ecsController.register_component<RigidBody>();
     ecsController.register_component<Transform>();
+    ecsController.register_component<SphereCollider>();
     ecsController.register_component<Camera>();
     ecsController.register_component<Renderable>();
 
