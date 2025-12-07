@@ -57,7 +57,7 @@ void PhysicsSystem::collide(Transform& tA, Transform& tB, RigidBody& rbA, RigidB
 
     if (!col.hasCollision) return;
 
-    const float percent = 0.1f;
+    const float percent = 0.8f;
     const float slop = 0.01f;
 
     glm::vec3 correction = col.normal * percent * std::max(col.depth - slop, 0.0f) / (rbA.inv_mass + rbB.inv_mass);
@@ -66,8 +66,8 @@ void PhysicsSystem::collide(Transform& tA, Transform& tB, RigidBody& rbA, RigidB
 
     std::cout << "Correction.x: " << correction.x << std::endl;
 
-    tA.position -= rbA.inv_mass * correction;
-    tB.position += rbB.inv_mass * correction;
+    tA.position += rbA.inv_mass * correction;
+    tB.position -= rbB.inv_mass * correction;
 }
 
 Collision PhysicsSystem::findCollision(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB) {
