@@ -57,17 +57,19 @@ void PhysicsSystem::collide(Transform& tA, Transform& tB, RigidBody& rbA, RigidB
 
     if (!col.hasCollision) return;
 
-    const float percent = 0.8f;
-    const float slop = 0.01f;
+    float speedDotNormal = glm::dot(rbA.velocity - rbB.velocity, col.normal);
 
-    glm::vec3 correction = col.normal * percent * std::max(col.depth - slop, 0.0f) / (rbA.inv_mass + rbB.inv_mass);
+    // This is important for convergence a negitive impulse would drive the objects closer together
+    if (speedDotNormal >= 0) return;
 
-    std::cout << "Adjustment: " << (rbA.inv_mass * correction).x << std::endl;
+    float e = scA.restitutionCoefficient * scB.restitutionCoefficient;
 
-    std::cout << "Correction.x: " << correction.x << std::endl;
+    float j = -(1.0f + e) * speedDotNormal / (rbA.inv_mass + rbB.inv_mass);
 
-    tA.position += rbA.inv_mass * correction;
-    tB.position -= rbB.inv_mass * correction;
+    glm::vec3 impulse = j * col.normal;
+
+    rbA.velocity += impulse * rbA.inv_mass;
+    rbB.velocity -= impulse * rbB.inv_mass;
 }
 
 Collision PhysicsSystem::findCollision(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB) {

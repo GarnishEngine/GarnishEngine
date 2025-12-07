@@ -25,6 +25,7 @@ struct Collision {
 
 struct SphereCollider {
     float radius;
+    float restitutionCoefficient;
 };
 
 class PhysicsSystem : public System {
