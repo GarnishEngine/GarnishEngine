@@ -26,7 +26,7 @@ using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
 using us = std::chrono::microseconds;
 
-bool OpenGLRenderDevice::init(InitInfo& info) {
+bool OpenGLRenderDevice::init(const InitInfo& info) {
     window = static_cast<SDL_Window*>(info.nativeWindow);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);

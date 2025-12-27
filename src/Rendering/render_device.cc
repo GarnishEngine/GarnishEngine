@@ -1,8 +1,8 @@
 #include "render_device.hpp"
 
-#include <stdexcept>
-
 #include <tiny_obj_loader.h>
+
+#include <stdexcept>
 
 namespace garnish {
 uint32_t RenderDevice::setup_mesh(const std::string& mesh_path) {
@@ -50,6 +50,6 @@ uint32_t RenderDevice::setup_mesh(const std::string& mesh_path) {
         }
     }
 
-    return setup_mesh(Geometry{ vertices, indices });
+    return setup_mesh(Geometry{.vertices = vertices, .indices = indices});
 }
-} // namespace garnish
+}  // namespace garnish
