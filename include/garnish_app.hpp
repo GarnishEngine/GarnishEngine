@@ -35,7 +35,7 @@ class App {
         uint32_t width = DEFAULT_WIDTH;
         uint32_t height = DEFAULT_HEIGHT;
         uint32_t targetFps = DEFAULT_TARGET_FPS;
-        std::string assetPath = "";
+        std::string assetPath;
     };
     App(CreateInfo createInfo = {
             .backend = RenderingBackend::OpenGL,
@@ -90,7 +90,7 @@ class App {
     void init_imgui();
     void terminate_imgui();
     [[nodiscard]] SDL_Window* init_window(int64_t flags) const;
-    std::unique_ptr<RenderDevice> make_render_device(RenderingBackend backend);
+    void make_render_device(const CreateInfo& createInfo);
     void refresh_window_size();
 };
 }  // namespace garnish

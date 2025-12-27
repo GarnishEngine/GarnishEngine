@@ -28,60 +28,14 @@
 #endif
 
 namespace garnish {
-App::App(CreateInfo createInfo)
+App::App(const CreateInfo createInfo)
     : width(createInfo.width),
       height(createInfo.height),
       fps(createInfo.targetFps),
-      renderDevice(make_render_device(createInfo.backend)),
+      renderDevice(nullptr),
       window(nullptr) {
     init();
-    RenderDevice::InitInfo info{};  // value-initialize
-    switch (createInfo.backend) {
-#ifdef _OPENGL_RENDERING
-        case RenderingBackend::OpenGL:
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-            SDL_GL_SetAttribute(
-                SDL_GL_CONTEXT_PROFILE_MASK,
-                SDL_GL_CONTEXT_PROFILE_CORE
-            );
-            window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
-            if (!window)
-                throw std::runtime_error("Failed to create OpenGL window");
-            info = {
-                .nativeWindow = window.get(),
-                .width = width,
-                .height = height,
-                .vsync = false,
-                .assetPath = createInfo.assetPath
-            };
-            renderDevice->init(info);
-            break;
-#endif
-
-#ifdef _VULKAN_RENDERING
-        case RenderingBackend::Vulkan:
-            window.reset(init_window(
-                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
-                SDL_WINDOW_RESIZABLE
-            ));
-            if (!window)
-                throw std::runtime_error("Failed to create Vulkan window");
-            info = {
-                .nativeWindow = window.get(),
-                .width = width,
-                .height = height,
-                .vsync = false,
-                .assetPath = createInfo.assetPath
-            };
-            renderDevice->init(info);
-            break;
-#endif
-
-        default:
-            throw std::runtime_error("not valid backend");
-    }
-
+    make_render_device(createInfo);
     ecsController.set(renderDevice.get());
 
     ecsController.register_component<RigidBody>();
@@ -192,17 +146,48 @@ void App::terminate_imgui() {
     ImGui::DestroyContext();
 }
 
-std::unique_ptr<RenderDevice> App::make_render_device(
-    RenderingBackend backend
-) {
-    switch (backend) {
+void App::make_render_device(const CreateInfo& createInfo) {
+    if (!window) {
+        throw std::runtime_error("Failed to create Vulkan window");
+    }
+    switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
-            return std::make_unique<OpenGLRenderDevice>();
+            renderDevice = std::make_unique<OpenGLRenderDevice>();
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+            SDL_GL_SetAttribute(
+                SDL_GL_CONTEXT_PROFILE_MASK,
+                SDL_GL_CONTEXT_PROFILE_CORE
+            );
+            window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
+            renderDevice->init(
+                {.nativeWindow = window.get(),
+                 .width = width,
+                 .height = height,
+                 .vsync = false,
+                 .assetPath = createInfo.assetPath}
+            );
 #endif
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
-            return std::make_unique<vulkan::VulkanRenderDevice>();
+            renderDevice = std::make_unique<vulkan::VulkanRenderDevice>();
+            window.reset(init_window(
+                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
+                SDL_WINDOW_RESIZABLE
+            ));
+            window.reset(init_window(
+                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
+                SDL_WINDOW_RESIZABLE
+            ));
+
+            renderDevice->init(
+                {.nativeWindow = window.get(),
+                 .width = width,
+                 .height = height,
+                 .vsync = false,
+                 .assetPath = createInfo.assetPath}
+            );
 #endif
         default:
             throw std::runtime_error("no rendering device created");
