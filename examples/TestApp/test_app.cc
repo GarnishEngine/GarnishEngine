@@ -1,14 +1,16 @@
 #include "test_app.h"
 
-#include <Rendering/OpenGL/shader_program.hpp>
 #include <Physics/physics_system.hpp>
+#include <Rendering/OpenGL/shader_program.hpp>
 
 int main() {
     garnish::App app{};
 
     // auto i = app.get_controller().register_system<ImGuiSystem>(0);
-    auto c = app.get_controller().register_system<CameraSystem>(0);
-
+    // auto c = app.get_controller().register_system<CameraSystem>(0);
+    app.register_update_function([](garnish::ECSController& world) {
+        CameraSystem().update(world);
+    });
     app.get_controller().register_component<Camera>();
     app.get_controller().register_component<Renderable>();
 
@@ -27,11 +29,16 @@ int main() {
     constexpr float MODEL_POS_X = 0.0F;
     constexpr float MODEL_POS_Y = -0.3F;
     constexpr float MODEL_POS_Z = 3.0F;
-    const glm::quat qX = glm::angleAxis(glm::radians(MODEL_ROT_X_DEGREES), glm::vec3{1,0,0});
-    const glm::quat qZ = glm::angleAxis(glm::radians(MODEL_ROT_Z_DEGREES), glm::vec3{0,0,1});
+    const glm::quat qX =
+        glm::angleAxis(glm::radians(MODEL_ROT_X_DEGREES), glm::vec3{1, 0, 0});
+    const glm::quat qZ =
+        glm::angleAxis(glm::radians(MODEL_ROT_Z_DEGREES), glm::vec3{0, 0, 1});
     auto vikingRoom = app.get_controller().create_entity_with_components(
         Renderable{.meshHandle = meshInstance, .texHandle = tex},
-        Transform{ .position = {MODEL_POS_X, MODEL_POS_Y, MODEL_POS_Z}, .rotation = qX * qZ }
+        Transform{
+            .position = {MODEL_POS_X, MODEL_POS_Y, MODEL_POS_Z},
+            .rotation = qX * qZ
+        }
     );
 
     app.run();

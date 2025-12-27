@@ -1,12 +1,15 @@
 #pragma once
 
 #include <SDL3/SDL_video.h>
-#include <glm/vec2.hpp>
+#include <ecs_controller.h>
+
+#include <Rendering/render_device.hpp>
 #include <cstdint>
+#include <functional>
+#include <glm/vec2.hpp>
 #include <memory>
 
-#include <ecs_controller.h>
-#include <Rendering/render_device.hpp>
+#include "Physics/physics_system.hpp"
 #include "Utility/sdl_raii.hpp"
 
 namespace garnish {
@@ -51,14 +54,26 @@ class App {
     virtual bool handle_poll_event();
     virtual void handle_all_events();
 
-    std::unique_ptr<RenderDevice>& get_render_device() noexcept { return renderDevice; }
-    const std::unique_ptr<RenderDevice>& get_render_device() const noexcept { return renderDevice; }
+    [[nodiscard]] const std::unique_ptr<RenderDevice>&
+    get_render_device() const noexcept {
+        return renderDevice;
+    }
 
     SDL_Window* get_window() noexcept { return window.get(); }
-    const SDL_Window* get_window() const noexcept { return window.get(); }
+    [[nodiscard]] const SDL_Window* get_window() const noexcept {
+        return window.get();
+    }
 
     ECSController& get_controller() noexcept { return ecsController; }
-    const ECSController& get_controller() const noexcept { return ecsController; }
+    [[nodiscard]] const ECSController& get_controller() const noexcept {
+        return ecsController;
+    }
+
+    void register_update_function(
+        std::function<void(ECSController&)> updateFunction
+    ) {
+        updateFunctions.push_back(std::move(updateFunction));
+    }
 
    private:
     std::unique_ptr<RenderDevice> renderDevice;
@@ -68,10 +83,13 @@ class App {
     uint32_t height;
     uint32_t fps;
     UniqueSDLWindow window;
+    PhysicsSystem physicsSystem;
+    std::vector<std::function<void(ECSController&)>> updateFunctions;
+
     virtual void init();
     void init_imgui();
     void terminate_imgui();
-    SDL_Window* init_window(int64_t flags) const;
+    [[nodiscard]] SDL_Window* init_window(int64_t flags) const;
     std::unique_ptr<RenderDevice> make_render_device(RenderingBackend backend);
     void refresh_window_size();
 };

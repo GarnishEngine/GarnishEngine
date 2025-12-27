@@ -1,12 +1,13 @@
 #pragma once
 
+#include <ecs_controller.h>
+
+#include <Utility/camera.hpp>
 #include <algorithm>
 #include <garnish_app.hpp>
-#include <ecs_controller.h>
-#include <system.h>
 #include <limits>
-#include <Utility/camera.hpp>
 #include <shared.hpp>
+
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_mouse.h"
 
@@ -16,12 +17,13 @@ float yaw = 0.0f;
 float pitch = 0.0f;
 float x = 0.0f;
 float y = 0.0f;
-}
+}  // namespace
 
-class CameraSystem : public garnish::System {
-    public:
-     void update(garnish::ECSController& world) override {
-        auto cam_ent = world.get_entities<garnish::Camera>()[0];  // TODO this is really janky, need to do
+class CameraSystem {
+   public:
+    void update(garnish::ECSController& world) {
+        auto cam_ent = world.get_entities<
+            garnish::Camera>()[0];  // TODO this is really janky, need to do
                                     // something about the camera
         auto& cam = world.get_component<garnish::Camera>(cam_ent);
         if (SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W]) {
@@ -86,7 +88,5 @@ class CameraSystem : public garnish::System {
         } else {
             cam.held = false;
         }
-
-
     }
 };

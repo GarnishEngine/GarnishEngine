@@ -16,7 +16,10 @@ int main() {
          .height = garnish::App::DEFAULT_HEIGHT,
          .targetFps = garnish::App::DEFAULT_TARGET_FPS}
     };
-    auto c = app.get_controller().register_system<CameraSystem>(0);
+
+    app.register_update_function([](garnish::ECSController& world) {
+        CameraSystem().update(world);
+    });
 
     auto camera_entity =
         app.get_controller().create_entity_with_components(Camera());

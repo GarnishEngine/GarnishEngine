@@ -6,13 +6,15 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <thread>
-#include <chrono>
+
 #include "Physics/physics_system.hpp"
+#include "Utility/camera.hpp"
 
 #ifdef _OPENGL_RENDERING
 #include <imgui_impl_opengl3.h>
@@ -33,7 +35,7 @@ App::App(CreateInfo createInfo)
       renderDevice(make_render_device(createInfo.backend)),
       window(nullptr) {
     init();
-    RenderDevice::InitInfo info{}; // value-initialize
+    RenderDevice::InitInfo info{};  // value-initialize
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
@@ -44,7 +46,8 @@ App::App(CreateInfo createInfo)
                 SDL_GL_CONTEXT_PROFILE_CORE
             );
             window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
-            if (!window) throw std::runtime_error("Failed to create OpenGL window");
+            if (!window)
+                throw std::runtime_error("Failed to create OpenGL window");
             info = {
                 .nativeWindow = window.get(),
                 .width = width,
@@ -62,7 +65,8 @@ App::App(CreateInfo createInfo)
                 SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
                 SDL_WINDOW_RESIZABLE
             ));
-            if (!window) throw std::runtime_error("Failed to create Vulkan window");
+            if (!window)
+                throw std::runtime_error("Failed to create Vulkan window");
             info = {
                 .nativeWindow = window.get(),
                 .width = width,
@@ -85,8 +89,6 @@ App::App(CreateInfo createInfo)
     ecsController.register_component<SphereCollider>();
     ecsController.register_component<Camera>();
     ecsController.register_component<Renderable>();
-
-    ecsController.register_system<PhysicsSystem>(0);
 }
 
 App::~App() noexcept {
@@ -102,7 +104,8 @@ void App::init() {}
 void App::run() {
     using clock = std::chrono::steady_clock;
     auto nextFrame = clock::now();
-    constexpr auto MICROSECONDS_PER_SECOND = std::chrono::microseconds{1'000'000};
+    constexpr auto MICROSECONDS_PER_SECOND =
+        std::chrono::microseconds{1'000'000};
     auto frameTime = MICROSECONDS_PER_SECOND / fps;
 
     while (!shouldClose) {
@@ -110,7 +113,11 @@ void App::run() {
         if (frameStart > nextFrame + frameTime) nextFrame = frameStart;
         auto dt = frameStart - (nextFrame - frameTime);
 
-        ecsController.update_all();
+        for (auto& updateFunction : updateFunctions) {
+            updateFunction(ecsController);
+        }
+
+        physicsSystem.update(ecsController);
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -126,6 +133,7 @@ void App::run() {
             }
         }
         renderDevice->update(ecsController);
+
         nextFrame += frameTime;
         std::this_thread::sleep_until(nextFrame);
     }
@@ -152,7 +160,12 @@ void App::handle_all_events() {
 SDL_Window* App::init_window(int64_t flags) const {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
-    return SDL_CreateWindow("hello window", static_cast<int>(width), static_cast<int>(height), flags);
+    return SDL_CreateWindow(
+        "hello window",
+        static_cast<int>(width),
+        static_cast<int>(height),
+        flags
+    );
 }
 
 void App::init_imgui() {
@@ -189,7 +202,7 @@ std::unique_ptr<RenderDevice> App::make_render_device(
 #endif
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
-            return std::make_unique<VulkanRenderDevice>();
+            return std::make_unique<vulkan::VulkanRenderDevice>();
 #endif
         default:
             throw std::runtime_error("no rendering device created");

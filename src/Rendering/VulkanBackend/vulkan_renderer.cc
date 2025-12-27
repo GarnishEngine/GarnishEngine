@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <iostream>
 #include <read_file.hpp>
+#include <set>
 #include <span>
 #include <sstream>
 #include <stdexcept>

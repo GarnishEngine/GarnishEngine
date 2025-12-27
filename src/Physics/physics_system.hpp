@@ -1,10 +1,11 @@
 #pragma once
 
-#include <system.h>
 #include <ecs_controller.h>
-#include "glm/ext/vector_float3.hpp"
+
 #include <chrono>
 #include <shared.hpp>
+
+#include "glm/ext/vector_float3.hpp"
 
 namespace garnish {
 struct RigidBody {
@@ -16,11 +17,11 @@ struct RigidBody {
 
 // Collision logic is based on: https://winter.dev/articles/physics-engine
 struct Collision {
-	glm::vec3 a;        // Furthest point of A into B
-	glm::vec3 b;        // Furthest point of B into A
-	glm::vec3 normal;   // B – A normalized
-	float depth;        // Length of B – A
-	bool hasCollision;
+    glm::vec3 a;       // Furthest point of A into B
+    glm::vec3 b;       // Furthest point of B into A
+    glm::vec3 normal;  // B – A normalized
+    float depth;       // Length of B – A
+    bool hasCollision;
 };
 
 struct SphereCollider {
@@ -28,17 +29,32 @@ struct SphereCollider {
     float restitutionCoefficient;
 };
 
-class PhysicsSystem : public System {
+class PhysicsSystem {
    public:
     PhysicsSystem() = default;
-    void update(ECSController& world) override;
+    void update(ECSController& world);
+
    private:
     static void integrate(float dt, RigidBody& rb, Transform& tf);
     using clock = std::chrono::steady_clock;
 
     clock::time_point time;
 
-    static void collide(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB);
-    static Collision findCollision(Transform& tA, Transform& tB, RigidBody& rbA, RigidBody& rbB, SphereCollider& scA, SphereCollider& scB);
+    static void collide(
+        Transform& tA,
+        Transform& tB,
+        RigidBody& rbA,
+        RigidBody& rbB,
+        SphereCollider& scA,
+        SphereCollider& scB
+    );
+    static Collision findCollision(
+        Transform& tA,
+        Transform& tB,
+        RigidBody& rbA,
+        RigidBody& rbB,
+        SphereCollider& scA,
+        SphereCollider& scB
+    );
 };
 }  // namespace garnish
