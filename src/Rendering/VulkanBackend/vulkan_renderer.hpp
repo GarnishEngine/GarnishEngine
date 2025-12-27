@@ -45,8 +45,8 @@ class VulkanRenderDevice : public RenderDevice {
     static constexpr float kSampleRateShadingMinFraction = 0.2F;
     static constexpr size_t kMat4Align = 16;
     // TODO: MAYABE NOT MAKE THESE HARD CODED
-    static constexpr std::string kVertexShaderPath = "shaders/vert.spv";
-    static constexpr std::string kFragmentShaderPath = "shaders/frag.spv";
+    static constexpr std::string_view kVertexShaderPath = "shaders/vert.spv";
+    static constexpr std::string_view kFragmentShaderPath = "shaders/frag.spv";
     struct GVMesh {
         uint32_t firstVertex;
         uint32_t vertexCount;

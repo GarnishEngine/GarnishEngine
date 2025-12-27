@@ -827,8 +827,9 @@ bool VulkanRenderDevice::create_render_pass() {
 }
 
 bool VulkanRenderDevice::create_graphics_pipeline(std::string assetPath) {
-    auto vertShaderCode = read_file(assetPath + kVertexShaderPath);
-    auto fragShaderCode = read_file(assetPath + kFragmentShaderPath);
+    auto vertShaderCode = read_file(assetPath + std::string(kVertexShaderPath));
+    auto fragShaderCode =
+        read_file(assetPath + std::string(kFragmentShaderPath));
     vk::ShaderModule vertShaderModule = create_shader_module(vertShaderCode);
     vk::ShaderModule fragShaderModule = create_shader_module(fragShaderCode);
 
