@@ -147,9 +147,6 @@ void App::terminate_imgui() {
 }
 
 void App::make_render_device(const CreateInfo& createInfo) {
-    if (!window) {
-        throw std::runtime_error("Failed to create Vulkan window");
-    }
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
@@ -161,6 +158,7 @@ void App::make_render_device(const CreateInfo& createInfo) {
                 SDL_GL_CONTEXT_PROFILE_CORE
             );
             window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
+
             renderDevice->init(
                 {.nativeWindow = window.get(),
                  .width = width,
@@ -168,14 +166,11 @@ void App::make_render_device(const CreateInfo& createInfo) {
                  .vsync = false,
                  .assetPath = createInfo.assetPath}
             );
+            break;
 #endif
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
             renderDevice = std::make_unique<vulkan::VulkanRenderDevice>();
-            window.reset(init_window(
-                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
-                SDL_WINDOW_RESIZABLE
-            ));
             window.reset(init_window(
                 SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
                 SDL_WINDOW_RESIZABLE
@@ -188,6 +183,7 @@ void App::make_render_device(const CreateInfo& createInfo) {
                  .vsync = false,
                  .assetPath = createInfo.assetPath}
             );
+            break;
 #endif
         default:
             throw std::runtime_error("no rendering device created");
