@@ -11,8 +11,6 @@ int main() {
     app.register_update_function([](garnish::ECSController& world) {
         CameraSystem().update(world);
     });
-    app.get_controller().register_component<Camera>();
-    app.get_controller().register_component<Renderable>();
 
     auto camera_entity =
         app.get_controller().create_entity_with_components(Camera());
