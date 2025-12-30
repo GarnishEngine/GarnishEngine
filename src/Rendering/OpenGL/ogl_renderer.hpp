@@ -13,7 +13,6 @@
 #include "render_device.hpp"
 #include "shader_program.hpp"
 namespace garnish {
-
 class OpenGLRenderDevice : public RenderDevice {
    public:
     OpenGLRenderDevice() = default;
@@ -96,7 +95,7 @@ class OpenGLRenderDevice : public RenderDevice {
     std::unique_ptr<ShaderProgram> shaderProgram;
     std::vector<OGLTexture> textures;
     std::vector<OGLMesh> meshes;
-    GLContext glContext;  // RAII wrapper
+    GLContext glContext;
 };
 
 }  // namespace garnish

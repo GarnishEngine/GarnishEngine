@@ -17,9 +17,7 @@
 namespace garnish {
 namespace {
 void* buffer_offset(std::size_t offset) {
-    return reinterpret_cast<void*>(
-        offset
-    );  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+    return reinterpret_cast<void*>(offset);  // NOLINT
 }
 }  // namespace
 
@@ -38,7 +36,7 @@ bool OpenGLRenderDevice::init(const InitInfo& info) {
         SDL_GL_CONTEXT_PROFILE_CORE
     );
 
-    auto* raw = SDL_GL_CreateContext(window);  // was 'auto raw'
+    auto* raw = SDL_GL_CreateContext(window);
     if (!raw) {
         std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
         return false;
@@ -178,7 +176,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
         GL_FLOAT,
         GL_FALSE,
         sizeof(Vertex),
-        buffer_offset(offsetof(Vertex, uv))  // removed pointer arithmetic
+        buffer_offset(offsetof(Vertex, uv))
     );
     glBindVertexArray(0);
 

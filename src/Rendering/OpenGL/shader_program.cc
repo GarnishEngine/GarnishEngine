@@ -14,63 +14,33 @@ ShaderProgram::ShaderProgram(
     const std::string& fragmentShaderPath
 )
     : handle(glCreateProgram()) {
-    std::vector<char> vertexShaderSource = read_file(vertexShaderPath);
-    const char* vertexSource = vertexShaderSource.data();
-
-    std::vector<char> fragmentShaderSource = read_file(fragmentShaderPath);
-    const char* fragmentSource = fragmentShaderSource.data();
-
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, NULL);
-    glCompileShader(vertexShader);
-
-    int success = 0;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        throw std::runtime_error(
-            "Vertex Shader failed to compile:\n" + std::string{infoLog}
-        );
-    }
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        throw std::runtime_error(
-            "Fragment Shader failed to compile:\n" + std::string{infoLog}
-        );
-    }
+    unsigned int vertexShader = compile_shader(vertexShaderPath);
+    unsigned int fragmentShader = compile_shader(fragmentShaderPath);
 
     glAttachShader(handle, vertexShader);
     glAttachShader(handle, fragmentShader);
     glLinkProgram(handle);
-
-    glGetProgramiv(handle, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(handle, 512, NULL, infoLog);
-        throw std::runtime_error(
-            "Shader Program failed to link:\n" + std::string{infoLog}
-        );
-    }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 }
 
 ShaderProgram::~ShaderProgram() {
+    cleanup();
+}
+
+void ShaderProgram::cleanup() const {
     glDeleteProgram(handle);
 }
 
-void ShaderProgram::use() {
+void ShaderProgram::use() const {
     glUseProgram(handle);
 }
 
-void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) {
+void ShaderProgram::set_uniform(
+    const std::string& name,
+    const glm::mat4& mat
+) const {
     use();
     glUniformMatrix4fv(
         glGetUniformLocation(handle, name.c_str()),
@@ -79,7 +49,27 @@ void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) {
         glm::value_ptr(mat)
     );
 }
-void ShaderProgram::cleanup() {
-    glDeleteProgram(handle);
+
+unsigned int ShaderProgram::compile_shader(const std::string& shaderPath) {
+    std::vector<char> shaderSource = read_file(shaderPath);
+
+    const char* source = shaderSource.data();
+
+    unsigned int shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(shader, 1, &source, nullptr);
+    glCompileShader(shader);
+
+    int success = 0;
+    constexpr size_t kInfoLogSize = 512;
+    std::array<char, kInfoLogSize> infoLog{};
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, kInfoLogSize, nullptr, infoLog.data());
+        throw std::runtime_error(
+            "Shader " + shaderPath + " failed to compile:\n" +
+            std::string{infoLog.data()}
+        );
+    }
+    return shader;
 }
 }  // namespace garnish

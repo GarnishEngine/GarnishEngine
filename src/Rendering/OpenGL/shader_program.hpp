@@ -15,11 +15,15 @@ class ShaderProgram {
     ShaderProgram& operator=(ShaderProgram&& other) noexcept = default;
     ~ShaderProgram();
 
-    void use();
-    void set_uniform(const std::string& name, const glm::mat4& mat);
-    void cleanup();
+    void use() const;
+    void set_uniform(const std::string& name, const glm::mat4& mat) const;
+    void cleanup() const;
 
    private:
+    [[nodiscard]] static unsigned int compile_shader(
+        const std::string& shaderPath
+    );
+
     unsigned int handle;
 };
 }  // namespace garnish
