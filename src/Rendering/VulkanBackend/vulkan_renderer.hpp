@@ -23,7 +23,7 @@ class VulkanRenderDevice : public RenderDevice {
     VulkanRenderDevice& operator=(const VulkanRenderDevice&) = delete;
     VulkanRenderDevice(VulkanRenderDevice&&) = delete;
     VulkanRenderDevice& operator=(VulkanRenderDevice&&) = delete;
-    ~VulkanRenderDevice() = default;
+    ~VulkanRenderDevice() { cleanup(); }
 
     bool init(const InitInfo& info) override;
     bool draw_frame(ECSController& world) override;
@@ -32,7 +32,6 @@ class VulkanRenderDevice : public RenderDevice {
 
     using RenderDevice::setup_mesh;
     uint32_t setup_mesh(const Geometry& geometry) override;
-
     uint32_t load_texture(const std::string& path) override;
 
    private:
@@ -275,7 +274,7 @@ class VulkanRenderDevice : public RenderDevice {
         TextureSize size,
         uint32_t mipLevels
     );
-};
+};  // namespace garnish::vulkan
 
 static vk::VertexInputBindingDescription getBindingDescription() {
     vk::VertexInputBindingDescription bindingDescription{};

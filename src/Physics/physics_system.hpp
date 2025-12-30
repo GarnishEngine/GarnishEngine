@@ -32,6 +32,12 @@ struct SphereCollider {
 class PhysicsSystem {
    public:
     PhysicsSystem() = default;
+    PhysicsSystem(const PhysicsSystem&) = delete;
+    PhysicsSystem& operator=(const PhysicsSystem&) = delete;
+    PhysicsSystem(PhysicsSystem&&) = delete;
+    PhysicsSystem& operator=(PhysicsSystem&&) = delete;
+    ~PhysicsSystem() = default;
+
     void update(ECSController& world);
 
    private:

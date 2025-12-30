@@ -2,16 +2,11 @@
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_vulkan.h>
-#include <ecs_controller.h>
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
-#include <Physics/physics_system.hpp>
-#include <Utility/camera.hpp>
-#include <Utility/log.hpp>
 #include <cstddef>
 #include <iostream>
-#include <read_file.hpp>
 #include <set>
 #include <span>
 #include <sstream>
@@ -20,6 +15,10 @@
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
+#include "Utility/camera.hpp"
+#include "Utility/log.hpp"
+#include "Utility/read_file.hpp"
+#include "ecs_controller.h"
 #include "geometry.hpp"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)

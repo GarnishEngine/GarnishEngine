@@ -1,10 +1,4 @@
 #pragma once
-#include <Physics/physics_system.hpp>
-#include <Utility/camera.hpp>
-#include <shader_program.hpp>
-#include <shared.hpp>
-#include <vector>
-
 #define GLEW_STATIC
 #define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
 
@@ -13,10 +7,11 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include "Utility/sdl_raii.hpp"
 #include "render_device.hpp"
-
+#include "shader_program.hpp"
 namespace garnish {
 
 class OpenGLRenderDevice : public RenderDevice {

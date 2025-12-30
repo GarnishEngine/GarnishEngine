@@ -1,25 +1,27 @@
 #include "ogl_renderer.hpp"
 
 #include <SDL3/SDL_video.h>
-#include <ecs_controller.h>
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-#include <cstddef>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 
+#include "Utility/camera.hpp"
+#include "ecs_controller.h"
+#include "shared.hpp"
 
 namespace garnish {
-namespace { 
+namespace {
 void* buffer_offset(std::size_t offset) {
-    return reinterpret_cast<void*>(offset); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+    return reinterpret_cast<void*>(
+        offset
+    );  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 }
-}
+}  // namespace
 
 using hrclock = std::chrono::high_resolution_clock;
 using tp = std::chrono::time_point<hrclock>;
@@ -36,7 +38,7 @@ bool OpenGLRenderDevice::init(const InitInfo& info) {
         SDL_GL_CONTEXT_PROFILE_CORE
     );
 
-    auto* raw = SDL_GL_CreateContext(window); // was 'auto raw'
+    auto* raw = SDL_GL_CreateContext(window);  // was 'auto raw'
     if (!raw) {
         std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
         return false;
@@ -49,7 +51,12 @@ bool OpenGLRenderDevice::init(const InitInfo& info) {
         throw std::runtime_error("GLEW failed to initialize");
     }
 
-    glViewport(0, 0, static_cast<GLsizei>(info.width), static_cast<GLsizei>(info.height));
+    glViewport(
+        0,
+        0,
+        static_cast<GLsizei>(info.width),
+        static_cast<GLsizei>(info.height)
+    );
     glEnable(GL_DEPTH_TEST);
 
     shaderProgram = std::make_unique<ShaderProgram>(
@@ -65,7 +72,7 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     glm::mat4 proj{1.0F};
     auto cameras = world.get_entities<garnish::Camera>();
     if (!cameras.empty()) {
-        auto &cam = world.get_component<garnish::Camera>(cameras[0]);
+        auto& cam = world.get_component<garnish::Camera>(cameras[0]);
         view = cam.view_matrix();
     }
     int w = 0;
@@ -89,18 +96,24 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
 
     auto entities = world.get_entities<Renderable>();
     for (Entity entity : entities) {
-        auto &dra = world.get_component<Renderable>(entity);
+        auto& dra = world.get_component<Renderable>(entity);
         glm::mat4 model{1.0F};
         if (world.has_component<Transform>(entity)) {
-            auto &tf = world.get_component<Transform>(entity);
-            model = glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
+            auto& tf = world.get_component<Transform>(entity);
+            model =
+                glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
         }
         glm::mat4 mvp = proj * view * model;
         shaderProgram->set_uniform("mvp", mvp);
 
         glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle].id);
         glBindVertexArray(meshes[dra.meshHandle].VAO);
-        glDrawElements(GL_TRIANGLES, meshes[dra.meshHandle].size, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(
+            GL_TRIANGLES,
+            meshes[dra.meshHandle].size,
+            GL_UNSIGNED_INT,
+            nullptr
+        );
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
     }
@@ -113,7 +126,6 @@ void OpenGLRenderDevice::update(ECSController& world) {
 }
 
 void OpenGLRenderDevice::cleanup() {}
-
 
 uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     OGLMesh mesh{};
@@ -166,7 +178,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
         GL_FLOAT,
         GL_FALSE,
         sizeof(Vertex),
-        buffer_offset(offsetof(Vertex, uv)) // removed pointer arithmetic
+        buffer_offset(offsetof(Vertex, uv))  // removed pointer arithmetic
     );
     glBindVertexArray(0);
 
@@ -178,7 +190,7 @@ uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
 
 uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     int mTexWidth = 0;
-    int mTexHeight = 0; 
+    int mTexHeight = 0;
     int nrChannels = 0;
     unsigned int texID = -1;
     // stbi_set_flip_vertically_on_load(true);
