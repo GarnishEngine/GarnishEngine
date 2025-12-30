@@ -6,9 +6,9 @@
 
 #include <chrono>
 #include <cstddef>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #include "Utility/camera.hpp"
 #include "ecs_controller.h"
@@ -26,20 +26,18 @@ using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
 using us = std::chrono::microseconds;
 
-bool OpenGLRenderDevice::init(const InitInfo& info) {
-    window = static_cast<SDL_Window*>(info.nativeWindow);
-
+OpenGLRenderDevice::OpenGLRenderDevice(const RenderDevice::InitInfo& info)
+    : RenderDevice(static_cast<SDL_Window*>(info.nativeWindow)),
+      shaderProgram(nullptr) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(
-        SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_CORE
-    );
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     auto* raw = SDL_GL_CreateContext(window);
     if (!raw) {
-        std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
-        return false;
+        throw std::runtime_error(
+            std::string("SDL_GL_CreateContext failed: ") + SDL_GetError()
+        );
     }
     glContext.reset(raw);
 
@@ -61,9 +59,12 @@ bool OpenGLRenderDevice::init(const InitInfo& info) {
         info.assetPath + "shaders/shader.vert",
         info.assetPath + "shaders/shader.frag"
     );
-    return true;
 }
 
+// Public overrides - Lifecycle
+void OpenGLRenderDevice::cleanup() {}
+
+// Public overrides - Core rendering
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     // Acquire camera (first one if multiple)
     glm::mat4 view{1.0F};
@@ -123,8 +124,7 @@ void OpenGLRenderDevice::update(ECSController& world) {
     draw_frame(world);
 }
 
-void OpenGLRenderDevice::cleanup() {}
-
+// Public overrides - Resource loading
 uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     OGLMesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);

@@ -13,11 +13,11 @@ class ShaderProgram {
     ShaderProgram(ShaderProgram&& other) noexcept = default;
     ShaderProgram& operator=(const ShaderProgram& other) = delete;
     ShaderProgram& operator=(ShaderProgram&& other) noexcept = default;
-    ~ShaderProgram();
+    ~ShaderProgram() { cleanup(); }
 
+    void cleanup() const;
     void use() const;
     void set_uniform(const std::string& name, const glm::mat4& mat) const;
-    void cleanup() const;
 
    private:
     [[nodiscard]] static unsigned int compile_shader(

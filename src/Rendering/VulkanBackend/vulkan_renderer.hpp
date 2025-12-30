@@ -11,108 +11,6 @@ namespace garnish::vulkan {
 namespace vkr = vk::raii;
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-struct TextureSize {
-    int32_t width;
-    int32_t height;
-};
-
-struct ImageCreateInfo {
-    uint32_t width;
-    uint32_t height;
-    uint32_t mipLevels;
-    vk::SampleCountFlagBits samples;
-    vk::Format format;
-    vk::ImageTiling tiling;
-    vk::ImageUsageFlags usage;
-    vk::MemoryPropertyFlags memoryProperties;
-};
-
-struct ImageAllocation {
-    vkr::Image image;
-    vkr::DeviceMemory memory;
-};
-
-struct ColorResources {
-    vkr::Image image;
-    vkr::DeviceMemory memory;
-    vkr::ImageView view;
-};
-
-struct DepthResources {
-    vkr::Image image;
-    vkr::DeviceMemory memory;
-    vkr::ImageView view;
-};
-
-struct VertexBufferAllocation {
-    vkr::Buffer buffer;
-    vkr::DeviceMemory memory;
-};
-
-struct IndexBufferAllocation {
-    vkr::Buffer buffer;
-    vkr::DeviceMemory memory;
-};
-
-struct BufferCreateInfo {
-    vk::DeviceSize size;
-    vk::BufferUsageFlags usage;
-    vk::MemoryPropertyFlags memoryProperties;
-};
-
-struct BufferAllocation {
-    vkr::Buffer buffer;
-    vkr::DeviceMemory memory;
-};
-
-struct UniformBufferAllocation {
-    std::vector<vkr::Buffer> buffers;
-    std::vector<vkr::DeviceMemory> memory;
-    std::vector<void*> mapped;
-};
-
-struct ModelBufferAllocation {
-    std::vector<vkr::Buffer> buffers;
-    std::vector<vkr::DeviceMemory> memory;
-    std::vector<void*> mapped;
-    uint32_t capacity;
-};
-
-struct ImageLayoutTransitionInfo {
-    vk::Image image;
-    vk::ImageLayout oldLayout;
-    vk::ImageLayout newLayout;
-    uint32_t mipLevels;
-};
-
-struct CopyBufferToImageInfo {
-    vk::Buffer buffer;
-    vk::Image image;
-    uint32_t width;
-    uint32_t height;
-};
-
-struct CopyBufferInfo {
-    vk::Buffer src;
-    vk::Buffer dst;
-    vk::DeviceSize size;
-    vk::DeviceSize dstOffset = 0;
-};
-
-struct ImageViewCreateParams {
-    vk::Image image;
-    vk::Format format;
-    vk::ImageAspectFlags aspectFlags;
-    uint32_t mipLevels;
-};
-
-struct MipmapGenerationInfo {
-    vk::Image image;
-    vk::Format format;
-    TextureSize size;
-    uint32_t mipLevels;
-};
-
 class VulkanRenderDevice : public RenderDevice {
    public:
     VulkanRenderDevice(const RenderDevice::InitInfo& info);
@@ -122,19 +20,19 @@ class VulkanRenderDevice : public RenderDevice {
     VulkanRenderDevice& operator=(VulkanRenderDevice&&) = delete;
     ~VulkanRenderDevice() { cleanup(); }
 
-    bool init(const InitInfo& info) override;
-    bool draw_frame(ECSController& world) override;
+    // Lifecycle
     void cleanup() override;
+
+    // Core rendering
+    bool draw_frame(ECSController& world) override;
     void update(ECSController& world) override;
 
+    // Resource loading
     using RenderDevice::setup_mesh;
     uint32_t setup_mesh(const Geometry& geometry) override;
     uint32_t load_texture(const std::string& path) override;
 
    private:
-    std::vector<const char*> deviceExtensions_ = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };  // don't change this to std::string, things need it to be char*
     static constexpr uint32_t kMAX_FRAMES_IN_FLIGHT = 2;
     static constexpr uint32_t kbufferDefaultSize = 1024 * 1024;
     static constexpr bool kEnableValidationLayers = true;
@@ -155,23 +53,13 @@ class VulkanRenderDevice : public RenderDevice {
         vkr::DeviceMemory textureMemory;
         vkr::ImageView textureImageView;
     };
-
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
-
-        bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
-    };
-    struct SwapChainSupportDetails {
-        vk::SurfaceCapabilitiesKHR capabilities;
-        std::vector<vk::SurfaceFormatKHR> formats;
-        std::vector<vk::PresentModeKHR> presentModes;
-    };
     struct CameraUBO {
         alignas(kMat4Align) glm::mat4 view;
         alignas(kMat4Align) glm::mat4 proj;
-    };
-    CameraUBO cameraUbo_{};
+    } cameraUbo_{};
+
+    // don't change this to std::string, things need it to be char*
+    std::vector<const char*> deviceExtensions_ = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
     vkr::Context gvContext_;
     vkr::Instance gvInstance_;
@@ -183,7 +71,12 @@ class VulkanRenderDevice : public RenderDevice {
     vkr::Device gvDevice_;
 
     static constexpr uint32_t kInitialModelCapacity = 256;
-    ModelBufferAllocation modelBufferAlloc_;
+    struct ModelBufferAllocation {
+        std::vector<vkr::Buffer> buffers;
+        std::vector<vkr::DeviceMemory> memory;
+        std::vector<void*> mapped;
+        uint32_t capacity;
+    } modelBufferAlloc_;
 
     vkr::Queue gvGraphicsQueue_;
     vkr::Queue gvPresentQueue_;
@@ -201,16 +94,35 @@ class VulkanRenderDevice : public RenderDevice {
     vkr::Pipeline gvPipeline_;
 
     vkr::CommandPool gvCommandPool_;
-    ColorResources colorResources_;
-    DepthResources depthResources_;
+
+    struct ColorResources {
+        vkr::Image image;
+        vkr::DeviceMemory memory;
+        vkr::ImageView view;
+    } colorResources_;
+    struct DepthResources {
+        vkr::Image image;
+        vkr::DeviceMemory memory;
+        vkr::ImageView view;
+    } depthResources_;
     std::vector<vkr::Framebuffer> swapChainFramebuffers_;
 
-    VertexBufferAllocation vertexBuffer_;
-    IndexBufferAllocation indexBuffer_;
+    struct VertexBufferAllocation {
+        vkr::Buffer buffer;
+        vkr::DeviceMemory memory;
+    } vertexBuffer_;
+    struct IndexBufferAllocation {
+        vkr::Buffer buffer;
+        vkr::DeviceMemory memory;
+    } indexBuffer_;
     vk::DeviceSize totalVertexBytes_ = 0;
     vk::DeviceSize totalIndexBytes_ = 0;
 
-    UniformBufferAllocation uniformBufferAlloc_;
+    struct UniformBufferAllocation {
+        std::vector<vkr::Buffer> buffers;
+        std::vector<vkr::DeviceMemory> memory;
+        std::vector<void*> mapped;
+    } uniformBufferAlloc_;
     vkr::DescriptorPool gvDescriptorPool_;
     std::vector<vkr::DescriptorSet> descriptorSets_;
     std::vector<vkr::CommandBuffer> gvCommandBuffers_;
@@ -233,18 +145,34 @@ class VulkanRenderDevice : public RenderDevice {
     bool framebufferResized_ = false;
     uint32_t currentFrame_ = 0;
 
-    bool init_vulkan(const InitInfo& info);
-
+    // Instance and surface initialization
     vkr::Instance create_instance();
-    vkr::DebugUtilsMessengerEXT setup_debug_messenger();
     vkr::SurfaceKHR create_surface();
+    vkr::DebugUtilsMessengerEXT setup_debug_messenger();
 
+    // Physical and logical device selection
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+
+        bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
+    };
     vkr::PhysicalDevice pick_physical_device();
-    bool check_device_extension_support(const vkr::PhysicalDevice& device);
-    bool is_device_suitable(const vkr::PhysicalDevice& device);
-    [[nodiscard]] vk::SampleCountFlagBits max_usable_sample_count() const;
     vkr::Device create_logical_device();
+    bool is_device_suitable(const vkr::PhysicalDevice& device);
+    bool check_device_extension_support(const vkr::PhysicalDevice& device);
+    QueueFamilyIndices find_queue_families(const vkr::PhysicalDevice& device);
+    [[nodiscard]] vk::SampleCountFlagBits max_usable_sample_count() const;
 
+    // Swap chain creation and management
+    struct SwapChainSupportDetails {
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
+    vk::Extent2D create_extent();
+    [[nodiscard]] vk::Format create_swap_chain_image_format() const;
+    vkr::SwapchainKHR create_swap_chain();
     [[nodiscard]] SwapChainSupportDetails query_swap_chain_support(
         const vk::PhysicalDevice& device
     ) const;
@@ -260,68 +188,144 @@ class VulkanRenderDevice : public RenderDevice {
         const vk::PresentModeKHR& presentMode,
         const QueueFamilyIndices& indices
     ) const;
-    vk::Format create_swap_chain_image_format() const;
-    vkr::SwapchainKHR create_swap_chain();
     bool recreate_swap_chain();
     bool cleanup_swap_chain();
 
+    // Image views
+    struct ImageViewCreateParams {
+        vk::Image image;
+        vk::Format format;
+        vk::ImageAspectFlags aspectFlags;
+        uint32_t mipLevels;
+    };
     std::vector<vkr::ImageView> create_image_views();
     vkr::ImageView create_image_view(const ImageViewCreateParams& params);
 
+    // Texture sampler
+    vkr::Sampler create_texture_sampler();
+    vkr::ImageView create_texture_image_view();
+
+    // Render pass
     vkr::RenderPass create_render_pass();
+    vk::Format find_depth_format();
     vk::Format find_supported_format(
         const std::vector<vk::Format>& candidates,
         vk::ImageTiling tiling,
         vk::FormatFeatureFlags features
     );
-    vk::Format find_depth_format();
+
+    // Descriptor set layout and pipeline
     vkr::DescriptorSetLayout create_descriptor_set_layout();
     vkr::PipelineLayout create_pipeline_layout();
     vkr::Pipeline create_graphics_pipeline(const std::string& assetPath);
-    vkr::CommandPool create_command_pool();
+    vkr::ShaderModule create_shader_module(const std::vector<char>& code);
 
+    // Command pool
+    vkr::CommandPool create_command_pool();
+    vkr::CommandBuffer begin_single_time_commands();
+    void end_single_time_commands(vkr::CommandBuffer& commandBuffer);
+
+    // Color and depth resources
     ColorResources create_color_resources();
     DepthResources create_depth_resources();
+
+    // Framebuffers
     std::vector<vkr::Framebuffer> create_framebuffers();
 
-    vkr::ImageView create_texture_image_view();
-    vkr::Sampler create_texture_sampler();
-    void update_descriptor_sets();
-    void transition_image_layout(const ImageLayoutTransitionInfo& info);
+    // Vertex, index, and uniform buffers
     VertexBufferAllocation create_vertex_buffer();
     IndexBufferAllocation create_index_buffer();
     UniformBufferAllocation create_uniform_buffers();
     ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
-    void update_camera_buffer(uint32_t currentImage);
-    void update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models);
 
+    // Descriptor pool and sets
     vkr::DescriptorPool create_descriptor_pool();
     std::vector<vkr::DescriptorSet> create_descriptor_sets();
+    void update_descriptor_sets();
+
+    // Command buffers
     std::vector<vkr::CommandBuffer> create_command_buffers();
-    std::vector<vkr::Semaphore> create_sync_objects();
     void record_command_buffer(
         vkr::CommandBuffer& commandBuffer,
         uint32_t imageIndex,
         ECSController& world
     );
 
-    QueueFamilyIndices find_queue_families(const vkr::PhysicalDevice& device);
-    vk::Extent2D create_extent();
-    vkr::ShaderModule create_shader_module(const std::vector<char>& code);
-    vkr::CommandBuffer begin_single_time_commands();
-    void end_single_time_commands(vkr::CommandBuffer& commandBuffer);
+    // Synchronization objects
+    std::vector<vkr::Semaphore> create_sync_objects();
 
+    // Low-level resource creation helpers
+    struct ImageCreateInfo {
+        uint32_t width;
+        uint32_t height;
+        uint32_t mipLevels;
+        vk::SampleCountFlagBits samples;
+        vk::Format format;
+        vk::ImageTiling tiling;
+        vk::ImageUsageFlags usage;
+        vk::MemoryPropertyFlags memoryProperties;
+    };
+    struct ImageAllocation {
+        vkr::Image image;
+        vkr::DeviceMemory memory;
+    };
+    struct BufferCreateInfo {
+        vk::DeviceSize size;
+        vk::BufferUsageFlags usage;
+        vk::MemoryPropertyFlags memoryProperties;
+    };
+    struct BufferAllocation {
+        vkr::Buffer buffer;
+        vkr::DeviceMemory memory;
+    };
     ImageAllocation create_image(const ImageCreateInfo& info);
-    uint32_t find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     BufferAllocation create_buffer(const BufferCreateInfo& info);
-
+    uint32_t find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     template <typename T>
     std::pair<vkr::Buffer, vkr::DeviceMemory> create_staging_buffer(std::span<T> data);
+
+    // Resource transfer and manipulation
+    struct ImageLayoutTransitionInfo {
+        vk::Image image;
+        vk::ImageLayout oldLayout;
+        vk::ImageLayout newLayout;
+        uint32_t mipLevels;
+    };
+    struct CopyBufferInfo {
+        vk::Buffer src;
+        vk::Buffer dst;
+        vk::DeviceSize size;
+        vk::DeviceSize dstOffset = 0;
+    };
+    struct CopyBufferToImageInfo {
+        vk::Buffer buffer;
+        vk::Image image;
+        uint32_t width;
+        uint32_t height;
+    };
+    struct TextureSize {
+        int32_t width;
+        int32_t height;
+    };
+    struct MipmapGenerationInfo {
+        vk::Image image;
+        vk::Format format;
+        TextureSize size;
+        uint32_t mipLevels;
+    };
+    void transition_image_layout(const ImageLayoutTransitionInfo& info);
     void copy_buffer(const CopyBufferInfo& info);
     void copy_buffer_to_image(const CopyBufferToImageInfo& info);
     void generate_mipmaps(const MipmapGenerationInfo& info);
+
+    // Runtime update functions
+    void update_camera_buffer(uint32_t currentImage);
+    void update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models);
+
+    // Historic (deprecated)
+    bool init_vulkan(const InitInfo& info);
 };  // namespace garnish::vulkan
 
 static vk::VertexInputBindingDescription getBindingDescription() {

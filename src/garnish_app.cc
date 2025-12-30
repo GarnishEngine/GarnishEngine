@@ -35,7 +35,6 @@ App::App(const CreateInfo createInfo)
       fps(createInfo.targetFps),
       renderDevice(nullptr),
       window(nullptr) {
-    init();
     make_render_device(createInfo);
     ecsController.set(renderDevice.get());
 
@@ -144,11 +143,17 @@ void App::make_render_device(const CreateInfo& createInfo) {
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
-            renderDevice = std::make_unique<OpenGLRenderDevice>();
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
             window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
+            renderDevice = std::make_unique<OpenGLRenderDevice>(RenderDevice::InitInfo{
+                .nativeWindow = window.get(),
+                .width = width,
+                .height = height,
+                .vsync = false,
+                .assetPath = createInfo.assetPath
+            });
             break;
 #endif
 #ifdef _VULKAN_RENDERING

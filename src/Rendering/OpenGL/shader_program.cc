@@ -25,10 +25,6 @@ ShaderProgram::ShaderProgram(
     glDeleteShader(fragmentShader);
 }
 
-ShaderProgram::~ShaderProgram() {
-    cleanup();
-}
-
 void ShaderProgram::cleanup() const {
     glDeleteProgram(handle);
 }

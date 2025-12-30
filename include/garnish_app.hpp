@@ -87,7 +87,7 @@ class App {
     uint32_t width;
     uint32_t height;
     uint32_t fps;
-    virtual void init();
+    virtual void init() = 0;
     void init_imgui();
     void terminate_imgui();
     [[nodiscard]] SDL_Window* init_window(int64_t flags) const;
