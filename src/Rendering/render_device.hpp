@@ -12,6 +12,8 @@ class ECSController;  // forward declaration
 
 class RenderDevice {
    public:
+    RenderDevice() = default;
+    explicit RenderDevice(SDL_Window* w) : window(w) {}
     virtual ~RenderDevice() = default;
     struct InitInfo {
         void* nativeWindow{};

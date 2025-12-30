@@ -77,15 +77,16 @@ class App {
 
    private:
     std::unique_ptr<RenderDevice> renderDevice;
+    UniqueSDLWindow window;
+
     ECSController ecsController;
+    std::vector<std::function<void(ECSController&)>> updateFunctions;
+    PhysicsSystem physicsSystem;
+
     bool shouldClose = false;
     uint32_t width;
     uint32_t height;
     uint32_t fps;
-    UniqueSDLWindow window;
-    PhysicsSystem physicsSystem;
-    std::vector<std::function<void(ECSController&)>> updateFunctions;
-
     virtual void init();
     void init_imgui();
     void terminate_imgui();

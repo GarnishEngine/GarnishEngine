@@ -1,24 +1,121 @@
 #pragma once
 #include <cstdint>
-#include <shared.hpp>
 #include <vector>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_raii.hpp>
 
 #include "render_device.hpp"
+#include "shared.hpp"
 
 namespace garnish::vulkan {
-const std::vector<const char*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
-};
+namespace vkr = vk::raii;
+const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
 struct TextureSize {
     int32_t width;
     int32_t height;
 };
 
+struct ImageCreateInfo {
+    uint32_t width;
+    uint32_t height;
+    uint32_t mipLevels;
+    vk::SampleCountFlagBits samples;
+    vk::Format format;
+    vk::ImageTiling tiling;
+    vk::ImageUsageFlags usage;
+    vk::MemoryPropertyFlags memoryProperties;
+};
+
+struct ImageAllocation {
+    vkr::Image image;
+    vkr::DeviceMemory memory;
+};
+
+struct ColorResources {
+    vkr::Image image;
+    vkr::DeviceMemory memory;
+    vkr::ImageView view;
+};
+
+struct DepthResources {
+    vkr::Image image;
+    vkr::DeviceMemory memory;
+    vkr::ImageView view;
+};
+
+struct VertexBufferAllocation {
+    vkr::Buffer buffer;
+    vkr::DeviceMemory memory;
+};
+
+struct IndexBufferAllocation {
+    vkr::Buffer buffer;
+    vkr::DeviceMemory memory;
+};
+
+struct BufferCreateInfo {
+    vk::DeviceSize size;
+    vk::BufferUsageFlags usage;
+    vk::MemoryPropertyFlags memoryProperties;
+};
+
+struct BufferAllocation {
+    vkr::Buffer buffer;
+    vkr::DeviceMemory memory;
+};
+
+struct UniformBufferAllocation {
+    std::vector<vkr::Buffer> buffers;
+    std::vector<vkr::DeviceMemory> memory;
+    std::vector<void*> mapped;
+};
+
+struct ModelBufferAllocation {
+    std::vector<vkr::Buffer> buffers;
+    std::vector<vkr::DeviceMemory> memory;
+    std::vector<void*> mapped;
+    uint32_t capacity;
+};
+
+struct ImageLayoutTransitionInfo {
+    vk::Image image;
+    vk::ImageLayout oldLayout;
+    vk::ImageLayout newLayout;
+    uint32_t mipLevels;
+};
+
+struct CopyBufferToImageInfo {
+    vk::Buffer buffer;
+    vk::Image image;
+    uint32_t width;
+    uint32_t height;
+};
+
+struct CopyBufferInfo {
+    vk::Buffer src;
+    vk::Buffer dst;
+    vk::DeviceSize size;
+    vk::DeviceSize dstOffset = 0;
+};
+
+struct ImageViewCreateParams {
+    vk::Image image;
+    vk::Format format;
+    vk::ImageAspectFlags aspectFlags;
+    uint32_t mipLevels;
+};
+
+struct MipmapGenerationInfo {
+    vk::Image image;
+    vk::Format format;
+    TextureSize size;
+    uint32_t mipLevels;
+};
+
 class VulkanRenderDevice : public RenderDevice {
    public:
-    VulkanRenderDevice() = default;
+    VulkanRenderDevice(const RenderDevice::InitInfo& info);
     VulkanRenderDevice(const VulkanRenderDevice&) = delete;
     VulkanRenderDevice& operator=(const VulkanRenderDevice&) = delete;
     VulkanRenderDevice(VulkanRenderDevice&&) = delete;
@@ -54,18 +151,16 @@ class VulkanRenderDevice : public RenderDevice {
     };
     struct GVTexture {
         uint32_t mipLevels;
-        vk::Image textureImage;
-        vk::DeviceMemory textureMemory;
-        vk::ImageView textureImageView;
+        vkr::Image textureImage;
+        vkr::DeviceMemory textureMemory;
+        vkr::ImageView textureImageView;
     };
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
 
-        bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
-        }
+        bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
     };
     struct SwapChainSupportDetails {
         vk::SurfaceCapabilitiesKHR capabilities;
@@ -78,64 +173,48 @@ class VulkanRenderDevice : public RenderDevice {
     };
     CameraUBO cameraUbo_{};
 
-    std::vector<vk::Buffer> modelBuffers_;
-    std::vector<vk::DeviceMemory> modelBuffersMemory_;
-    std::vector<void*> modelBuffersMapped_;
-    uint32_t modelBufferCapacity = 0;
-    static constexpr uint32_t kInitialModelCapacity = 256;
+    vkr::Context gvContext_;
+    vkr::Instance gvInstance_;
+    vkr::SurfaceKHR gvSurface_;
+    vkr::DebugUtilsMessengerEXT gvDebugMessenger_;
 
-    vk::DebugUtilsMessengerEXT gvDebugMessenger_;
-
-    vk::Instance gvInstance_;
-    vk::SurfaceKHR gvSurface_;
-
-    vk::PhysicalDevice gvPhysicalDevice_;
-    vk::Device gvDevice_;
-
-    vk::Queue gvGraphicsQueue_;
-    vk::Queue gvPresentQueue_;
-
-    vk::SwapchainKHR gvSwapchainKHR_;
-    vk::Format gvSwapChainImageFormat_{};
-    vk::Extent2D gvSwapChainExtent_;
-    std::vector<vk::Image> swapChainImages_;
-    std::vector<vk::ImageView> swapChainImageViews_;
-    std::vector<vk::Framebuffer> swapChainFramebuffers_;
-
-    vk::RenderPass gvRenderPass_;
-    vk::PipelineLayout gvPipelineLayout_;
-    vk::Pipeline gvPipeline_;
     vk::SampleCountFlagBits msaaSamples_ = vk::SampleCountFlagBits::e1;
+    vkr::PhysicalDevice gvPhysicalDevice_;
+    vkr::Device gvDevice_;
 
-    vk::DescriptorPool gvDescriptorPool_;
-    vk::DescriptorSetLayout gvDescriptorSetLayout_;
-    vk::DescriptorSet gvDescriptorSet_;
-    std::vector<vk::DescriptorSet> descriptorSets_;
+    static constexpr uint32_t kInitialModelCapacity = 256;
+    ModelBufferAllocation modelBufferAlloc_;
 
-    vk::CommandPool gvCommandPool_;
-    std::vector<vk::CommandBuffer> gvCommandBuffers_;
+    vkr::Queue gvGraphicsQueue_;
+    vkr::Queue gvPresentQueue_;
 
-    vk::Semaphore gvPresentSemaphore_;
-    vk::Semaphore gvRenderSemaphore_;
+    vk::Extent2D gvSwapChainExtent_;
+    vk::Format gvSwapChainImageFormat_;
+    std::vector<vk::Image> swapChainImages_;
+    vkr::SwapchainKHR gvSwapchainKHR_;
+    std::vector<vkr::ImageView> swapChainImageViews_;
 
-    vk::Fence gvRenderFence_;
+    vkr::Sampler gvTextureSampler_;
+    vkr::RenderPass gvRenderPass_;
+    vkr::DescriptorSetLayout gvDescriptorSetLayout_;
+    vkr::PipelineLayout gvPipelineLayout_;
+    vkr::Pipeline gvPipeline_;
 
-    vk::Image colorImage_;
-    vk::DeviceMemory colorImageMemory_;
-    vk::ImageView colorImageView_;
+    vkr::CommandPool gvCommandPool_;
+    ColorResources colorResources_;
+    DepthResources depthResources_;
+    std::vector<vkr::Framebuffer> swapChainFramebuffers_;
 
-    vk::Image depthImage_;
-    vk::DeviceMemory depthImageMemory_;
-    vk::ImageView depthImageView_;
+    VertexBufferAllocation vertexBuffer_;
+    IndexBufferAllocation indexBuffer_;
     vk::DeviceSize totalVertexBytes_ = 0;
     vk::DeviceSize totalIndexBytes_ = 0;
 
-    vk::Buffer vertexBuffer_;
-    vk::Buffer indexBuffer_;
-    vk::DeviceMemory vertexBufferMemory_;
-    vk::DeviceMemory indexBufferMemory_;
+    UniformBufferAllocation uniformBufferAlloc_;
+    vkr::DescriptorPool gvDescriptorPool_;
+    std::vector<vkr::DescriptorSet> descriptorSets_;
+    std::vector<vkr::CommandBuffer> gvCommandBuffers_;
 
-    vk::Sampler gvTextureSampler_;
     std::vector<GVMesh> gvMeshes_;
     std::vector<GVTexture> gvTextures_;
     std::unordered_map<size_t, uint32_t> loadedTextures_;
@@ -144,166 +223,133 @@ class VulkanRenderDevice : public RenderDevice {
     vk::PhysicalDeviceDescriptorIndexingProperties indexingProperties_;
     vk::PhysicalDeviceVulkan12Features vulkan12Features_;
 
-    std::vector<vk::Buffer> uniformBuffers_;
-    std::vector<vk::DeviceMemory> uniformBuffersMemory_;
-    std::vector<void*> uniformBuffersMapped_;
-
     uint32_t mipLevels = 0;
 
-    std::vector<vk::Semaphore> imageAvailableSemaphores_;
-    std::vector<vk::Semaphore> renderFinishedSemaphores_;
-    std::vector<vk::Fence> inFlightFences_;
-    std::vector<vk::Fence> imageInFlight_;
+    std::vector<vkr::Fence> inFlightFences_;
+    std::vector<vkr::Semaphore> renderFinishedSemaphores_;
+    std::vector<vk::Fence> imageInFlight_;  // Non-owning handles
+    std::vector<vkr::Semaphore> imageAvailableSemaphores_;
 
     bool framebufferResized_ = false;
     uint32_t currentFrame_ = 0;
 
     bool init_vulkan(const InitInfo& info);
 
-    bool create_instance();
-    bool setup_debug_messenger();
-    bool create_surface();
+    vkr::Instance create_instance();
+    vkr::DebugUtilsMessengerEXT setup_debug_messenger();
+    vkr::SurfaceKHR create_surface();
 
-    bool pick_physical_device();
-    bool check_device_extension_support(const vk::PhysicalDevice& device);
-    bool is_device_suitable(const vk::PhysicalDevice& device);
+    vkr::PhysicalDevice pick_physical_device();
+    bool check_device_extension_support(const vkr::PhysicalDevice& device);
+    bool is_device_suitable(const vkr::PhysicalDevice& device);
     [[nodiscard]] vk::SampleCountFlagBits max_usable_sample_count() const;
-    bool create_logical_device();
+    vkr::Device create_logical_device();
 
-    bool create_swap_chain();
+    [[nodiscard]] SwapChainSupportDetails query_swap_chain_support(
+        const vk::PhysicalDevice& device
+    ) const;
+    [[nodiscard]] static vk::PresentModeKHR choose_present_mode(
+        const std::vector<vk::PresentModeKHR>& availableModes
+    );
+    [[nodiscard]] static uint32_t choose_image_count(
+        const vk::SurfaceCapabilitiesKHR& capabilities
+    );
+    [[nodiscard]] vk::SwapchainCreateInfoKHR build_swapchain_create_info(
+        const SwapChainSupportDetails& support,
+        const vk::SurfaceFormatKHR& surfaceFormat,
+        const vk::PresentModeKHR& presentMode,
+        const QueueFamilyIndices& indices
+    ) const;
+    vk::Format create_swap_chain_image_format() const;
+    vkr::SwapchainKHR create_swap_chain();
     bool recreate_swap_chain();
     bool cleanup_swap_chain();
 
-    bool create_image_views();
-    vk::ImageView create_image_view(
-        vk::Image image,
-        vk::Format format,
-        vk::ImageAspectFlags aspectFlags,
-        uint32_t mipLevels
-    );
+    std::vector<vkr::ImageView> create_image_views();
+    vkr::ImageView create_image_view(const ImageViewCreateParams& params);
 
-    bool create_render_pass();
+    vkr::RenderPass create_render_pass();
     vk::Format find_supported_format(
         const std::vector<vk::Format>& candidates,
         vk::ImageTiling tiling,
         vk::FormatFeatureFlags features
     );
     vk::Format find_depth_format();
-    bool create_descriptor_set_layout();
-    bool create_graphics_pipeline(std::string assetPath);
-    bool create_command_pool();
+    vkr::DescriptorSetLayout create_descriptor_set_layout();
+    vkr::PipelineLayout create_pipeline_layout();
+    vkr::Pipeline create_graphics_pipeline(const std::string& assetPath);
+    vkr::CommandPool create_command_pool();
 
-    bool create_color_resources();
-    bool create_depth_resources();
-    bool create_framebuffers();
+    ColorResources create_color_resources();
+    DepthResources create_depth_resources();
+    std::vector<vkr::Framebuffer> create_framebuffers();
 
-    bool create_texture_image_view();
-    bool create_texture_sampler();
+    vkr::ImageView create_texture_image_view();
+    vkr::Sampler create_texture_sampler();
     void update_descriptor_sets();
-    void transition_image_layout(
-        vk::Image image,
-        vk::Format format,
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        uint32_t mipLevels
-    );
-    void create_vertex_buffer();
-    void create_index_buffer();
-    void create_uniform_buffers();
-    void create_model_buffers(uint32_t minCapacity);
+    void transition_image_layout(const ImageLayoutTransitionInfo& info);
+    VertexBufferAllocation create_vertex_buffer();
+    IndexBufferAllocation create_index_buffer();
+    UniformBufferAllocation create_uniform_buffers();
+    ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
     void update_camera_buffer(uint32_t currentImage);
-    void update_model_buffer(
-        uint32_t currentImage,
-        const std::vector<glm::mat4>& models
-    );
+    void update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models);
 
-    bool create_descriptor_pool();
-    bool create_descriptor_sets();
-    bool create_command_buffers();
-    bool create_sync_objects();
+    vkr::DescriptorPool create_descriptor_pool();
+    std::vector<vkr::DescriptorSet> create_descriptor_sets();
+    std::vector<vkr::CommandBuffer> create_command_buffers();
+    std::vector<vkr::Semaphore> create_sync_objects();
     void record_command_buffer(
-        vk::CommandBuffer commandBuffer,
+        vkr::CommandBuffer& commandBuffer,
         uint32_t imageIndex,
         ECSController& world
     );
 
-    QueueFamilyIndices find_queue_families(const vk::PhysicalDevice& device);
+    QueueFamilyIndices find_queue_families(const vkr::PhysicalDevice& device);
     vk::Extent2D create_extent();
-    vk::ShaderModule create_shader_module(const std::vector<char>& code);
-    vk::CommandBuffer begin_single_time_commands();
-    void end_single_time_commands(vk::CommandBuffer& commandBuffer);
-    // TODO maybe seperate parameters below into differens structs
-    void create_image(
-        uint32_t width,
-        uint32_t height,
-        uint32_t mipLevels,
-        vk::SampleCountFlagBits numSamples,
-        vk::Format format,
-        vk::ImageTiling tiling,
-        vk::ImageUsageFlags usage,
-        vk::MemoryPropertyFlags properties,
-        vk::Image& image,
-        vk::DeviceMemory& imageMemory
-    );
-    uint32_t
-    find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-    void create_buffer(
-        vk::DeviceSize size,
-        vk::BufferUsageFlags usage,
-        vk::MemoryPropertyFlags properties,
-        vk::Buffer& buffer,
-        vk::DeviceMemory& bufferMemory
-    );
-    void copy_buffer(
-        vk::Buffer srcBuffer,
-        vk::Buffer dstBuffer,
-        vk::DeviceSize size,
-        vk::DeviceSize dstOffset
-    );
-    void copy_buffer_to_image(
-        vk::Buffer buffer,
-        vk::Image image,
-        uint32_t width,
-        uint32_t height
-    );
-    void generate_mipmaps(
-        vk::Image image,
-        vk::Format imageFormat,
-        TextureSize size,
-        uint32_t mipLevels
-    );
+    vkr::ShaderModule create_shader_module(const std::vector<char>& code);
+    vkr::CommandBuffer begin_single_time_commands();
+    void end_single_time_commands(vkr::CommandBuffer& commandBuffer);
+
+    ImageAllocation create_image(const ImageCreateInfo& info);
+    uint32_t find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    BufferAllocation create_buffer(const BufferCreateInfo& info);
+
+    template <typename T>
+    std::pair<vkr::Buffer, vkr::DeviceMemory> create_staging_buffer(std::span<T> data);
+    void copy_buffer(const CopyBufferInfo& info);
+    void copy_buffer_to_image(const CopyBufferToImageInfo& info);
+    void generate_mipmaps(const MipmapGenerationInfo& info);
 };  // namespace garnish::vulkan
 
 static vk::VertexInputBindingDescription getBindingDescription() {
-    vk::VertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = vk::VertexInputRate::eVertex;
-
+    auto bindingDescription = vk::VertexInputBindingDescription{}
+                                  .setBinding(0)
+                                  .setStride(sizeof(Vertex))
+                                  .setInputRate(vk::VertexInputRate::eVertex);
     return bindingDescription;
 }
 
-static std::array<vk::VertexInputAttributeDescription, 3>
-getAttributeDescriptions() {
+static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
     std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions{};
+    attributeDescriptions[0] = vk::VertexInputAttributeDescription{}
+                                   .setBinding(0)
+                                   .setLocation(0)
+                                   .setFormat(vk::Format::eR32G32B32Sfloat)
+                                   .setOffset(offsetof(Vertex, position));
 
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = vk::Format::eR32G32B32Sfloat;
-    attributeDescriptions[0].offset = offsetof(Vertex, position);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = vk::Format::eR32G32B32Sfloat;
-    attributeDescriptions[1].offset = offsetof(Vertex, normal);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
-    attributeDescriptions[2].offset = offsetof(Vertex, uv);
-
+    attributeDescriptions[1] = vk::VertexInputAttributeDescription{}
+                                   .setBinding(0)
+                                   .setLocation(1)
+                                   .setFormat(vk::Format::eR32G32B32Sfloat)
+                                   .setOffset(offsetof(Vertex, normal));
+    attributeDescriptions[2] = vk::VertexInputAttributeDescription{}
+                                   .setBinding(0)
+                                   .setLocation(2)
+                                   .setFormat(vk::Format::eR32G32Sfloat)
+                                   .setOffset(offsetof(Vertex, uv));
     return attributeDescriptions;
 }
 }  // namespace garnish::vulkan
@@ -312,8 +358,7 @@ namespace std {
 template <>
 struct hash<Vertex> {
     size_t operator()(Vertex const& vertex) const {
-        return ((hash<glm::vec3>()(vertex.position) ^
-                 (hash<glm::vec3>()(vertex.normal) << 1)) >>
+        return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >>
                 1) ^
                (hash<glm::vec2>()(vertex.uv) << 1);
     }
