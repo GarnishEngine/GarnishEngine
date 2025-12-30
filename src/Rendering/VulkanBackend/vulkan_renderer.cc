@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <format>
 #include <iostream>
 #include <ranges>
 #include <set>
@@ -285,7 +286,7 @@ vkr::DebugUtilsMessengerEXT VulkanRenderDevice::setup_debug_messenger() {
                               vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
                           )
                           .setPfnUserCallback(&debugMessageFunc);
-    return vkr::DebugUtilsMessengerEXT(gvInstance_, createInfo);
+    return {gvInstance_, createInfo};
 }
 
 vkr::PhysicalDevice VulkanRenderDevice::pick_physical_device() {
@@ -321,24 +322,28 @@ vkr::PhysicalDevice VulkanRenderDevice::pick_physical_device() {
     supportedIndexingFeatures_ = indexingFeaturesQuery;
 
     log_debug(
-        "Vulkan 1.2 descriptorIndexing: " + std::to_string(vulkan12Features_.descriptorIndexing) +
-        "\n" + "Descriptor indexing support:\n" + "  runtimeDescriptorArray: " +
-        std::to_string(supportedIndexingFeatures_.runtimeDescriptorArray) + "\n" +
-        "  descriptorBindingPartiallyBound: " +
-        std::to_string(supportedIndexingFeatures_.descriptorBindingPartiallyBound) + "\n" +
-        "  descriptorBindingVariableDescriptorCount: " +
-        std::to_string(supportedIndexingFeatures_.descriptorBindingVariableDescriptorCount) + "\n" +
-        "  shaderSampledImageArrayNonUniformIndexing: " +
-        std::to_string(supportedIndexingFeatures_.shaderSampledImageArrayNonUniformIndexing) +
-        "\n" + "Descriptor indexing properties (limits):\n" +
-        "  maxPerStageDescriptorUpdateAfterBindSamplers: " +
-        std::to_string(indexingProperties_.maxPerStageDescriptorUpdateAfterBindSamplers) + "\n" +
-        "  maxPerStageDescriptorUpdateAfterBindUniformBuffers: " +
-        std::to_string(indexingProperties_.maxPerStageDescriptorUpdateAfterBindUniformBuffers) +
-        "\n" + "  maxPerStageDescriptorUpdateAfterBindStorageBuffers: " +
-        std::to_string(indexingProperties_.maxPerStageDescriptorUpdateAfterBindStorageBuffers) +
-        "\n" + "  maxPerStageDescriptorUpdateAfterBindSampledImages: " +
-        std::to_string(indexingProperties_.maxPerStageDescriptorUpdateAfterBindSampledImages)
+        std::format(
+            "Vulkan 1.2 descriptorIndexing: {}\n"
+            "Descriptor indexing support:\n"
+            "  runtimeDescriptorArray: {}\n"
+            "  descriptorBindingPartiallyBound: {}\n"
+            "  descriptorBindingVariableDescriptorCount: {}\n"
+            "  shaderSampledImageArrayNonUniformIndexing: {}\n"
+            "Descriptor indexing properties (limits):\n"
+            "  maxPerStageDescriptorUpdateAfterBindSamplers: {}\n"
+            "  maxPerStageDescriptorUpdateAfterBindUniformBuffers: {}\n"
+            "  maxPerStageDescriptorUpdateAfterBindStorageBuffers: {}\n"
+            "  maxPerStageDescriptorUpdateAfterBindSampledImages: {}",
+            vulkan12Features_.descriptorIndexing,
+            supportedIndexingFeatures_.runtimeDescriptorArray,
+            supportedIndexingFeatures_.descriptorBindingPartiallyBound,
+            supportedIndexingFeatures_.descriptorBindingVariableDescriptorCount,
+            supportedIndexingFeatures_.shaderSampledImageArrayNonUniformIndexing,
+            indexingProperties_.maxPerStageDescriptorUpdateAfterBindSamplers,
+            indexingProperties_.maxPerStageDescriptorUpdateAfterBindUniformBuffers,
+            indexingProperties_.maxPerStageDescriptorUpdateAfterBindStorageBuffers,
+            indexingProperties_.maxPerStageDescriptorUpdateAfterBindSampledImages
+        )
     );
 
     std::vector<vk::ExtensionProperties>
@@ -351,8 +356,10 @@ vkr::PhysicalDevice VulkanRenderDevice::pick_physical_device() {
             vk::PhysicalDeviceProperties2,
             vk::PhysicalDeviceMaintenance3Properties>();
         log_timed(
-            "maintenance3Props.maxMemoryAllocationSize: " +
-            std::to_string(maintenance3Props.maxMemoryAllocationSize)
+            std::format(
+                "maintenance3Props.maxMemoryAllocationSize: {}",
+                maintenance3Props.maxMemoryAllocationSize
+            )
         );
         deviceExtensions_.push_back(vk::KHRMaintenance3ExtensionName);
     }
@@ -857,7 +864,7 @@ ColorResources VulkanRenderDevice::create_color_resources() {
          .mipLevels = 1}
     );
 
-    return {std::move(image), std::move(memory), std::move(view)};
+    return {.image = std::move(image), .memory = std::move(memory), .view = std::move(view)};
 }
 
 DepthResources VulkanRenderDevice::create_depth_resources() {
@@ -881,7 +888,7 @@ DepthResources VulkanRenderDevice::create_depth_resources() {
          .mipLevels = 1}
     );
 
-    return {std::move(image), std::move(memory), std::move(view)};
+    return {.image = std::move(image), .memory = std::move(memory), .view = std::move(view)};
 }
 
 std::vector<vkr::Framebuffer> VulkanRenderDevice::create_framebuffers() {
