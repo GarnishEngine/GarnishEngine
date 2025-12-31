@@ -499,22 +499,20 @@ vkr::PhysicalDevice VulkanRenderDevice::pick_physical_device() {
 vkr::Device VulkanRenderDevice::create_logical_device() {
     QueueFamilyIndices indices = find_queue_families(gvPhysicalDevice_);
 
-    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {
         indices.graphicsFamily.value(),
         indices.presentFamily.value()
     };
 
     float queuePriority = 1.0F;
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
-        queueCreateInfos.push_back(
-            vk::DeviceQueueCreateInfo{}
-                .setQueueFamilyIndex(queueFamily)
-                .setQueueCount(1)
-                .setPQueuePriorities(&queuePriority)
-        );
-    }
-
+    auto queueCreateInfos = uniqueQueueFamilies |
+                            std::views::transform([&queuePriority](uint32_t queueFamily) {
+                                return vk::DeviceQueueCreateInfo{}
+                                    .setQueueFamilyIndex(queueFamily)
+                                    .setQueueCount(1)
+                                    .setPQueuePriorities(&queuePriority);
+                            }) |
+                            std::ranges::to<std::vector>();
     auto deviceFeatures = vk::PhysicalDeviceFeatures{}
                               .setSamplerAnisotropy(vk::True)
                               .setSampleRateShading(vk::True);
@@ -776,17 +774,15 @@ bool VulkanRenderDevice::cleanup_swap_chain() {
 
 // Image views
 std::vector<vkr::ImageView> VulkanRenderDevice::create_image_views() {
-    std::vector<vkr::ImageView> views;
-    views.reserve(swapChainImages_.size());
-    for (const auto& image : swapChainImages_) {
-        views.push_back(create_image_view(
-            {.image = image,
-             .format = gvSwapChainImageFormat_,
-             .aspectFlags = vk::ImageAspectFlagBits::eColor,
-             .mipLevels = 1}
-        ));
-    }
-    return views;
+    return swapChainImages_ | std::views::transform([this](const auto& image) {
+               return create_image_view(
+                   {.image = image,
+                    .format = gvSwapChainImageFormat_,
+                    .aspectFlags = vk::ImageAspectFlagBits::eColor,
+                    .mipLevels = 1}
+               );
+           }) |
+           std::ranges::to<std::vector>();
 }
 
 vkr::ImageView VulkanRenderDevice::create_image_view(const ImageViewCreateParams& params) {
@@ -829,10 +825,10 @@ vkr::Sampler VulkanRenderDevice::create_texture_sampler() {
     );
 }
 
-vkr::ImageView VulkanRenderDevice::create_texture_image_view() {
-    // Note: This function appears to be unused but keeping it as it's in the header
-    return vkr::ImageView{nullptr};
-}
+// Note: This function appears to be unused but keeping it as it's in the header
+// vkr::ImageView VulkanRenderDevice::create_texture_image_view() {
+//     return vkr::ImageView{nullptr};
+// }
 
 // Render pass
 vkr::RenderPass VulkanRenderDevice::create_render_pass() {
@@ -1210,20 +1206,18 @@ VulkanRenderDevice::DepthResources VulkanRenderDevice::create_depth_resources() 
 
 // Framebuffers
 std::vector<vkr::Framebuffer> VulkanRenderDevice::create_framebuffers() {
-    std::vector<vkr::Framebuffer> framebuffers;
-    framebuffers.reserve(swapChainImageViews_.size());
-    for (const auto& imageView : swapChainImageViews_) {
-        std::array attachments = {*colorResources_.view, *depthResources_.view, *imageView};
-        framebuffers.push_back(gvDevice_.createFramebuffer(
-            vk::FramebufferCreateInfo{}
-                .setRenderPass(gvRenderPass_)
-                .setAttachments(attachments)
-                .setWidth(gvSwapChainExtent_.width)
-                .setHeight(gvSwapChainExtent_.height)
-                .setLayers(1)
-        ));
-    }
-    return framebuffers;
+    return swapChainImageViews_ | std::views::transform([this](const auto& imageView) {
+               std::array attachments = {*colorResources_.view, *depthResources_.view, *imageView};
+               return gvDevice_.createFramebuffer(
+                   vk::FramebufferCreateInfo{}
+                       .setRenderPass(gvRenderPass_)
+                       .setAttachments(attachments)
+                       .setWidth(gvSwapChainExtent_.width)
+                       .setHeight(gvSwapChainExtent_.height)
+                       .setLayers(1)
+               );
+           }) |
+           std::ranges::to<std::vector>();
 }
 
 // Vertex, index, and uniform buffers
@@ -1352,31 +1346,22 @@ std::vector<vkr::DescriptorSet> VulkanRenderDevice::create_descriptor_sets() {
 
 void VulkanRenderDevice::update_descriptor_sets() {
     if (descriptorSets_.empty()) return;
-    std::vector<vk::DescriptorImageInfo> imageInfos(gvTextures_.size());
-    for (uint32_t i = 0; i < gvTextures_.size(); ++i) {
-        imageInfos[i] = vk::DescriptorImageInfo{}
-                            .setImageView(gvTextures_[i].textureImageView)
-                            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-    }
+    std::vector<vk::DescriptorImageInfo>
+        imageInfos = gvTextures_ | std::views::transform([](const auto& texture) {
+                         return vk::DescriptorImageInfo{}
+                             .setImageView(texture.textureImageView)
+                             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+                     }) |
+                     std::ranges::to<std::vector>();
     std::vector<vk::DescriptorBufferInfo> camInfos(kMAX_FRAMES_IN_FLIGHT);
     std::vector<vk::DescriptorBufferInfo> modelInfos(kMAX_FRAMES_IN_FLIGHT);
+    std::vector<vk::WriteDescriptorSet> writes;
+
     for (size_t i = 0; i < kMAX_FRAMES_IN_FLIGHT; ++i) {
         camInfos[i] = vk::DescriptorBufferInfo{}
                           .setBuffer(uniformBufferAlloc_.buffers[i])
                           .setOffset(0)
                           .setRange(sizeof(CameraUBO));
-        if (!modelBufferAlloc_.buffers.empty()) {
-            modelInfos[i] = vk::DescriptorBufferInfo{}
-                                .setBuffer(modelBufferAlloc_.buffers[i])
-                                .setOffset(0)
-                                .setRange(
-                                    static_cast<vk::DeviceSize>(modelBufferAlloc_.capacity) *
-                                    sizeof(glm::mat4)
-                                );
-        }
-    }
-    std::vector<vk::WriteDescriptorSet> writes;
-    for (size_t i = 0; i < kMAX_FRAMES_IN_FLIGHT; ++i) {
         writes.push_back(
             vk::WriteDescriptorSet{}
                 .setDstSet(descriptorSets_[i])
@@ -1386,7 +1371,15 @@ void VulkanRenderDevice::update_descriptor_sets() {
                 .setDescriptorType(vk::DescriptorType::eUniformBuffer)
                 .setPBufferInfo(&camInfos[i])
         );
+
         if (!modelBufferAlloc_.buffers.empty()) {
+            modelInfos[i] = vk::DescriptorBufferInfo{}
+                                .setBuffer(modelBufferAlloc_.buffers[i])
+                                .setOffset(0)
+                                .setRange(
+                                    static_cast<vk::DeviceSize>(modelBufferAlloc_.capacity) *
+                                    sizeof(glm::mat4)
+                                );
             writes.push_back(
                 vk::WriteDescriptorSet{}
                     .setDstSet(descriptorSets_[i])
@@ -1397,6 +1390,7 @@ void VulkanRenderDevice::update_descriptor_sets() {
                     .setPBufferInfo(&modelInfos[i])
             );
         }
+
         if (!gvTextures_.empty()) {
             writes.push_back(
                 vk::WriteDescriptorSet{}
@@ -1487,16 +1481,11 @@ void VulkanRenderDevice::record_command_buffer(
     cameraUbo_.proj = proj;
 
     auto entities = world.get_entities<Renderable, Transform>();
-    std::vector<glm::mat4> modelMatrices;
-
-    modelMatrices.reserve(entities.size());
-
-    for (auto e : entities) {
-        const auto& tf = world.get_component<Transform>(e);
-        glm::mat4 model{1.0F};
-        model = glm::translate(glm::mat4_cast(tf.rotation), tf.position);
-        modelMatrices.push_back(model);
-    }
+    auto modelMatrices = entities | std::views::transform([&world](auto e) {
+                             const auto& tf = world.get_component<Transform>(e);
+                             return glm::translate(glm::mat4_cast(tf.rotation), tf.position);
+                         }) |
+                         std::ranges::to<std::vector>();
 
     ensure_model_capacity(static_cast<uint32_t>(modelMatrices.size()));
     update_model_buffer(currentFrame_, modelMatrices);
