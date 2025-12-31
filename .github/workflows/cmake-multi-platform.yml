@@ -25,11 +25,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
+        compiler: [gcc-14, clang-18]
         include:
-          - os: ubuntu-latest
+          - compiler: gcc-14
             c_compiler: gcc-14
             cpp_compiler: g++-14
-          - os: ubuntu-latest
+          - compiler: clang-18
             c_compiler: clang-18
             cpp_compiler: clang++-18
 
