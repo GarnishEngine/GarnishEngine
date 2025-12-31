@@ -15,8 +15,10 @@ set_property(CACHE RENDER_BACKENDS PROPERTY STRINGS "OpenGL;Vulkan")
 # Library target
 add_library(GarnishEngine STATIC)
 # Require C++23
-target_compile_features(GarnishEngine PUBLIC cxx_std_23)
-set_target_properties(GarnishEngine PROPERTIES CXX_STANDARD_REQUIRED ON)
+set_target_properties(GarnishEngine PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)
 
 # Helper to check backend selection
 function(backends_contains name result)
