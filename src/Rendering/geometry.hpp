@@ -11,12 +11,10 @@ struct Vertex {
     glm::vec2 uv;
 };
 
-[[nodiscard]] constexpr bool operator==(
-    const Vertex& vertex,
-    const Vertex& other
-) noexcept {
-    return vertex.position == other.position &&
-           vertex.normal == other.normal && vertex.uv == other.uv;
+[[nodiscard]] constexpr bool
+operator==(const Vertex& vertex, const Vertex& other) noexcept {
+    return vertex.position == other.position && vertex.normal == other.normal &&
+           vertex.uv == other.uv;
 }
 
 using Index = uint32_t;
@@ -27,12 +25,19 @@ struct Geometry {
 };
 
 Geometry createUnitCubeGeometry();
-// Geometry createUnitSphereGeometry(); // TODO
+
+constexpr uint32_t kDefaultSphereSectors = 36;
+constexpr uint32_t kDefaultSphereStacks = 18;
+Geometry createUnitSphereGeometry(
+    uint32_t sectors = kDefaultSphereSectors,
+    uint32_t stacks = kDefaultSphereStacks
+);
 
 namespace std {
 template <>
 struct hash<Vertex> {
-    [[nodiscard]] constexpr size_t operator()(Vertex const& vertex
+    [[nodiscard]] constexpr size_t operator()(
+        Vertex const& vertex
     ) const noexcept {
         return ((hash<glm::vec3>()(vertex.position) ^
                  (hash<glm::vec3>()(vertex.normal) << 1)) >>
