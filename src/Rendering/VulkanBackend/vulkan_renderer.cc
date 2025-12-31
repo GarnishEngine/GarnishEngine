@@ -17,6 +17,7 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_raii.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 #include "Utility/camera.hpp"
@@ -25,7 +26,6 @@
 #include "Utility/sdl_raii.hpp"
 #include "ecs_controller.h"
 #include "geometry.hpp"
-#include "vulkan/vulkan_raii.hpp"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 

@@ -3,10 +3,9 @@
 namespace garnish {
 Camera::Camera(float movementSpeed, float lookSensitivity)
     : movementSpeed(movementSpeed),
-      lookSensitivity(lookSensitivity) {
-}
+      lookSensitivity(lookSensitivity) {}
 
-glm::mat4 Camera::view_matrix() {
+glm::mat4 Camera::view_matrix() const noexcept {
     return glm::lookAt(position, position + forward, up);
 }
 }  // namespace garnish
