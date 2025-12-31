@@ -25,14 +25,13 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang]
         include:
           - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
+            c_compiler: gcc-14
+            cpp_compiler: g++-14
           - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+            c_compiler: clang-18
+            cpp_compiler: clang++-18
 
     steps:
     - uses: actions/checkout@v4
@@ -41,6 +40,7 @@ jobs:
 
 
     - name: Cache and Update Submodules
+      id: cache-submodule
       uses: actions/cache@v4.2.0
       with:
         path: |
@@ -70,7 +70,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglew-dev libglm-dev libvulkan-dev vulkan-tools
+        sudo apt-get install -y libglew-dev libglm-dev libvulkan-dev vulkan-tools gcc-14 g++-14 clang-18 clang++-18 libc++-18-dev libc++abi-18-dev
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
