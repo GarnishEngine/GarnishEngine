@@ -20,6 +20,8 @@ set_target_properties(GarnishEngine PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+target_compile_features(GarnishEngine PUBLIC cxx_std_23)
+
 # Helper to check backend selection
 function(backends_contains name result)
     list(FIND RENDER_BACKENDS "${name}" _idx)
