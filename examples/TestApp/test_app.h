@@ -1,15 +1,14 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
+#include <ecs_controller.h>
 
-#include <algorithm>
+#include <Rendering/OpenGL/shader_program.hpp>
 #include <Utility/camera.hpp>
+#include <algorithm>
 #include <garnish_app.hpp>
 #include <limits>
-#include <Rendering/OpenGL/shader_program.hpp>
 #include <shared.hpp>
-
-#include <ecs_controller.h>
 
 const int32_t FRAME_RATE = 90;
 
@@ -56,12 +55,12 @@ static float y = 0;
 //         ImGui::End();
 //     }
 // };
-class CameraSystem : public System {
+class CameraSystem {
    public:
     int32_t WIDTH = 600;
     int32_t HEIGHT = 800;
 
-    void update(ECSController& world) override {
+    void update(ECSController& world) {
         auto cam_ent = world.get_entities<
             garnish::Camera>()[0];  // TODO this is really janky, need to do
                                     // something about the camera

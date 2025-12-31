@@ -9,7 +9,7 @@
 
 namespace garnish {
 struct Camera {
-    Camera(float movementSpeed = 0.02F, float lookSensitivity = 0.5F);
+    Camera(float movementSpeed = 0.02F, float lookSensitivity = 0.2F);
 
     glm::vec3 position{0.0F, 0.0F, 5.0F};
 
@@ -26,6 +26,6 @@ struct Camera {
 
     glm::vec2 lastMousePos{std::numeric_limits<float>::max()};
 
-    glm::mat4 view_matrix();
+    [[nodiscard]] glm::mat4 view_matrix() const noexcept;
 };
 }  // namespace garnish

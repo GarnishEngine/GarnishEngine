@@ -1,45 +1,38 @@
 #include "ogl_renderer.hpp"
 
 #include <SDL3/SDL_video.h>
-#include <ecs_controller.h>
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
 #include <chrono>
-#include <iostream>
+#include <cstddef>
+#include <format>
 #include <memory>
 #include <stdexcept>
-#include <cstddef>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include <string>
 
+#include "Utility/camera.hpp"
+#include "Utility/sdl_raii.hpp"
+#include "ecs_controller.h"
+#include "shared.hpp"
 
 namespace garnish {
-namespace { 
-void* buffer_offset(std::size_t offset) {
-    return reinterpret_cast<void*>(offset); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+namespace {
+[[nodiscard]] void* buffer_offset(std::size_t offset) noexcept {
+    return reinterpret_cast<void*>(offset);  // NOLINT
 }
-}
+}  // namespace
 
 using hrclock = std::chrono::high_resolution_clock;
 using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
 using us = std::chrono::microseconds;
 
-bool OpenGLRenderDevice::init(InitInfo& info) {
-    window = static_cast<SDL_Window*>(info.nativeWindow);
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(
-        SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_CORE
-    );
-
-    auto* raw = SDL_GL_CreateContext(window); // was 'auto raw'
+OpenGLRenderDevice::OpenGLRenderDevice(const RenderDevice::InitInfo& info)
+    : RenderDevice(static_cast<SDL_Window*>(info.nativeWindow)) {
+    auto* raw = SDL_GL_CreateContext(window);
     if (!raw) {
-        std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
-        return false;
+        throw std::runtime_error(std::format("SDL_GL_CreateContext failed: {}", SDL_GetError()));
     }
     glContext.reset(raw);
 
@@ -49,23 +42,31 @@ bool OpenGLRenderDevice::init(InitInfo& info) {
         throw std::runtime_error("GLEW failed to initialize");
     }
 
-    glViewport(0, 0, static_cast<GLsizei>(info.width), static_cast<GLsizei>(info.height));
+    glViewport(
+        0,
+        0,
+        static_cast<GLsizei>(info.width),
+        static_cast<GLsizei>(info.height)
+    );
     glEnable(GL_DEPTH_TEST);
 
     shaderProgram = std::make_unique<ShaderProgram>(
-        "shaders/shader.vert",
-        "shaders/shader.frag"
+        info.assetPath + "shaders/shader.vert",
+        info.assetPath + "shaders/shader.frag"
     );
-    return true;
 }
 
+// Public overrides - Lifecycle
+void OpenGLRenderDevice::cleanup() {}
+
+// Public overrides - Core rendering
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     // Acquire camera (first one if multiple)
     glm::mat4 view{1.0F};
     glm::mat4 proj{1.0F};
     auto cameras = world.get_entities<garnish::Camera>();
     if (!cameras.empty()) {
-        auto &cam = world.get_component<garnish::Camera>(cameras[0]);
+        auto& cam = world.get_component<garnish::Camera>(cameras[0]);
         view = cam.view_matrix();
     }
     int w = 0;
@@ -89,18 +90,24 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
 
     auto entities = world.get_entities<Renderable>();
     for (Entity entity : entities) {
-        auto &dra = world.get_component<Renderable>(entity);
+        auto& dra = world.get_component<Renderable>(entity);
         glm::mat4 model{1.0F};
         if (world.has_component<Transform>(entity)) {
-            auto &tf = world.get_component<Transform>(entity);
-            model = glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
+            auto& tf = world.get_component<Transform>(entity);
+            model =
+                glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
         }
         glm::mat4 mvp = proj * view * model;
         shaderProgram->set_uniform("mvp", mvp);
 
         glBindTexture(GL_TEXTURE_2D, textures[dra.texHandle].id);
         glBindVertexArray(meshes[dra.meshHandle].VAO);
-        glDrawElements(GL_TRIANGLES, meshes[dra.meshHandle].size, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(
+            GL_TRIANGLES,
+            meshes[dra.meshHandle].size,
+            GL_UNSIGNED_INT,
+            nullptr
+        );
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
     }
@@ -112,49 +119,8 @@ void OpenGLRenderDevice::update(ECSController& world) {
     draw_frame(world);
 }
 
-void OpenGLRenderDevice::cleanup() {}
-
-
-uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
-    std::vector<OGLVertex3d> vertices;
-    std::vector<uint32_t> indices;
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn;
-    std::string err;
-
-    if (!tinyobj::LoadObj(
-            &attrib,
-            &shapes,
-            &materials,
-            &warn,
-            &err,
-            mesh_path.c_str()
-        )) {
-        throw std::runtime_error(warn + err);
-    }
-
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            OGLVertex3d vert{};
-            vert.pos = {
-                attrib.vertices[(3 * index.vertex_index) + 0],
-                attrib.vertices[(3 * index.vertex_index) + 1],
-                attrib.vertices[(3 * index.vertex_index) + 2]
-            };
-
-            vert.texCoord = {
-                attrib.texcoords[(2 * index.texcoord_index) + 0],
-                1.0F - attrib.texcoords[(2 * index.texcoord_index) + 1]
-            };
-            vert.color = {1.0F, 1.0F, 1.0F};
-            vertices.push_back(vert);
-
-            indices.push_back(indices.size());
-        }
-    }
-
+// Public overrides - Resource loading
+uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     OGLMesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);
     glGenBuffers(1, &mesh.VBO);
@@ -165,16 +131,16 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(vertices.size() * sizeof(OGLVertex3d)),
-        vertices.data(),
+        static_cast<GLsizeiptr>(geometry.vertices.size() * sizeof(Vertex)),
+        geometry.vertices.data(),
         GL_STATIC_DRAW
     );
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)),
-        indices.data(),
+        static_cast<GLsizeiptr>(geometry.indices.size() * sizeof(unsigned int)),
+        geometry.indices.data(),
         GL_STATIC_DRAW
     );
 
@@ -185,8 +151,8 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(OGLVertex3d),
-        buffer_offset(offsetof(OGLVertex3d, pos))
+        sizeof(Vertex),
+        buffer_offset(offsetof(Vertex, position))
     );
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(
@@ -194,8 +160,8 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(OGLVertex3d),
-        buffer_offset(offsetof(OGLVertex3d, color))
+        sizeof(Vertex),
+        buffer_offset(offsetof(Vertex, normal))
     );
     // vertex3d texture coords
     glEnableVertexAttribArray(2);
@@ -204,12 +170,12 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
         2,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(OGLVertex3d),
-        buffer_offset(offsetof(OGLVertex3d, texCoord)) // removed pointer arithmetic
+        sizeof(Vertex),
+        buffer_offset(offsetof(Vertex, uv))
     );
     glBindVertexArray(0);
 
-    mesh.size = static_cast<GLsizei>(indices.size());
+    mesh.size = static_cast<GLsizei>(geometry.indices.size());
 
     meshes.push_back(std::move(mesh));
     return meshes.size() - 1;
@@ -217,20 +183,14 @@ uint32_t OpenGLRenderDevice::setup_mesh(const std::string& mesh_path) {
 
 uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     int mTexWidth = 0;
-    int mTexHeight = 0; 
+    int mTexHeight = 0;
     int nrChannels = 0;
     unsigned int texID = -1;
-    // stbi_set_flip_vertically_on_load(true);
-    unsigned char* textureData = stbi_load(
-        texture_path.c_str(),
-        &mTexWidth,
-        &mTexHeight,
-        &nrChannels,
-        0
+    UniqueSTBImage textureData(
+        stbi_load(texture_path.c_str(), &mTexWidth, &mTexHeight, &nrChannels, 0)
     );
 
     if (!textureData) {
-        stbi_image_free(textureData);
         throw std::runtime_error("texture load failed");
     }
 
@@ -255,13 +215,12 @@ uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
         0,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        textureData
+        textureData.get()
     );
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(textureData);
 
     textures.emplace_back(texID);
     return textures.size() - 1;

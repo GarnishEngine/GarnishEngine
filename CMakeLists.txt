@@ -14,8 +14,13 @@ set_property(CACHE RENDER_BACKENDS PROPERTY STRINGS "OpenGL;Vulkan")
 
 # Library target
 add_library(GarnishEngine STATIC)
-# Require C++20
-target_compile_features(GarnishEngine PUBLIC cxx_std_20)
+# Require C++23
+set_target_properties(GarnishEngine PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)
+
+target_compile_features(GarnishEngine PUBLIC cxx_std_23)
 
 # Helper to check backend selection
 function(backends_contains name result)
@@ -65,7 +70,6 @@ set(IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_sdl3.cpp)
 if(USE_OPENGL)
     list(APPEND IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_opengl3.cpp)
 endif()
-add_library(imgui STATIC ${IMGUI_CORE} ${IMGUI_BACKENDS})
 
 target_include_directories(imgui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
@@ -128,6 +132,41 @@ if(USE_VULKAN)
     )
 
     target_compile_definitions(GarnishEngine PUBLIC _VULKAN_RENDERING)
+
+    # Shader compilation
+    find_program(GLSL_COMPILER glslc)
+    if(NOT GLSL_COMPILER)
+        message(WARNING "glslc not found. Shaders will not be compiled automatically.")
+    else()
+        set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+        set(SHADER_OUTPUT_DIR ${SHADER_SOURCE_DIR})
+
+        add_custom_command(
+            OUTPUT ${SHADER_OUTPUT_DIR}/vert.spv
+            COMMAND ${GLSL_COMPILER}
+                -fshader-stage=vertex
+                ${SHADER_SOURCE_DIR}/vulkan.vert
+                -o ${SHADER_OUTPUT_DIR}/vert.spv
+            DEPENDS ${SHADER_SOURCE_DIR}/vulkan.vert
+            COMMENT "Compiling vertex shader: vulkan.vert -> vert.spv"
+        )
+
+        add_custom_command(
+            OUTPUT ${SHADER_OUTPUT_DIR}/frag.spv
+            COMMAND ${GLSL_COMPILER}
+                -fshader-stage=fragment
+                ${SHADER_SOURCE_DIR}/vulkan.frag
+                -o ${SHADER_OUTPUT_DIR}/frag.spv
+            DEPENDS ${SHADER_SOURCE_DIR}/vulkan.frag
+            COMMENT "Compiling fragment shader: vulkan.frag -> frag.spv"
+        )
+
+        add_custom_target(shaders
+            DEPENDS ${SHADER_OUTPUT_DIR}/vert.spv ${SHADER_OUTPUT_DIR}/frag.spv
+        )
+        
+        add_dependencies(GarnishEngine shaders)
+    endif()
 endif()
 
 # Public/Private include paths
