@@ -33,6 +33,11 @@ class VulkanRenderDevice : public RenderDevice {
     uint32_t setup_mesh(const Geometry& geometry) override;
     uint32_t load_texture(const std::string& path) override;
 
+    // ImGui integration
+    void init_imgui_backend() override;
+    void shutdown_imgui_backend() override;
+    void new_imgui_frame() override;
+
    private:
     static constexpr uint32_t kMAX_FRAMES_IN_FLIGHT = 2;
     static constexpr uint32_t kbufferDefaultSize = 1024 * 1024;
@@ -57,7 +62,22 @@ class VulkanRenderDevice : public RenderDevice {
     struct CameraUBO {
         alignas(kMat4Align) glm::mat4 view;
         alignas(kMat4Align) glm::mat4 proj;
+        alignas(kMat4Align) glm::vec3 viewPos;
     } cameraUbo_{};
+
+    struct LightingUBO {
+        alignas(kMat4Align) glm::vec3 lightPos{0.0F, 5.0F, 5.0F};
+        alignas(kMat4Align) glm::vec3 lightColor{1.0F, 1.0F, 1.0F};
+    } lightingUbo_{};
+
+    struct PushConstants {
+        uint32_t texIndex;
+        uint32_t modelIndex;
+        alignas(kMat4Align) glm::vec3 material_ambient{0.1F, 0.1F, 0.1F};
+        alignas(kMat4Align) glm::vec3 material_diffuse{1.0F, 1.0F, 1.0F};
+        alignas(kMat4Align) glm::vec3 material_specular{0.5F, 0.5F, 0.5F};
+        float material_shininess{32.0F};
+    };
 
     // don't change this to std::string, things need it to be char*
     std::vector<const char*> deviceExtensions_ = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -72,12 +92,6 @@ class VulkanRenderDevice : public RenderDevice {
     vkr::Device gvDevice_;
 
     static constexpr uint32_t kInitialModelCapacity = 256;
-    struct ModelBufferAllocation {
-        std::vector<vkr::Buffer> buffers;
-        std::vector<vkr::DeviceMemory> memory;
-        std::vector<void*> mapped;
-        uint32_t capacity;
-    } modelBufferAlloc_;
 
     vkr::Queue gvGraphicsQueue_;
     vkr::Queue gvPresentQueue_;
@@ -108,22 +122,30 @@ class VulkanRenderDevice : public RenderDevice {
     } depthResources_;
     std::vector<vkr::Framebuffer> swapChainFramebuffers_;
 
-    struct VertexBufferAllocation {
+    struct BufferAllocation {
         vkr::Buffer buffer;
         vkr::DeviceMemory memory;
-    } vertexBuffer_;
-    struct IndexBufferAllocation {
-        vkr::Buffer buffer;
-        vkr::DeviceMemory memory;
-    } indexBuffer_;
+    };
+    BufferAllocation vertexBuffer_;
+    BufferAllocation indexBuffer_;
     vk::DeviceSize totalVertexBytes_ = 0;
     vk::DeviceSize totalIndexBytes_ = 0;
 
-    struct UniformBufferAllocation {
+    struct MappedBufferAllocation {
         std::vector<vkr::Buffer> buffers;
         std::vector<vkr::DeviceMemory> memory;
         std::vector<void*> mapped;
-    } uniformBufferAlloc_;
+    };
+    MappedBufferAllocation uniformBufferAlloc_;
+    MappedBufferAllocation lightingBufferAlloc_;
+    struct ModelBufferAllocation {
+        std::vector<vkr::Buffer> buffers;
+        std::vector<vkr::DeviceMemory> memory;
+        std::vector<void*> mapped;
+        uint32_t capacity;
+    };
+    ModelBufferAllocation modelBufferAlloc_;
+
     vkr::DescriptorPool gvDescriptorPool_;
     std::vector<vkr::DescriptorSet> descriptorSets_;
     std::vector<vkr::CommandBuffer> gvCommandBuffers_;
@@ -145,6 +167,12 @@ class VulkanRenderDevice : public RenderDevice {
 
     bool framebufferResized_ = false;
     uint32_t currentFrame_ = 0;
+
+    vkr::DescriptorPool imguiDescriptorPool_{nullptr};
+    bool imguiInitialized_ = false;
+
+    [[nodiscard]] vkr::DescriptorPool create_imgui_descriptor_pool();
+    void render_imgui(vkr::CommandBuffer& commandBuffer) const;
 
     // Instance and surface initialization
     vkr::Instance create_instance();
@@ -236,9 +264,8 @@ class VulkanRenderDevice : public RenderDevice {
     [[nodiscard]] std::vector<vkr::Framebuffer> create_framebuffers();
 
     // Vertex, index, and uniform buffers
-    [[nodiscard]] VertexBufferAllocation create_vertex_buffer();
-    [[nodiscard]] IndexBufferAllocation create_index_buffer();
-    [[nodiscard]] UniformBufferAllocation create_uniform_buffers();
+    [[nodiscard]] BufferAllocation create_buffer_allocation(vk::BufferUsageFlags usage);
+    [[nodiscard]] MappedBufferAllocation create_uniform_buffers();
     [[nodiscard]] ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
@@ -257,7 +284,8 @@ class VulkanRenderDevice : public RenderDevice {
     );
 
     // Synchronization objects
-    [[nodiscard]] std::vector<vkr::Semaphore> create_sync_objects();
+    [[nodiscard]] std::vector<vkr::Fence> create_in_flight_fences();
+    [[nodiscard]] std::vector<vkr::Semaphore> create_image_available_semaphores();
 
     // Low-level resource creation helpers
     struct ImageCreateInfo {
@@ -278,10 +306,6 @@ class VulkanRenderDevice : public RenderDevice {
         vk::DeviceSize size;
         vk::BufferUsageFlags usage;
         vk::MemoryPropertyFlags memoryProperties;
-    };
-    struct BufferAllocation {
-        vkr::Buffer buffer;
-        vkr::DeviceMemory memory;
     };
     [[nodiscard]] ImageAllocation create_image(const ImageCreateInfo& info);
     [[nodiscard]] BufferAllocation create_buffer(const BufferCreateInfo& info);
@@ -326,10 +350,11 @@ class VulkanRenderDevice : public RenderDevice {
 
     // Runtime update functions
     void update_camera_buffer(uint32_t currentImage);
+    void update_lighting_buffer(uint32_t currentImage);
     void update_model_buffer(uint32_t currentImage, std::span<const glm::mat4> models);
 
-    // Historic (deprecated)
-    bool init_vulkan(const InitInfo& info);
+    // Cleanup function(s)
+    void unmap_buffer_allocation(auto& alloc);
 };  // namespace garnish::vulkan
 
 static vk::VertexInputBindingDescription getBindingDescription() {
@@ -362,13 +387,3 @@ static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptio
 }
 }  // namespace garnish::vulkan
 
-namespace std {
-template <>
-struct hash<Vertex> {
-    [[nodiscard]] constexpr size_t operator()(Vertex const& vertex) const noexcept {
-        return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >>
-                1) ^
-               (hash<glm::vec2>()(vertex.uv) << 1);
-    }
-};
-}  // namespace std

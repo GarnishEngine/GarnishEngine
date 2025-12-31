@@ -19,13 +19,9 @@
 #include "render_device.hpp"
 
 #ifdef _OPENGL_RENDERING
-#include <imgui_impl_opengl3.h>
-
 #include "ogl_renderer.hpp"
 #endif
 #ifdef _VULKAN_RENDERING
-#include <SDL3/SDL_vulkan.h>
-
 #include "vulkan_renderer.hpp"
 #endif
 
@@ -42,9 +38,14 @@ App::App(const CreateInfo& createInfo)
     ecsController.register_component<SphereCollider>();
     ecsController.register_component<Camera>();
     ecsController.register_component<Renderable>();
+    ecsController.register_component<Material>();
+    ecsController.register_component<PointLight>();
+
+    init_imgui();
 }
 
 App::~App() noexcept {
+    terminate_imgui();
     if (renderDevice) {
         renderDevice->cleanup();
     }
@@ -63,20 +64,32 @@ void App::run() {
         if (frameStart > nextFrame + frameTime) nextFrame = frameStart;
         auto dt = frameStart - (nextFrame - frameTime);
 
-        for (auto& updateFunction : updateFunctions) {
-            updateFunction(ecsController);
-        }
-
-        physicsSystem.update(ecsController);
-
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            if (imguiEnabled_) {
+                ImGui_ImplSDL3_ProcessEvent(&event);
+            }
             switch (event.type) {
                 case SDL_EVENT_QUIT: shouldClose = true; break;
                 case SDL_EVENT_WINDOW_RESIZED: refresh_window_size(); break;
                 default: break;
             }
         }
+
+        for (auto& updateFunction : updateFunctions) {
+            updateFunction(ecsController);
+        }
+
+        physicsSystem.update(ecsController);
+
+        begin_imgui_frame();
+        if (imguiEnabled_) {
+            for (auto& callback : imguiCallbacks_) {
+                callback(ecsController);
+            }
+        }
+        end_imgui_frame();
+
         renderDevice->update(ecsController);
 
         nextFrame += frameTime;
@@ -108,19 +121,28 @@ void App::init_imgui() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-#ifdef _OPENGL_RENDERING
-    ImGui_ImplSDL3_InitForOpenGL(window->get(), SDL_GL_GetCurrentContext());
-    ImGui_ImplOpenGL3_Init();
-#endif
+    ImGui::StyleColorsDark();
+
+    renderDevice->init_imgui_backend();
 }
 
 void App::terminate_imgui() {
-#ifdef _OPENGL_RENDERING
-    ImGui_ImplOpenGL3_Shutdown();
+    renderDevice->shutdown_imgui_backend();
     ImGui_ImplSDL3_Shutdown();
-#endif
+}
+
+void App::begin_imgui_frame() {
+    if (!imguiEnabled_) return;
+
+    renderDevice->new_imgui_frame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+}
+
+void App::end_imgui_frame() {
+    if (!imguiEnabled_) return;
+    ImGui::Render();
 }
 
 void App::make_render_device(const CreateInfo& createInfo) {
@@ -157,7 +179,7 @@ void App::make_render_device(const CreateInfo& createInfo) {
                 "hello window",
                 static_cast<int>(width),
                 static_cast<int>(height),
-                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE
+                SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
             );
             renderDevice = std::make_unique<vulkan::VulkanRenderDevice>(RenderDevice::InitInfo{
                 .nativeWindow = window->get(),

@@ -1,6 +1,7 @@
 #include "test_app.h"
 
 #include <ecs_controller.h>
+#include <imgui.h>
 
 #include <Physics/physics_system.hpp>
 #include <VulkanBackend/vulkan_renderer.hpp>
@@ -9,6 +10,32 @@
 
 using namespace garnish;
 
+namespace {
+void draw_debug_panel(garnish::ECSController& world) {
+    ImGui::Begin("Debug Panel");
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::Text("FPS: %.1f", io.Framerate);
+    ImGui::Text("Frame Time: %.3f ms", 1000.0F / io.Framerate);
+
+    auto entities = world.get_entities<Renderable>();
+    ImGui::Text("Renderable Entities: %zu", entities.size());
+
+    auto cameras = world.get_entities<garnish::Camera>();
+    if (!cameras.empty()) {
+        auto& cam = world.get_component<garnish::Camera>(cameras[0]);
+        ImGui::Separator();
+        ImGui::Text("Camera Position:");
+        ImGui::Text("  X: %.2f", cam.position.x);
+        ImGui::Text("  Y: %.2f", cam.position.y);
+        ImGui::Text("  Z: %.2f", cam.position.z);
+        ImGui::Text("Yaw: %.1f, Pitch: %.1f", cam.yaw, cam.pitch);
+    }
+
+    ImGui::End();
+}
+}  // namespace
+
 int main() {
     garnish::App app{
         {.backend = RenderingBackend::Vulkan,
@@ -16,6 +43,13 @@ int main() {
          .height = garnish::App::DEFAULT_HEIGHT,
          .targetFps = garnish::App::DEFAULT_TARGET_FPS}
     };
+
+    app.enable_imgui(true);
+
+    app.register_imgui_callback([](garnish::ECSController& world) {
+        ImGui::ShowDemoWindow();
+        draw_debug_panel(world);
+    });
 
     app.register_update_function([](garnish::ECSController& world) {
         CameraSystem().update(world);

@@ -1,5 +1,9 @@
 #pragma once
+
+#include <glbinding/gl/gl.h>
+
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <string>
 #include <string_view>
 
@@ -16,10 +20,13 @@ class ShaderProgram {
     void cleanup() const noexcept;
     void use() const noexcept;
     void set_uniform(const std::string& name, const glm::mat4& mat) const;
+    void set_uniform(const std::string& name, const glm::vec3& vec) const;
+    void set_uniform(const std::string& name, float value) const;
+    void set_uniform(const std::string& name, int value) const;
 
    private:
-    [[nodiscard]] static unsigned int compile_shader(std::string_view shaderPath);
+    [[nodiscard]] static gl::GLuint compile_shader(std::string_view shaderPath);
 
-    unsigned int handle;
+    gl::GLuint handle;
 };
 }  // namespace garnish

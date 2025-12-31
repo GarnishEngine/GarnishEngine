@@ -1,6 +1,6 @@
 BasedOnStyle: Google
 IndentWidth: 4
-ColumnLimit: 100
+ColumnLimit: 80
 
 BinPackArguments: false
 BinPackParameters: false
@@ -24,5 +24,5 @@ ExperimentalAutoDetectBinPacking: false
 # Preserve builder-style method chaining (e.g., .setX().setY())
 AllowShortCaseLabelsOnASingleLine: true
 BreakBeforeBinaryOperators: None
-PenaltyBreakAssignment: 1000
+PenaltyBreakAssignment: 2
 PenaltyReturnTypeOnItsOwnLine: 200

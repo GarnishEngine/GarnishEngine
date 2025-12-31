@@ -1,6 +1,6 @@
 #include "shader_program.hpp"
 
-#include <GL/glew.h>
+#include <glbinding/gl/gl.h>
 
 #include <array>
 #include <format>
@@ -14,63 +14,95 @@
 
 namespace garnish {
 namespace {
-constexpr GLenum get_shader_type(std::string_view shaderPath) {
+constexpr gl::GLenum get_shader_type(std::string_view shaderPath) {
     if (shaderPath.ends_with(".frag") || shaderPath.ends_with(".fragment")) {
-        return GL_FRAGMENT_SHADER;
+        return gl::GL_FRAGMENT_SHADER;
     }
-    return GL_VERTEX_SHADER;
+    return gl::GL_VERTEX_SHADER;
 }
 }  // namespace
 
-ShaderProgram::ShaderProgram(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
-    : handle(glCreateProgram()) {
-    unsigned int vertexShader = compile_shader(vertexShaderPath);
-    unsigned int fragmentShader = compile_shader(fragmentShaderPath);
+ShaderProgram::ShaderProgram(
+    std::string_view vertexShaderPath,
+    std::string_view fragmentShaderPath
+)
+    : handle(gl::glCreateProgram()) {
+    gl::GLuint vertexShader = compile_shader(vertexShaderPath);
+    gl::GLuint fragmentShader = compile_shader(fragmentShaderPath);
 
-    glAttachShader(handle, vertexShader);
-    glAttachShader(handle, fragmentShader);
-    glLinkProgram(handle);
+    gl::glAttachShader(handle, vertexShader);
+    gl::glAttachShader(handle, fragmentShader);
+    gl::glLinkProgram(handle);
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    gl::glDeleteShader(vertexShader);
+    gl::glDeleteShader(fragmentShader);
 }
 
 void ShaderProgram::cleanup() const noexcept {
-    glDeleteProgram(handle);
+    gl::glDeleteProgram(handle);
 }
 
 void ShaderProgram::use() const noexcept {
-    glUseProgram(handle);
+    gl::glUseProgram(handle);
 }
 
-void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) const {
+void ShaderProgram::set_uniform(
+    const std::string& name,
+    const glm::mat4& mat
+) const {
     use();
-    glUniformMatrix4fv(
-        glGetUniformLocation(handle, name.c_str()),
+    gl::glUniformMatrix4fv(
+        gl::glGetUniformLocation(handle, name.c_str()),
         1,
-        GL_FALSE,
+        false,
         glm::value_ptr(mat)
     );
 }
 
-unsigned int ShaderProgram::compile_shader(std::string_view shaderPath) {
-    std::vector<char> shaderSource = read_file(shaderPath);
+void ShaderProgram::set_uniform(
+    const std::string& name,
+    const glm::vec3& vec
+) const {
+    use();
+    gl::glUniform3fv(
+        gl::glGetUniformLocation(handle, name.c_str()),
+        1,
+        glm::value_ptr(vec)
+    );
+}
 
-    const GLenum shaderType = get_shader_type(shaderPath);
+void ShaderProgram::set_uniform(const std::string& name, float value) const {
+    use();
+    gl::glUniform1f(gl::glGetUniformLocation(handle, name.c_str()), value);
+}
+
+void ShaderProgram::set_uniform(const std::string& name, int value) const {
+    use();
+    gl::glUniform1i(gl::glGetUniformLocation(handle, name.c_str()), value);
+}
+
+gl::GLuint ShaderProgram::compile_shader(std::string_view shaderPath) {
+    constexpr size_t kInfoLogSize = 512;
+    const gl::GLenum shaderType = get_shader_type(shaderPath);
+    const gl::GLuint shader = gl::glCreateShader(shaderType);
+
+    const std::vector<char> shaderSource = read_file(shaderPath);
     const char* source = shaderSource.data();
 
-    unsigned int shader = glCreateShader(shaderType);
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
+    gl::glShaderSource(shader, 1, &source, nullptr);
+    gl::glCompileShader(shader);
 
-    int success = 0;
-    constexpr size_t kInfoLogSize = 512;
+    gl::GLint success = 0;
     std::array<char, kInfoLogSize> infoLog{};
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, kInfoLogSize, nullptr, infoLog.data());
+    gl::glGetShaderiv(shader, gl::GL_COMPILE_STATUS, &success);
+    if (success == 0) {
+        gl::glGetShaderInfoLog(shader, kInfoLogSize, nullptr, infoLog.data());
         throw std::runtime_error(
-            std::format("Shader {} failed to compile:\n{}", shaderPath, infoLog.data())
+            std::format(
+                "Shader {} failed to compile:\n{}",
+                shaderPath,
+                infoLog.data()
+            )
         );
     }
     return shader;
