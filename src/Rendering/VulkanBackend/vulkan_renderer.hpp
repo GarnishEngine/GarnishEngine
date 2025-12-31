@@ -33,6 +33,11 @@ class VulkanRenderDevice : public RenderDevice {
     uint32_t setup_mesh(const Geometry& geometry) override;
     uint32_t load_texture(const std::string& path) override;
 
+    // ImGui integration
+    void init_imgui_backend() override;
+    void shutdown_imgui_backend() override;
+    void new_imgui_frame() override;
+
    private:
     static constexpr uint32_t kMAX_FRAMES_IN_FLIGHT = 2;
     static constexpr uint32_t kbufferDefaultSize = 1024 * 1024;
@@ -145,6 +150,12 @@ class VulkanRenderDevice : public RenderDevice {
 
     bool framebufferResized_ = false;
     uint32_t currentFrame_ = 0;
+
+    vkr::DescriptorPool imguiDescriptorPool_{nullptr};
+    bool imguiInitialized_ = false;
+
+    [[nodiscard]] vkr::DescriptorPool create_imgui_descriptor_pool();
+    void render_imgui(vkr::CommandBuffer& commandBuffer);
 
     // Instance and surface initialization
     vkr::Instance create_instance();

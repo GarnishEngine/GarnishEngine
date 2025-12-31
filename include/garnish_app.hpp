@@ -75,6 +75,14 @@ class App {
         updateFunctions.push_back(std::move(updateFunction));
     }
 
+    void enable_imgui(bool enabled = true) { imguiEnabled_ = enabled; }
+    [[nodiscard]] bool is_imgui_enabled() const noexcept { return imguiEnabled_; }
+
+    using ImGuiCallback = std::function<void(ECSController&)>;
+    void register_imgui_callback(ImGuiCallback callback) {
+        imguiCallbacks_.push_back(std::move(callback));
+    }
+
    private:
     std::unique_ptr<RenderDevice> renderDevice;
     std::unique_ptr<SDLWindowManager> window;
@@ -87,9 +95,15 @@ class App {
     uint32_t width;
     uint32_t height;
     uint32_t fps;
+
+    bool imguiEnabled_ = false;
+    std::vector<ImGuiCallback> imguiCallbacks_;
+
     virtual void init();
     void init_imgui();
     void terminate_imgui();
+    void begin_imgui_frame();
+    void end_imgui_frame();
     void make_render_device(const CreateInfo& createInfo);
     void refresh_window_size();
 };

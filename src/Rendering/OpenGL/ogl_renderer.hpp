@@ -1,8 +1,7 @@
 #pragma once
-#define GLEW_STATIC
 
-#include <GL/glew.h>
-#include <SDL3/SDL_opengl.h>
+#include <glbinding/gl/gl.h>
+#include <glbinding/glbinding.h>
 
 #include <cstdint>
 #include <memory>
@@ -34,12 +33,17 @@ class OpenGLRenderDevice : public RenderDevice {
     uint32_t load_texture(const std::string& texture_path) override;
     void set_shader();
 
+    // ImGui integration
+    void init_imgui_backend() override;
+    void shutdown_imgui_backend() override;
+    void new_imgui_frame() override;
+
    private:
     struct OGLMesh {
-        GLuint VAO = 0;
-        GLuint VBO = 0;
-        GLuint EBO = 0;
-        GLsizei size = 0;
+        gl::GLuint VAO = 0;
+        gl::GLuint VBO = 0;
+        gl::GLuint EBO = 0;
+        gl::GLsizei size = 0;
 
         OGLMesh() = default;
         OGLMesh(const OGLMesh&) = delete;
@@ -65,16 +69,16 @@ class OpenGLRenderDevice : public RenderDevice {
             return *this;
         }
         ~OGLMesh() {
-            if (EBO) glDeleteBuffers(1, &EBO);
-            if (VBO) glDeleteBuffers(1, &VBO);
-            if (VAO) glDeleteVertexArrays(1, &VAO);
+            if (EBO) gl::glDeleteBuffers(1, &EBO);
+            if (VBO) gl::glDeleteBuffers(1, &VBO);
+            if (VAO) gl::glDeleteVertexArrays(1, &VAO);
         }
     };
 
     struct OGLTexture {
-        GLuint id = 0;
+        gl::GLuint id = 0;
         OGLTexture() = default;
-        explicit OGLTexture(GLuint tex)
+        explicit OGLTexture(gl::GLuint tex)
             : id(tex) {}
         OGLTexture(const OGLTexture&) = delete;
         OGLTexture& operator=(const OGLTexture&) = delete;
@@ -84,16 +88,18 @@ class OpenGLRenderDevice : public RenderDevice {
         }
         OGLTexture& operator=(OGLTexture&& other) noexcept {
             if (this != &other) {
-                if (id) glDeleteTextures(1, &id);
+                if (id) gl::glDeleteTextures(1, &id);
                 id = other.id;
                 other.id = 0;
             }
             return *this;
         }
         ~OGLTexture() {
-            if (id) glDeleteTextures(1, &id);
+            if (id) gl::glDeleteTextures(1, &id);
         }
     };
+
+    void render_imgui();
 
     std::unique_ptr<ShaderProgram> shaderProgram;
     std::vector<OGLTexture> textures;

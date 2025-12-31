@@ -22,3 +22,6 @@
 [submodule "3rdParty/VulkanMemoryAllocator"]
 	path = 3rdParty/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "3rdParty/glbinding"]
+	path = 3rdParty/glbinding
+	url = https://github.com/cginternals/glbinding.git

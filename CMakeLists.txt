@@ -44,44 +44,56 @@ add_subdirectory(3rdParty/SDL           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/glm           EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/tinyobjloader EXCLUDE_FROM_ALL)
 add_subdirectory(3rdParty/GarnishECS    EXCLUDE_FROM_ALL)
-
-file(GLOB IMGUI_SOURCES
-        "3rdParty/imgui/*.h"
-        "3rdParty/imgui/*.cpp"
-        "3rdParty/imgui/backends/imgui_impl_opengl3.cpp"
-        "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
-add_library(imgui STATIC ${IMGUI_SOURCES})
-
-target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui/backends)
-target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL GLEW::GLEW)
-list(APPEND GARNISH_PRIVATE_LIBS SDL3::SDL3 glm::glm GarnishECS imgui)
-
-target_include_directories(GarnishEngine
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include     
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering     
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/GarnishECS/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glm
-)
-set(IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_sdl3.cpp)
 if(USE_OPENGL)
-    list(APPEND IMGUI_BACKENDS 3rdParty/imgui/backends/imgui_impl_opengl3.cpp)
+    add_subdirectory(3rdParty/glbinding  EXCLUDE_FROM_ALL)
 endif()
+
+# ImGui library 
+file(GLOB IMGUI_CORE_SOURCES
+    "3rdParty/imgui/*.h"
+    "3rdParty/imgui/*.cpp"
+    "3rdParty/imgui/backends/imgui_impl_sdl3.h"
+    "3rdParty/imgui/backends/imgui_impl_sdl3.cpp")
+
+set(IMGUI_BACKEND_SOURCES "")
+if(USE_OPENGL)
+    list(APPEND IMGUI_BACKEND_SOURCES
+        "3rdParty/imgui/backends/imgui_impl_opengl3.h"
+        "3rdParty/imgui/backends/imgui_impl_opengl3.cpp")
+endif()
+if(USE_VULKAN)
+    list(APPEND IMGUI_BACKEND_SOURCES
+        "3rdParty/imgui/backends/imgui_impl_vulkan.h"
+        "3rdParty/imgui/backends/imgui_impl_vulkan.cpp")
+endif()
+
+add_library(imgui STATIC ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
 target_include_directories(imgui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/imgui/backends
 )
-# Link ImGui to SDL always; GL only when OpenGL backend is enabled
+
 target_link_libraries(imgui PUBLIC SDL3::SDL3)
 if(USE_OPENGL)
-    find_package(GLEW REQUIRED)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(imgui PUBLIC GLEW::GLEW OpenGL::GL)
+    target_link_libraries(imgui PUBLIC OpenGL::GL glbinding::glbinding)
 endif()
+if(USE_VULKAN)
+    find_package(Vulkan REQUIRED)
+    target_link_libraries(imgui PUBLIC Vulkan::Vulkan)
+endif()
+
+# Includes
+target_include_directories(GarnishEngine
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/tinyobjloader
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/stb
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/GarnishECS/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glm
+)
 
 # Collect engine sources (exclude backend dirs, add them explicitly below)
 file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
@@ -98,7 +110,7 @@ if(USE_OPENGL)
     list(APPEND ENGINE_SRC ${OPENGL_SRC})
 
     # Link GL on each platform
-    list(APPEND GARNISH_PRIVATE_LIBS GLEW::GLEW)
+    list(APPEND GARNISH_PRIVATE_LIBS glbinding::glbinding glbinding::glbinding-aux)
     if(APPLE)
         list(APPEND GARNISH_PRIVATE_LIBS "-framework OpenGL")
     else()

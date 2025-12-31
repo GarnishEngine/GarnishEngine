@@ -2,6 +2,9 @@
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_vulkan.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_vulkan.h>
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
@@ -128,6 +131,8 @@ void VulkanRenderDevice::cleanup() {
     if (!(*gvDevice_)) return;
     gvDevice_.waitIdle();
 
+    shutdown_imgui_backend();
+
     cleanup_swap_chain();
 
     for (auto&& [mapped, memory] :
@@ -159,6 +164,70 @@ void VulkanRenderDevice::cleanup() {
     swapChainFramebuffers_.clear();
     swapChainImageViews_.clear();
     gvCommandBuffers_.clear();
+}
+
+vkr::DescriptorPool VulkanRenderDevice::create_imgui_descriptor_pool() {
+    std::array poolSizes{
+        vk::DescriptorPoolSize{}
+            .setType(vk::DescriptorType::eCombinedImageSampler)
+            .setDescriptorCount(10)
+    };
+
+    auto poolInfo = vk::DescriptorPoolCreateInfo{}
+                        .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
+                        .setMaxSets(10)
+                        .setPoolSizes(poolSizes);
+
+    return gvDevice_.createDescriptorPool(poolInfo);
+}
+
+void VulkanRenderDevice::init_imgui_backend() {
+    if (imguiInitialized_) return;
+
+    ImGui_ImplSDL3_InitForVulkan(window);
+    imguiDescriptorPool_ = create_imgui_descriptor_pool();
+
+    QueueFamilyIndices indices = find_queue_families(gvPhysicalDevice_);
+
+    ImGui_ImplVulkan_InitInfo initInfo = {};
+    initInfo.Instance = *gvInstance_;
+    initInfo.PhysicalDevice = *gvPhysicalDevice_;
+    initInfo.Device = *gvDevice_;
+    initInfo.QueueFamily = indices.graphicsFamily.value();
+    initInfo.Queue = *gvGraphicsQueue_;
+    initInfo.PipelineCache = VK_NULL_HANDLE;
+    initInfo.DescriptorPool = *imguiDescriptorPool_;
+    initInfo.RenderPass = *gvRenderPass_;
+    initInfo.Subpass = 0;
+    initInfo.MinImageCount = kMAX_FRAMES_IN_FLIGHT;
+    initInfo.ImageCount = static_cast<uint32_t>(swapChainImages_.size());
+    initInfo.MSAASamples = static_cast<VkSampleCountFlagBits>(msaaSamples_);
+    initInfo.Allocator = nullptr;
+    initInfo.CheckVkResultFn = nullptr;
+
+    ImGui_ImplVulkan_Init(&initInfo);
+
+    imguiInitialized_ = true;
+}
+
+void VulkanRenderDevice::shutdown_imgui_backend() {
+    if (!imguiInitialized_) return;
+
+    gvDevice_.waitIdle();
+    ImGui_ImplVulkan_Shutdown();
+    imguiDescriptorPool_.clear();
+    imguiInitialized_ = false;
+}
+
+void VulkanRenderDevice::new_imgui_frame() {
+    ImGui_ImplVulkan_NewFrame();
+}
+
+void VulkanRenderDevice::render_imgui(vkr::CommandBuffer& commandBuffer) {
+    ImDrawData* drawData = ImGui::GetDrawData();
+    if (drawData && imguiInitialized_) {
+        ImGui_ImplVulkan_RenderDrawData(drawData, *commandBuffer);
+    }
 }
 
 // Public overrides - Core rendering
@@ -1548,6 +1617,8 @@ void VulkanRenderDevice::record_command_buffer(
         );
         commandBuffer.drawIndexed(msh.indexCount, 1, 0, 0, 0);
     }
+
+    render_imgui(commandBuffer);
 
     commandBuffer.endRenderPass();
     commandBuffer.end();

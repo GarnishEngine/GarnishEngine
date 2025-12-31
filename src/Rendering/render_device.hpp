@@ -35,6 +35,12 @@ class RenderDevice {
     virtual uint32_t setup_mesh(const Geometry& geometry) = 0;
     uint32_t setup_mesh(const std::string& mesh_path);
     virtual uint32_t load_texture(const std::string& texture_path) = 0;
+
+    // ImGui integration
+    virtual void init_imgui_backend() {}
+    virtual void shutdown_imgui_backend() {}
+    virtual void new_imgui_frame() {}
+
     SDL_Window* window = nullptr;
 };
 }  // namespace garnish
