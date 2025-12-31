@@ -18,7 +18,7 @@
 
 namespace garnish {
 namespace {
-constexpr void* buffer_offset(std::size_t offset) noexcept {
+[[nodiscard]] void* buffer_offset(std::size_t offset) noexcept {
     return reinterpret_cast<void*>(offset);  // NOLINT
 }
 }  // namespace
