@@ -1,6 +1,5 @@
 #pragma once
 #define GLEW_STATIC
-#define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
 
 #include <GL/glew.h>
 #include <SDL3/SDL_opengl.h>
@@ -15,21 +14,25 @@
 namespace garnish {
 class OpenGLRenderDevice : public RenderDevice {
    public:
-    OpenGLRenderDevice() = default;
+    explicit OpenGLRenderDevice(const RenderDevice::InitInfo& info);
     OpenGLRenderDevice(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice& operator=(const OpenGLRenderDevice&) = delete;
     OpenGLRenderDevice(OpenGLRenderDevice&&) = delete;
     OpenGLRenderDevice& operator=(OpenGLRenderDevice&&) = delete;
-    ~OpenGLRenderDevice() override = default;
-    bool init(const InitInfo& info) override;
-    bool draw_frame(ECSController& world) override;
-    void cleanup() override;
-    void update(ECSController& world) override;
-    void set_shader();
+    ~OpenGLRenderDevice() override { cleanup(); }
 
+    // Lifecycle
+    void cleanup() override;
+
+    // Core rendering
+    bool draw_frame(ECSController& world) override;
+    void update(ECSController& world) override;
+
+    // Resource loading
     using RenderDevice::setup_mesh;
     uint32_t setup_mesh(const Geometry& geometry) override;
     uint32_t load_texture(const std::string& texture_path) override;
+    void set_shader();
 
    private:
     struct OGLMesh {

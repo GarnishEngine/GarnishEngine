@@ -1,15 +1,17 @@
 #pragma once
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <ios>
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace garnish {
-inline std::vector<char> read_file(const std::string& path) {
-    std::ifstream file{path, std::ios::ate | std::ios::binary};
+[[nodiscard]] inline std::vector<char> read_file(std::string_view path) {
+    std::ifstream file{std::filesystem::path{path}, std::ios::ate | std::ios::binary};
 
     if (!file.is_open()) {
-        throw std::runtime_error("Failed to open: " + path);
+        throw std::runtime_error(std::format("Failed to open: {}", path));
     }
 
     auto fileSize = static_cast<std::streamsize>(file.tellg());
@@ -18,9 +20,7 @@ inline std::vector<char> read_file(const std::string& path) {
     file.seekg(0);
     file.read(buffer.data(), fileSize);
 
-    file.close();
     if (buffer.size() & 3) buffer.resize((buffer.size() + 3) & ~3);
-
     return buffer;
 }
 }  // namespace garnish

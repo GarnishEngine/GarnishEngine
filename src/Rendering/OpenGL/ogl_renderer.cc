@@ -6,17 +6,19 @@
 
 #include <chrono>
 #include <cstddef>
-#include <iostream>
+#include <format>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #include "Utility/camera.hpp"
+#include "Utility/sdl_raii.hpp"
 #include "ecs_controller.h"
 #include "shared.hpp"
 
 namespace garnish {
 namespace {
-void* buffer_offset(std::size_t offset) {
+[[nodiscard]] void* buffer_offset(std::size_t offset) noexcept {
     return reinterpret_cast<void*>(offset);  // NOLINT
 }
 }  // namespace
@@ -26,20 +28,11 @@ using tp = std::chrono::time_point<hrclock>;
 using ms = std::chrono::duration<double, std::milli>;
 using us = std::chrono::microseconds;
 
-bool OpenGLRenderDevice::init(const InitInfo& info) {
-    window = static_cast<SDL_Window*>(info.nativeWindow);
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(
-        SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_CORE
-    );
-
+OpenGLRenderDevice::OpenGLRenderDevice(const RenderDevice::InitInfo& info)
+    : RenderDevice(static_cast<SDL_Window*>(info.nativeWindow)) {
     auto* raw = SDL_GL_CreateContext(window);
     if (!raw) {
-        std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError();
-        return false;
+        throw std::runtime_error(std::format("SDL_GL_CreateContext failed: {}", SDL_GetError()));
     }
     glContext.reset(raw);
 
@@ -61,9 +54,12 @@ bool OpenGLRenderDevice::init(const InitInfo& info) {
         info.assetPath + "shaders/shader.vert",
         info.assetPath + "shaders/shader.frag"
     );
-    return true;
 }
 
+// Public overrides - Lifecycle
+void OpenGLRenderDevice::cleanup() {}
+
+// Public overrides - Core rendering
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     // Acquire camera (first one if multiple)
     glm::mat4 view{1.0F};
@@ -123,8 +119,7 @@ void OpenGLRenderDevice::update(ECSController& world) {
     draw_frame(world);
 }
 
-void OpenGLRenderDevice::cleanup() {}
-
+// Public overrides - Resource loading
 uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     OGLMesh mesh{};
     glGenVertexArrays(1, &mesh.VAO);
@@ -191,17 +186,11 @@ uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
     int mTexHeight = 0;
     int nrChannels = 0;
     unsigned int texID = -1;
-    // stbi_set_flip_vertically_on_load(true);
-    unsigned char* textureData = stbi_load(
-        texture_path.c_str(),
-        &mTexWidth,
-        &mTexHeight,
-        &nrChannels,
-        0
+    UniqueSTBImage textureData(
+        stbi_load(texture_path.c_str(), &mTexWidth, &mTexHeight, &nrChannels, 0)
     );
 
     if (!textureData) {
-        stbi_image_free(textureData);
         throw std::runtime_error("texture load failed");
     }
 
@@ -226,13 +215,12 @@ uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
         0,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        textureData
+        textureData.get()
     );
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(textureData);
 
     textures.emplace_back(texID);
     return textures.size() - 1;

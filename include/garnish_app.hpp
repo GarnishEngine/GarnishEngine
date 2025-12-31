@@ -37,7 +37,7 @@ class App {
         uint32_t targetFps = DEFAULT_TARGET_FPS;
         std::string assetPath;
     };
-    App(CreateInfo createInfo = {
+    App(const CreateInfo& createInfo = {
             .backend = RenderingBackend::OpenGL,
             .width = DEFAULT_WIDTH,
             .height = DEFAULT_HEIGHT,
@@ -59,9 +59,9 @@ class App {
         return renderDevice;
     }
 
-    SDL_Window* get_window() noexcept { return window.get(); }
+    SDL_Window* get_window() noexcept { return window ? window->get() : nullptr; }
     [[nodiscard]] const SDL_Window* get_window() const noexcept {
-        return window.get();
+        return window ? window->get() : nullptr;
     }
 
     ECSController& get_controller() noexcept { return ecsController; }
@@ -77,19 +77,19 @@ class App {
 
    private:
     std::unique_ptr<RenderDevice> renderDevice;
+    std::unique_ptr<SDLWindowManager> window;
+
     ECSController ecsController;
+    std::vector<std::function<void(ECSController&)>> updateFunctions;
+    PhysicsSystem physicsSystem;
+
     bool shouldClose = false;
     uint32_t width;
     uint32_t height;
     uint32_t fps;
-    UniqueSDLWindow window;
-    PhysicsSystem physicsSystem;
-    std::vector<std::function<void(ECSController&)>> updateFunctions;
-
     virtual void init();
     void init_imgui();
     void terminate_imgui();
-    [[nodiscard]] SDL_Window* init_window(int64_t flags) const;
     void make_render_device(const CreateInfo& createInfo);
     void refresh_window_size();
 };

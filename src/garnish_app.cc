@@ -15,6 +15,8 @@
 
 #include "Physics/physics_system.hpp"
 #include "Utility/camera.hpp"
+#include "Utility/imgui_raii.hpp"
+#include "render_device.hpp"
 
 #ifdef _OPENGL_RENDERING
 #include <imgui_impl_opengl3.h>
@@ -28,13 +30,10 @@
 #endif
 
 namespace garnish {
-App::App(const CreateInfo createInfo)
+App::App(const CreateInfo& createInfo)
     : width(createInfo.width),
       height(createInfo.height),
-      fps(createInfo.targetFps),
-      renderDevice(nullptr),
-      window(nullptr) {
-    init();
+      fps(createInfo.targetFps) {
     make_render_device(createInfo);
     ecsController.set(renderDevice.get());
 
@@ -49,8 +48,6 @@ App::~App() noexcept {
     if (renderDevice) {
         renderDevice->cleanup();
     }
-
-    SDL_Quit();
 }
 
 void App::init() {}
@@ -58,8 +55,7 @@ void App::init() {}
 void App::run() {
     using clock = std::chrono::steady_clock;
     auto nextFrame = clock::now();
-    constexpr auto MICROSECONDS_PER_SECOND =
-        std::chrono::microseconds{1'000'000};
+    constexpr auto MICROSECONDS_PER_SECOND = std::chrono::microseconds{1'000'000};
     auto frameTime = MICROSECONDS_PER_SECOND / fps;
 
     while (!shouldClose) {
@@ -76,14 +72,9 @@ void App::run() {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-                case SDL_EVENT_QUIT:
-                    shouldClose = true;
-                    break;
-                case SDL_EVENT_WINDOW_RESIZED:
-                    refresh_window_size();
-                    break;
-                default:
-                    break;
+                case SDL_EVENT_QUIT: shouldClose = true; break;
+                case SDL_EVENT_WINDOW_RESIZED: refresh_window_size(); break;
+                default: break;
             }
         }
         renderDevice->update(ecsController);
@@ -98,8 +89,7 @@ bool App::handle_poll_event() {
     if (!SDL_PollEvent(&event)) {
         return false;
     }
-    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ||
-        event.type == SDL_EVENT_QUIT) {
+    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED || event.type == SDL_EVENT_QUIT) {
         shouldClose = true;
     }
     return true;
@@ -111,20 +101,8 @@ void App::handle_all_events() {
     }
 }
 
-SDL_Window* App::init_window(int64_t flags) const {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
-
-    return SDL_CreateWindow(
-        "hello window",
-        static_cast<int>(width),
-        static_cast<int>(height),
-        flags
-    );
-}
-
 void App::init_imgui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    static ImGuiContextRAII imguiCtx;
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -133,7 +111,7 @@ void App::init_imgui() {
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 #ifdef _OPENGL_RENDERING
-    ImGui_ImplSDL3_InitForOpenGL(window.get(), SDL_GL_GetCurrentContext());
+    ImGui_ImplSDL3_InitForOpenGL(window->get(), SDL_GL_GetCurrentContext());
     ImGui_ImplOpenGL3_Init();
 #endif
 }
@@ -143,57 +121,61 @@ void App::terminate_imgui() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
 #endif
-    ImGui::DestroyContext();
 }
 
 void App::make_render_device(const CreateInfo& createInfo) {
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
-            renderDevice = std::make_unique<OpenGLRenderDevice>();
+            window = std::make_unique<SDLWindowManager>(
+                SDL_INIT_VIDEO | SDL_INIT_EVENTS,
+                "hello window",
+                static_cast<int>(width),
+                static_cast<int>(height),
+                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+            );
+#ifdef __APPLE__
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-            SDL_GL_SetAttribute(
-                SDL_GL_CONTEXT_PROFILE_MASK,
-                SDL_GL_CONTEXT_PROFILE_CORE
-            );
-            window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
 
-            renderDevice->init(
-                {.nativeWindow = window.get(),
-                 .width = width,
-                 .height = height,
-                 .vsync = false,
-                 .assetPath = createInfo.assetPath}
-            );
+            renderDevice = std::make_unique<OpenGLRenderDevice>(RenderDevice::InitInfo{
+                .nativeWindow = window->get(),
+                .width = width,
+                .height = height,
+                .vsync = false,
+                .assetPath = createInfo.assetPath
+            });
             break;
 #endif
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
-            renderDevice = std::make_unique<vulkan::VulkanRenderDevice>();
-            window.reset(init_window(
-                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY |
-                SDL_WINDOW_RESIZABLE
-            ));
-
-            renderDevice->init(
-                {.nativeWindow = window.get(),
-                 .width = width,
-                 .height = height,
-                 .vsync = false,
-                 .assetPath = createInfo.assetPath}
+            window = std::make_unique<SDLWindowManager>(
+                SDL_INIT_VIDEO | SDL_INIT_EVENTS,
+                "hello window",
+                static_cast<int>(width),
+                static_cast<int>(height),
+                SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE
             );
+            renderDevice = std::make_unique<vulkan::VulkanRenderDevice>(RenderDevice::InitInfo{
+                .nativeWindow = window->get(),
+                .width = width,
+                .height = height,
+                .vsync = false,
+                .assetPath = createInfo.assetPath
+            });
             break;
 #endif
-        default:
-            throw std::runtime_error("no rendering device created");
+        default: throw std::runtime_error("no rendering device created");
     }
 }
 
 void App::refresh_window_size() {
     int w = 0;
     int h = 0;
-    SDL_GetWindowSize(window.get(), &w, &h);
+    SDL_GetWindowSize(window->get(), &w, &h);
     width = static_cast<uint32_t>(w);
     height = static_cast<uint32_t>(h);
 }

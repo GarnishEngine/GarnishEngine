@@ -26,6 +26,6 @@ struct Camera {
 
     glm::vec2 lastMousePos{std::numeric_limits<float>::max()};
 
-    glm::mat4 view_matrix();
+    [[nodiscard]] glm::mat4 view_matrix() const noexcept;
 };
 }  // namespace garnish

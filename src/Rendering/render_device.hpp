@@ -12,6 +12,8 @@ class ECSController;  // forward declaration
 
 class RenderDevice {
    public:
+    RenderDevice() = default;
+    explicit RenderDevice(SDL_Window* w) : window(w) {}
     virtual ~RenderDevice() = default;
     struct InitInfo {
         void* nativeWindow{};
@@ -21,12 +23,15 @@ class RenderDevice {
         void* pNext{};
         std::string assetPath;
     };
-    virtual bool init(const InitInfo& info) = 0;
+
+    // Lifecycle
     virtual void cleanup() = 0;
 
+    // Core rendering
     virtual bool draw_frame(ECSController& world) = 0;
     virtual void update(ECSController& world) = 0;
 
+    // Resource loading
     virtual uint32_t setup_mesh(const Geometry& geometry) = 0;
     uint32_t setup_mesh(const std::string& mesh_path);
     virtual uint32_t load_texture(const std::string& texture_path) = 0;
