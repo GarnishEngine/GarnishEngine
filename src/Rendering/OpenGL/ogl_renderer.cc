@@ -64,14 +64,17 @@ void OpenGLRenderDevice::cleanup() {}
 
 // Public overrides - Core rendering
 bool OpenGLRenderDevice::draw_frame(ECSController& world) {
-    // Acquire camera (first one if multiple)
+    // Acquire camera
     glm::mat4 view{1.0F};
-    glm::mat4 proj{1.0F};
+    glm::vec3 cameraPos{0.0F, 0.0F, 5.0F};
     auto cameras = world.get_entities<garnish::Camera>();
     if (!cameras.empty()) {
         auto& cam = world.get_component<garnish::Camera>(cameras[0]);
         view = cam.view_matrix();
+        cameraPos = cam.position;
     }
+
+    // Setup projection
     int w = 0;
     int h = 0;
     SDL_GetWindowSize(window, &w, &h);
@@ -79,30 +82,69 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
     constexpr float kFovDeg = 60.0F;
     constexpr float kNear = 0.01F;
     constexpr float kFar = 1000.0F;
-    proj = glm::perspective(
+    glm::mat4 proj = glm::perspective(
         glm::radians(kFovDeg),
         static_cast<float>(w) / static_cast<float>(h),
         kNear,
         kFar
     );
 
+    // Acquire light (first PointLight entity or defaults)
+    glm::vec3 lightPos{0.0F, 5.0F, 5.0F};
+    glm::vec3 lightColor{1.0F, 1.0F, 1.0F};
+    auto lights = world.get_entities<PointLight>();
+    if (!lights.empty()) {
+        auto& light = world.get_component<PointLight>(lights[0]);
+        lightPos = light.position;
+        lightColor = light.color * light.intensity;
+    }
+
     gl::glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
     gl::glClear(gl::GL_COLOR_BUFFER_BIT | gl::GL_DEPTH_BUFFER_BIT);
 
     shaderProgram->use();
 
+    // Set global uniforms
+    shaderProgram->set_uniform("view", view);
+    shaderProgram->set_uniform("projection", proj);
+    shaderProgram->set_uniform("viewPos", cameraPos);
+    shaderProgram->set_uniform("lightPos", lightPos);
+    shaderProgram->set_uniform("lightColor", lightColor);
+    shaderProgram->set_uniform("diffuseTexture", 0);
+
+    // Default material values
+    constexpr glm::vec3 kDefaultAmbient{0.1F, 0.1F, 0.1F};
+    constexpr glm::vec3 kDefaultDiffuse{1.0F, 1.0F, 1.0F};
+    constexpr glm::vec3 kDefaultSpecular{0.5F, 0.5F, 0.5F};
+    constexpr float kDefaultShininess = 32.0F;
+
     auto entities = world.get_entities<Renderable>();
     for (Entity entity : entities) {
         auto& dra = world.get_component<Renderable>(entity);
+
+        // Build model matrix
         glm::mat4 model{1.0F};
         if (world.has_component<Transform>(entity)) {
             auto& tf = world.get_component<Transform>(entity);
-            model =
-                glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
+            model = glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
         }
-        glm::mat4 mvp = proj * view * model;
-        shaderProgram->set_uniform("mvp", mvp);
+        shaderProgram->set_uniform("model", model);
 
+        // Set material uniforms
+        if (world.has_component<Material>(entity)) {
+            auto& mat = world.get_component<Material>(entity);
+            shaderProgram->set_uniform("material_ambient", mat.ambient);
+            shaderProgram->set_uniform("material_diffuse", mat.diffuse);
+            shaderProgram->set_uniform("material_specular", mat.specular);
+            shaderProgram->set_uniform("material_shininess", mat.shininess);
+        } else {
+            shaderProgram->set_uniform("material_ambient", kDefaultAmbient);
+            shaderProgram->set_uniform("material_diffuse", kDefaultDiffuse);
+            shaderProgram->set_uniform("material_specular", kDefaultSpecular);
+            shaderProgram->set_uniform("material_shininess", kDefaultShininess);
+        }
+
+        gl::glActiveTexture(gl::GL_TEXTURE0);
         gl::glBindTexture(gl::GL_TEXTURE_2D, textures[dra.texHandle].id);
         gl::glBindVertexArray(meshes[dra.meshHandle].VAO);
         gl::glDrawElements(

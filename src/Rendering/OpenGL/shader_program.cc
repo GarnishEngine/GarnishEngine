@@ -53,6 +53,21 @@ void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) c
     );
 }
 
+void ShaderProgram::set_uniform(const std::string& name, const glm::vec3& vec) const {
+    use();
+    gl::glUniform3fv(gl::glGetUniformLocation(handle, name.c_str()), 1, glm::value_ptr(vec));
+}
+
+void ShaderProgram::set_uniform(const std::string& name, float value) const {
+    use();
+    gl::glUniform1f(gl::glGetUniformLocation(handle, name.c_str()), value);
+}
+
+void ShaderProgram::set_uniform(const std::string& name, int value) const {
+    use();
+    gl::glUniform1i(gl::glGetUniformLocation(handle, name.c_str()), value);
+}
+
 gl::GLuint ShaderProgram::compile_shader(std::string_view shaderPath) {
     std::vector<char> shaderSource = read_file(shaderPath);
 

@@ -38,6 +38,8 @@ App::App(const CreateInfo& createInfo)
     ecsController.register_component<SphereCollider>();
     ecsController.register_component<Camera>();
     ecsController.register_component<Renderable>();
+    ecsController.register_component<Material>();
+    ecsController.register_component<PointLight>();
 
     init_imgui();
 }

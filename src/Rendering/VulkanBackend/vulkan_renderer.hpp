@@ -62,7 +62,22 @@ class VulkanRenderDevice : public RenderDevice {
     struct CameraUBO {
         alignas(kMat4Align) glm::mat4 view;
         alignas(kMat4Align) glm::mat4 proj;
+        alignas(kMat4Align) glm::vec3 viewPos;
     } cameraUbo_{};
+
+    struct LightingUBO {
+        alignas(kMat4Align) glm::vec3 lightPos{0.0F, 5.0F, 5.0F};
+        alignas(kMat4Align) glm::vec3 lightColor{1.0F, 1.0F, 1.0F};
+    } lightingUbo_{};
+
+    struct PushConstants {
+        uint32_t texIndex;
+        uint32_t modelIndex;
+        alignas(kMat4Align) glm::vec3 material_ambient{0.1F, 0.1F, 0.1F};
+        alignas(kMat4Align) glm::vec3 material_diffuse{1.0F, 1.0F, 1.0F};
+        alignas(kMat4Align) glm::vec3 material_specular{0.5F, 0.5F, 0.5F};
+        float material_shininess{32.0F};
+    };
 
     // don't change this to std::string, things need it to be char*
     std::vector<const char*> deviceExtensions_ = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -129,6 +144,13 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vkr::DeviceMemory> memory;
         std::vector<void*> mapped;
     } uniformBufferAlloc_;
+
+    struct LightingBufferAllocation {
+        std::vector<vkr::Buffer> buffers;
+        std::vector<vkr::DeviceMemory> memory;
+        std::vector<void*> mapped;
+    } lightingBufferAlloc_;
+
     vkr::DescriptorPool gvDescriptorPool_;
     std::vector<vkr::DescriptorSet> descriptorSets_;
     std::vector<vkr::CommandBuffer> gvCommandBuffers_;
@@ -250,6 +272,7 @@ class VulkanRenderDevice : public RenderDevice {
     [[nodiscard]] VertexBufferAllocation create_vertex_buffer();
     [[nodiscard]] IndexBufferAllocation create_index_buffer();
     [[nodiscard]] UniformBufferAllocation create_uniform_buffers();
+    [[nodiscard]] LightingBufferAllocation create_lighting_buffers();
     [[nodiscard]] ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
@@ -337,6 +360,7 @@ class VulkanRenderDevice : public RenderDevice {
 
     // Runtime update functions
     void update_camera_buffer(uint32_t currentImage);
+    void update_lighting_buffer(uint32_t currentImage);
     void update_model_buffer(uint32_t currentImage, std::span<const glm::mat4> models);
 
     // Historic (deprecated)

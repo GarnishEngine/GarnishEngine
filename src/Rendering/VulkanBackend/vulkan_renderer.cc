@@ -118,6 +118,7 @@ VulkanRenderDevice::VulkanRenderDevice(const RenderDevice::InitInfo& info)
       vertexBuffer_(create_vertex_buffer()),
       indexBuffer_(create_index_buffer()),
       uniformBufferAlloc_(create_uniform_buffers()),
+      lightingBufferAlloc_(create_lighting_buffers()),
       gvDescriptorPool_(create_descriptor_pool()),
       descriptorSets_(create_descriptor_sets()),
       gvCommandBuffers_(create_command_buffers()),
@@ -144,6 +145,14 @@ void VulkanRenderDevice::cleanup() {
     }
 
     for (auto&& [mapped, memory] :
+         std::views::zip(lightingBufferAlloc_.mapped, lightingBufferAlloc_.memory)) {
+        if (mapped) {
+            memory.unmapMemory();
+            mapped = nullptr;
+        }
+    }
+
+    for (auto&& [mapped, memory] :
          std::views::zip(modelBufferAlloc_.mapped, modelBufferAlloc_.memory)) {
         if (mapped) {
             memory.unmapMemory();
@@ -154,6 +163,8 @@ void VulkanRenderDevice::cleanup() {
     gvTextures_.clear();
     uniformBufferAlloc_.buffers.clear();
     uniformBufferAlloc_.memory.clear();
+    lightingBufferAlloc_.buffers.clear();
+    lightingBufferAlloc_.memory.clear();
     modelBufferAlloc_.buffers.clear();
     modelBufferAlloc_.memory.clear();
     descriptorSets_.clear();
@@ -259,6 +270,7 @@ bool VulkanRenderDevice::draw_frame(ECSController& world) {
 
     record_command_buffer(gvCommandBuffers_[currentFrame_], imageIndex, world);
     update_camera_buffer(currentFrame_);
+    update_lighting_buffer(currentFrame_);
     const std::array<vk::Semaphore, 1> waitSemaphores{*imageAvailableSemaphores_[currentFrame_]};
     const std::array<vk::PipelineStageFlags, 1> waitStages{
         vk::PipelineStageFlagBits::eColorAttachmentOutput
@@ -1034,7 +1046,9 @@ vkr::DescriptorSetLayout VulkanRenderDevice::create_descriptor_set_layout() {
                           .setBinding(0)
                           .setDescriptorType(vk::DescriptorType::eUniformBuffer)
                           .setDescriptorCount(1)
-                          .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+                          .setStageFlags(
+                              vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+                          );
 
     auto modelBinding = vk::DescriptorSetLayoutBinding{}
                             .setBinding(1)
@@ -1049,12 +1063,22 @@ vkr::DescriptorSetLayout VulkanRenderDevice::create_descriptor_set_layout() {
                            .setStageFlags(vk::ShaderStageFlagBits::eFragment)
                            .setPImmutableSamplers(&(*gvTextureSampler_));
 
+    auto lightBinding = vk::DescriptorSetLayoutBinding{}
+                            .setBinding(3)
+                            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                            .setDescriptorCount(1)
+                            .setStageFlags(
+                                vk::ShaderStageFlagBits::eVertex |
+                                vk::ShaderStageFlagBits::eFragment
+                            );
+
     auto imgBinding = vk::DescriptorSetLayoutBinding{}
-                          .setBinding(3)
+                          .setBinding(4)
                           .setDescriptorType(vk::DescriptorType::eSampledImage)
                           .setDescriptorCount(textureLimit_)
                           .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-    std::array bindings{camBinding, modelBinding, sampBinding, imgBinding};
+
+    std::array bindings{camBinding, modelBinding, sampBinding, lightBinding, imgBinding};
 
     vk::DescriptorBindingFlags textureBindingFlags{};
     if (supportedIndexingFeatures_.descriptorBindingPartiallyBound) {
@@ -1064,7 +1088,9 @@ vkr::DescriptorSetLayout VulkanRenderDevice::create_descriptor_set_layout() {
         textureBindingFlags |= vk::DescriptorBindingFlagBits::eVariableDescriptorCount;
     }
 
+    // textureBindingFlags must be on the last binding (binding 4 = textures)
     std::array bindingFlags{
+        vk::DescriptorBindingFlags{},
         vk::DescriptorBindingFlags{},
         vk::DescriptorBindingFlags{},
         vk::DescriptorBindingFlags{},
@@ -1079,17 +1105,12 @@ vkr::DescriptorSetLayout VulkanRenderDevice::create_descriptor_set_layout() {
 }
 
 vkr::PipelineLayout VulkanRenderDevice::create_pipeline_layout() {
-    struct PC {
-        uint32_t texIndex;
-        uint32_t modelIndex;
-    };
-
     auto pcRange = vk::PushConstantRange{}
                        .setStageFlags(
                            vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex
                        )
                        .setOffset(0)
-                       .setSize(sizeof(PC));
+                       .setSize(sizeof(PushConstants));
 
     auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo{}
                                   .setSetLayoutCount(1)
@@ -1348,6 +1369,24 @@ VulkanRenderDevice::UniformBufferAllocation VulkanRenderDevice::create_uniform_b
     return alloc;
 }
 
+VulkanRenderDevice::LightingBufferAllocation VulkanRenderDevice::create_lighting_buffers() {
+    vk::DeviceSize bufferSize = sizeof(LightingUBO);
+
+    LightingBufferAllocation alloc;
+    for ([[maybe_unused]] auto i : std::views::iota(0U, kMAX_FRAMES_IN_FLIGHT)) {
+        auto [buffer, memory] = create_buffer(
+            {.size = bufferSize,
+             .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+             .memoryProperties = vk::MemoryPropertyFlagBits::eHostVisible |
+                                 vk::MemoryPropertyFlagBits::eHostCoherent}
+        );
+        alloc.buffers.push_back(std::move(buffer));
+        alloc.memory.push_back(std::move(memory));
+        alloc.mapped.push_back(alloc.memory.back().mapMemory(0, bufferSize));
+    }
+    return alloc;
+}
+
 VulkanRenderDevice::ModelBufferAllocation VulkanRenderDevice::create_model_buffers(
     const uint32_t minCapacity
 ) {
@@ -1394,10 +1433,11 @@ void VulkanRenderDevice::ensure_model_capacity(const uint32_t requiredModelCount
 
 // Descriptor pool and sets
 vkr::DescriptorPool VulkanRenderDevice::create_descriptor_pool() {
+    // 2 uniform buffers per frame: camera UBO (binding 0) + lighting UBO (binding 4)
     std::array poolSizes{
         vk::DescriptorPoolSize{}
             .setType(vk::DescriptorType::eUniformBuffer)
-            .setDescriptorCount(kMAX_FRAMES_IN_FLIGHT),
+            .setDescriptorCount(2 * kMAX_FRAMES_IN_FLIGHT),
         vk::DescriptorPoolSize{}
             .setType(vk::DescriptorType::eStorageBuffer)
             .setDescriptorCount(kMAX_FRAMES_IN_FLIGHT),
@@ -1450,6 +1490,7 @@ void VulkanRenderDevice::update_descriptor_sets() {
     }
 
     std::vector<vk::DescriptorBufferInfo> camInfos(kMAX_FRAMES_IN_FLIGHT);
+    std::vector<vk::DescriptorBufferInfo> lightInfos(kMAX_FRAMES_IN_FLIGHT);
     std::vector<vk::DescriptorBufferInfo> modelInfos(kMAX_FRAMES_IN_FLIGHT);
     std::vector<vk::WriteDescriptorSet> writes;
 
@@ -1487,11 +1528,27 @@ void VulkanRenderDevice::update_descriptor_sets() {
             );
         }
 
-        if (!gvTextures_.empty()) {
+        if (!lightingBufferAlloc_.buffers.empty()) {
+            lightInfos[i] = vk::DescriptorBufferInfo{}
+                                .setBuffer(lightingBufferAlloc_.buffers[i])
+                                .setOffset(0)
+                                .setRange(sizeof(LightingUBO));
             writes.push_back(
                 vk::WriteDescriptorSet{}
                     .setDstSet(descriptorSets_[i])
                     .setDstBinding(3)
+                    .setDstArrayElement(0)
+                    .setDescriptorCount(1)
+                    .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                    .setPBufferInfo(&lightInfos[i])
+            );
+        }
+
+        if (!gvTextures_.empty()) {
+            writes.push_back(
+                vk::WriteDescriptorSet{}
+                    .setDstSet(descriptorSets_[i])
+                    .setDstBinding(4)
                     .setDstArrayElement(0)
                     .setDescriptorCount(static_cast<uint32_t>(gvTextures_.size()))
                     .setDescriptorType(vk::DescriptorType::eSampledImage)
@@ -1557,10 +1614,12 @@ void VulkanRenderDevice::record_command_buffer(
 
     glm::mat4 view{1.0F};
     glm::mat4 proj{1.0F};
+    glm::vec3 viewPos{0.0F};
     auto cameras = world.get_entities<garnish::Camera>();
     if (!cameras.empty()) {
         auto& cam = world.get_component<garnish::Camera>(cameras[0]);
         view = cam.view_matrix();
+        viewPos = cam.position;
         constexpr float kFovDeg = 45.0F;
         constexpr float kNear = 0.1F;
         constexpr float kFar = 100.0F;
@@ -1575,6 +1634,14 @@ void VulkanRenderDevice::record_command_buffer(
     }
     cameraUbo_.view = view;
     cameraUbo_.proj = proj;
+    cameraUbo_.viewPos = viewPos;
+
+    auto lights = world.get_entities<PointLight>();
+    if (!lights.empty()) {
+        const auto& light = world.get_component<PointLight>(lights[0]);
+        lightingUbo_.lightPos = light.position;
+        lightingUbo_.lightColor = light.color;
+    }
 
     auto entities = world.get_entities<Renderable, Transform>();
     auto modelMatrices = entities | std::views::transform([&world](auto e) {
@@ -1605,11 +1672,18 @@ void VulkanRenderDevice::record_command_buffer(
             static_cast<vk::DeviceSize>(msh.firstIndex) * sizeof(uint32_t),
             vk::IndexType::eUint32
         );
-        struct PC {
-            uint32_t texIndex;
-            uint32_t modelIndex;
-        } pc{.texIndex = r.texHandle, .modelIndex = modelIdx};
-        commandBuffer.pushConstants<PC>(
+
+        // Get material data if entity has Material component, otherwise use defaults
+        PushConstants pc{.texIndex = r.texHandle, .modelIndex = modelIdx};
+        if (world.has_component<Material>(e)) {
+            const auto& mat = world.get_component<Material>(e);
+            pc.material_ambient = mat.ambient;
+            pc.material_diffuse = mat.diffuse;
+            pc.material_specular = mat.specular;
+            pc.material_shininess = mat.shininess;
+        }
+
+        commandBuffer.pushConstants<PushConstants>(
             *gvPipelineLayout_,
             vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex,
             0,
@@ -1916,6 +1990,10 @@ void VulkanRenderDevice::generate_mipmaps(const MipmapGenerationInfo& info) {
 // Runtime update functions
 void VulkanRenderDevice::update_camera_buffer(const uint32_t currentImage) {
     memcpy(uniformBufferAlloc_.mapped[currentImage], &cameraUbo_, sizeof(CameraUBO));
+}
+
+void VulkanRenderDevice::update_lighting_buffer(const uint32_t currentImage) {
+    memcpy(lightingBufferAlloc_.mapped[currentImage], &lightingUbo_, sizeof(LightingUBO));
 }
 
 void VulkanRenderDevice::update_model_buffer(
