@@ -127,9 +127,6 @@ void App::make_render_device(const CreateInfo& createInfo) {
     switch (createInfo.backend) {
 #ifdef _OPENGL_RENDERING
         case RenderingBackend::OpenGL:
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
             window = std::make_unique<SDLWindowManager>(
                 SDL_INIT_VIDEO | SDL_INIT_EVENTS,
                 "hello window",
@@ -137,6 +134,13 @@ void App::make_render_device(const CreateInfo& createInfo) {
                 static_cast<int>(height),
                 SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
             );
+#ifdef __APPLE__
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
             renderDevice = std::make_unique<OpenGLRenderDevice>(RenderDevice::InitInfo{
                 .nativeWindow = window->get(),
                 .width = width,
