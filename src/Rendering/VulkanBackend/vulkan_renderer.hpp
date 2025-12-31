@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <span>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
@@ -155,13 +156,15 @@ class VulkanRenderDevice : public RenderDevice {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
 
-        bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
+        [[nodiscard]] constexpr bool isComplete() const noexcept {
+            return graphicsFamily.has_value() && presentFamily.has_value();
+        }
     };
     vkr::PhysicalDevice pick_physical_device();
     vkr::Device create_logical_device();
     bool is_device_suitable(const vkr::PhysicalDevice& device);
     bool check_device_extension_support(const vkr::PhysicalDevice& device);
-    QueueFamilyIndices find_queue_families(const vkr::PhysicalDevice& device);
+    [[nodiscard]] QueueFamilyIndices find_queue_families(const vkr::PhysicalDevice& device);
     [[nodiscard]] vk::SampleCountFlagBits max_usable_sample_count() const;
 
     // Swap chain creation and management
@@ -170,16 +173,16 @@ class VulkanRenderDevice : public RenderDevice {
         std::vector<vk::SurfaceFormatKHR> formats;
         std::vector<vk::PresentModeKHR> presentModes;
     };
-    vk::Extent2D create_extent();
+    [[nodiscard]] vk::Extent2D create_extent();
     [[nodiscard]] vk::Format create_swap_chain_image_format() const;
-    vkr::SwapchainKHR create_swap_chain();
+    [[nodiscard]] vkr::SwapchainKHR create_swap_chain();
     [[nodiscard]] SwapChainSupportDetails query_swap_chain_support(
         const vk::PhysicalDevice& device
     ) const;
     [[nodiscard]] static vk::PresentModeKHR choose_present_mode(
-        const std::vector<vk::PresentModeKHR>& availableModes
+        std::span<const vk::PresentModeKHR> availableModes
     );
-    [[nodiscard]] static uint32_t choose_image_count(
+    [[nodiscard]] static constexpr uint32_t choose_image_count(
         const vk::SurfaceCapabilitiesKHR& capabilities
     );
     [[nodiscard]] vk::SwapchainCreateInfoKHR build_swapchain_create_info(
@@ -198,18 +201,18 @@ class VulkanRenderDevice : public RenderDevice {
         vk::ImageAspectFlags aspectFlags;
         uint32_t mipLevels;
     };
-    std::vector<vkr::ImageView> create_image_views();
-    vkr::ImageView create_image_view(const ImageViewCreateParams& params);
+    [[nodiscard]] std::vector<vkr::ImageView> create_image_views();
+    [[nodiscard]] vkr::ImageView create_image_view(const ImageViewCreateParams& params);
 
     // Texture sampler
-    vkr::Sampler create_texture_sampler();
+    [[nodiscard]] vkr::Sampler create_texture_sampler();
     vkr::ImageView create_texture_image_view();
 
     // Render pass
-    vkr::RenderPass create_render_pass();
+    [[nodiscard]] vkr::RenderPass create_render_pass();
     vk::Format find_depth_format();
     vk::Format find_supported_format(
-        const std::vector<vk::Format>& candidates,
+        std::span<const vk::Format> candidates,
         vk::ImageTiling tiling,
         vk::FormatFeatureFlags features
     );
@@ -218,35 +221,35 @@ class VulkanRenderDevice : public RenderDevice {
     vkr::DescriptorSetLayout create_descriptor_set_layout();
     vkr::PipelineLayout create_pipeline_layout();
     vkr::Pipeline create_graphics_pipeline(const std::string& assetPath);
-    vkr::ShaderModule create_shader_module(const std::vector<char>& code);
+    vkr::ShaderModule create_shader_module(std::span<const char> code);
 
     // Command pool
-    vkr::CommandPool create_command_pool();
-    vkr::CommandBuffer begin_single_time_commands();
+    [[nodiscard]] vkr::CommandPool create_command_pool();
+    [[nodiscard]] vkr::CommandBuffer begin_single_time_commands();
     void end_single_time_commands(vkr::CommandBuffer& commandBuffer);
 
     // Color and depth resources
-    ColorResources create_color_resources();
-    DepthResources create_depth_resources();
+    [[nodiscard]] ColorResources create_color_resources();
+    [[nodiscard]] DepthResources create_depth_resources();
 
     // Framebuffers
-    std::vector<vkr::Framebuffer> create_framebuffers();
+    [[nodiscard]] std::vector<vkr::Framebuffer> create_framebuffers();
 
     // Vertex, index, and uniform buffers
-    VertexBufferAllocation create_vertex_buffer();
-    IndexBufferAllocation create_index_buffer();
-    UniformBufferAllocation create_uniform_buffers();
-    ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
+    [[nodiscard]] VertexBufferAllocation create_vertex_buffer();
+    [[nodiscard]] IndexBufferAllocation create_index_buffer();
+    [[nodiscard]] UniformBufferAllocation create_uniform_buffers();
+    [[nodiscard]] ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
 
     // Descriptor pool and sets
-    vkr::DescriptorPool create_descriptor_pool();
-    std::vector<vkr::DescriptorSet> create_descriptor_sets();
+    [[nodiscard]] vkr::DescriptorPool create_descriptor_pool();
+    [[nodiscard]] std::vector<vkr::DescriptorSet> create_descriptor_sets();
     void update_descriptor_sets();
 
     // Command buffers
-    std::vector<vkr::CommandBuffer> create_command_buffers();
+    [[nodiscard]] std::vector<vkr::CommandBuffer> create_command_buffers();
     void record_command_buffer(
         vkr::CommandBuffer& commandBuffer,
         uint32_t imageIndex,
@@ -254,7 +257,7 @@ class VulkanRenderDevice : public RenderDevice {
     );
 
     // Synchronization objects
-    std::vector<vkr::Semaphore> create_sync_objects();
+    [[nodiscard]] std::vector<vkr::Semaphore> create_sync_objects();
 
     // Low-level resource creation helpers
     struct ImageCreateInfo {
@@ -280,9 +283,10 @@ class VulkanRenderDevice : public RenderDevice {
         vkr::Buffer buffer;
         vkr::DeviceMemory memory;
     };
-    ImageAllocation create_image(const ImageCreateInfo& info);
-    BufferAllocation create_buffer(const BufferCreateInfo& info);
-    uint32_t find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    [[nodiscard]] ImageAllocation create_image(const ImageCreateInfo& info);
+    [[nodiscard]] BufferAllocation create_buffer(const BufferCreateInfo& info);
+    [[nodiscard]] uint32_t
+    find_memory_type(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     template <typename T>
     std::pair<vkr::Buffer, vkr::DeviceMemory> create_staging_buffer(std::span<T> data);
 
@@ -322,7 +326,7 @@ class VulkanRenderDevice : public RenderDevice {
 
     // Runtime update functions
     void update_camera_buffer(uint32_t currentImage);
-    void update_model_buffer(uint32_t currentImage, const std::vector<glm::mat4>& models);
+    void update_model_buffer(uint32_t currentImage, std::span<const glm::mat4> models);
 
     // Historic (deprecated)
     bool init_vulkan(const InitInfo& info);
@@ -361,7 +365,7 @@ static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptio
 namespace std {
 template <>
 struct hash<Vertex> {
-    size_t operator()(Vertex const& vertex) const {
+    [[nodiscard]] constexpr size_t operator()(Vertex const& vertex) const noexcept {
         return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >>
                 1) ^
                (hash<glm::vec2>()(vertex.uv) << 1);

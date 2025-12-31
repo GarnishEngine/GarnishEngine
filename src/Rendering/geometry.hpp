@@ -10,7 +10,7 @@ struct Vertex {
     glm::vec2 uv;
 };
 
-bool operator==(const Vertex& vertex, const Vertex& other);
+[[nodiscard]] constexpr bool operator==(const Vertex& vertex, const Vertex& other) noexcept;
 
 using Index = uint32_t;
 

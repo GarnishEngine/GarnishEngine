@@ -2,17 +2,27 @@
 
 #include <GL/glew.h>
 
+#include <array>
+#include <format>
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "Utility/read_file.hpp"
 
 namespace garnish {
-ShaderProgram::ShaderProgram(
-    const std::string& vertexShaderPath,
-    const std::string& fragmentShaderPath
-)
+namespace {
+constexpr GLenum get_shader_type(std::string_view shaderPath) {
+    if (shaderPath.ends_with(".frag") || shaderPath.ends_with(".fragment")) {
+        return GL_FRAGMENT_SHADER;
+    }
+    return GL_VERTEX_SHADER;
+}
+}  // namespace
+
+ShaderProgram::ShaderProgram(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
     : handle(glCreateProgram()) {
     unsigned int vertexShader = compile_shader(vertexShaderPath);
     unsigned int fragmentShader = compile_shader(fragmentShaderPath);
@@ -25,18 +35,15 @@ ShaderProgram::ShaderProgram(
     glDeleteShader(fragmentShader);
 }
 
-void ShaderProgram::cleanup() const {
+void ShaderProgram::cleanup() const noexcept {
     glDeleteProgram(handle);
 }
 
-void ShaderProgram::use() const {
+void ShaderProgram::use() const noexcept {
     glUseProgram(handle);
 }
 
-void ShaderProgram::set_uniform(
-    const std::string& name,
-    const glm::mat4& mat
-) const {
+void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) const {
     use();
     glUniformMatrix4fv(
         glGetUniformLocation(handle, name.c_str()),
@@ -46,12 +53,13 @@ void ShaderProgram::set_uniform(
     );
 }
 
-unsigned int ShaderProgram::compile_shader(const std::string& shaderPath) {
+unsigned int ShaderProgram::compile_shader(std::string_view shaderPath) {
     std::vector<char> shaderSource = read_file(shaderPath);
 
+    const GLenum shaderType = get_shader_type(shaderPath);
     const char* source = shaderSource.data();
 
-    unsigned int shader = glCreateShader(GL_VERTEX_SHADER);
+    unsigned int shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
 
@@ -62,8 +70,7 @@ unsigned int ShaderProgram::compile_shader(const std::string& shaderPath) {
     if (!success) {
         glGetShaderInfoLog(shader, kInfoLogSize, nullptr, infoLog.data());
         throw std::runtime_error(
-            "Shader " + shaderPath + " failed to compile:\n" +
-            std::string{infoLog.data()}
+            std::format("Shader {} failed to compile:\n{}", shaderPath, infoLog.data())
         );
     }
     return shader;

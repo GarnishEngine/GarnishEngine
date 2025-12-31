@@ -15,6 +15,7 @@
 
 #include "Physics/physics_system.hpp"
 #include "Utility/camera.hpp"
+#include "Utility/imgui_raii.hpp"
 #include "render_device.hpp"
 
 #ifdef _OPENGL_RENDERING
@@ -29,12 +30,10 @@
 #endif
 
 namespace garnish {
-App::App(const CreateInfo createInfo)
+App::App(const CreateInfo& createInfo)
     : width(createInfo.width),
       height(createInfo.height),
-      fps(createInfo.targetFps),
-      renderDevice(nullptr),
-      window(nullptr) {
+      fps(createInfo.targetFps) {
     make_render_device(createInfo);
     ecsController.set(renderDevice.get());
 
@@ -49,8 +48,6 @@ App::~App() noexcept {
     if (renderDevice) {
         renderDevice->cleanup();
     }
-
-    SDL_Quit();
 }
 
 void App::init() {}
@@ -104,20 +101,8 @@ void App::handle_all_events() {
     }
 }
 
-SDL_Window* App::init_window(int64_t flags) const {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
-
-    return SDL_CreateWindow(
-        "hello window",
-        static_cast<int>(width),
-        static_cast<int>(height),
-        flags
-    );
-}
-
 void App::init_imgui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    static ImGuiContextRAII imguiCtx;
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -126,7 +111,7 @@ void App::init_imgui() {
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 #ifdef _OPENGL_RENDERING
-    ImGui_ImplSDL3_InitForOpenGL(window.get(), SDL_GL_GetCurrentContext());
+    ImGui_ImplSDL3_InitForOpenGL(window->get(), SDL_GL_GetCurrentContext());
     ImGui_ImplOpenGL3_Init();
 #endif
 }
@@ -136,7 +121,6 @@ void App::terminate_imgui() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
 #endif
-    ImGui::DestroyContext();
 }
 
 void App::make_render_device(const CreateInfo& createInfo) {
@@ -146,9 +130,15 @@ void App::make_render_device(const CreateInfo& createInfo) {
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-            window.reset(init_window(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE));
+            window = std::make_unique<SDLWindowManager>(
+                SDL_INIT_VIDEO | SDL_INIT_EVENTS,
+                "hello window",
+                static_cast<int>(width),
+                static_cast<int>(height),
+                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+            );
             renderDevice = std::make_unique<OpenGLRenderDevice>(RenderDevice::InitInfo{
-                .nativeWindow = window.get(),
+                .nativeWindow = window->get(),
                 .width = width,
                 .height = height,
                 .vsync = false,
@@ -158,11 +148,15 @@ void App::make_render_device(const CreateInfo& createInfo) {
 #endif
 #ifdef _VULKAN_RENDERING
         case RenderingBackend::Vulkan:
-            window.reset(init_window(
+            window = std::make_unique<SDLWindowManager>(
+                SDL_INIT_VIDEO | SDL_INIT_EVENTS,
+                "hello window",
+                static_cast<int>(width),
+                static_cast<int>(height),
                 SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE
-            ));
+            );
             renderDevice = std::make_unique<vulkan::VulkanRenderDevice>(RenderDevice::InitInfo{
-                .nativeWindow = window.get(),
+                .nativeWindow = window->get(),
                 .width = width,
                 .height = height,
                 .vsync = false,
@@ -177,7 +171,7 @@ void App::make_render_device(const CreateInfo& createInfo) {
 void App::refresh_window_size() {
     int w = 0;
     int h = 0;
-    SDL_GetWindowSize(window.get(), &w, &h);
+    SDL_GetWindowSize(window->get(), &w, &h);
     width = static_cast<uint32_t>(w);
     height = static_cast<uint32_t>(h);
 }

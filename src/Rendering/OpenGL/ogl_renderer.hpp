@@ -1,6 +1,5 @@
 #pragma once
 #define GLEW_STATIC
-#define GL_PTR_OFFSET(i) reinterpret_cast<void*>(static_cast<intptr_t>(i))
 
 #include <GL/glew.h>
 #include <SDL3/SDL_opengl.h>

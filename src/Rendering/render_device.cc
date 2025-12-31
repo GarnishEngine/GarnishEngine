@@ -2,6 +2,7 @@
 
 #include <tiny_obj_loader.h>
 
+#include <format>
 #include <stdexcept>
 
 namespace garnish {
@@ -14,15 +15,8 @@ uint32_t RenderDevice::setup_mesh(const std::string& mesh_path) {
     std::string warn;
     std::string err;
 
-    if (!tinyobj::LoadObj(
-            &attrib,
-            &shapes,
-            &materials,
-            &warn,
-            &err,
-            mesh_path.c_str()
-        )) {
-        throw std::runtime_error(warn + err);
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, mesh_path.c_str())) {
+        throw std::runtime_error(std::format("{}: {}", warn, err));
     }
 
     for (const auto& shape : shapes) {
