@@ -92,12 +92,6 @@ class VulkanRenderDevice : public RenderDevice {
     vkr::Device gvDevice_;
 
     static constexpr uint32_t kInitialModelCapacity = 256;
-    struct ModelBufferAllocation {
-        std::vector<vkr::Buffer> buffers;
-        std::vector<vkr::DeviceMemory> memory;
-        std::vector<void*> mapped;
-        uint32_t capacity;
-    } modelBufferAlloc_;
 
     vkr::Queue gvGraphicsQueue_;
     vkr::Queue gvPresentQueue_;
@@ -128,28 +122,29 @@ class VulkanRenderDevice : public RenderDevice {
     } depthResources_;
     std::vector<vkr::Framebuffer> swapChainFramebuffers_;
 
-    struct VertexBufferAllocation {
+    struct BufferAllocation {
         vkr::Buffer buffer;
         vkr::DeviceMemory memory;
-    } vertexBuffer_;
-    struct IndexBufferAllocation {
-        vkr::Buffer buffer;
-        vkr::DeviceMemory memory;
-    } indexBuffer_;
+    };
+    BufferAllocation vertexBuffer_;
+    BufferAllocation indexBuffer_;
     vk::DeviceSize totalVertexBytes_ = 0;
     vk::DeviceSize totalIndexBytes_ = 0;
 
-    struct UniformBufferAllocation {
+    struct MappedBufferAllocation {
         std::vector<vkr::Buffer> buffers;
         std::vector<vkr::DeviceMemory> memory;
         std::vector<void*> mapped;
-    } uniformBufferAlloc_;
-
-    struct LightingBufferAllocation {
+    };
+    MappedBufferAllocation uniformBufferAlloc_;
+    MappedBufferAllocation lightingBufferAlloc_;
+    struct ModelBufferAllocation {
         std::vector<vkr::Buffer> buffers;
         std::vector<vkr::DeviceMemory> memory;
         std::vector<void*> mapped;
-    } lightingBufferAlloc_;
+        uint32_t capacity;
+    };
+    ModelBufferAllocation modelBufferAlloc_;
 
     vkr::DescriptorPool gvDescriptorPool_;
     std::vector<vkr::DescriptorSet> descriptorSets_;
@@ -177,7 +172,7 @@ class VulkanRenderDevice : public RenderDevice {
     bool imguiInitialized_ = false;
 
     [[nodiscard]] vkr::DescriptorPool create_imgui_descriptor_pool();
-    void render_imgui(vkr::CommandBuffer& commandBuffer);
+    void render_imgui(vkr::CommandBuffer& commandBuffer) const;
 
     // Instance and surface initialization
     vkr::Instance create_instance();
@@ -269,10 +264,8 @@ class VulkanRenderDevice : public RenderDevice {
     [[nodiscard]] std::vector<vkr::Framebuffer> create_framebuffers();
 
     // Vertex, index, and uniform buffers
-    [[nodiscard]] VertexBufferAllocation create_vertex_buffer();
-    [[nodiscard]] IndexBufferAllocation create_index_buffer();
-    [[nodiscard]] UniformBufferAllocation create_uniform_buffers();
-    [[nodiscard]] LightingBufferAllocation create_lighting_buffers();
+    [[nodiscard]] BufferAllocation create_buffer_allocation(vk::BufferUsageFlags usage);
+    [[nodiscard]] MappedBufferAllocation create_uniform_buffers();
     [[nodiscard]] ModelBufferAllocation create_model_buffers(uint32_t minCapacity);
     void destroy_model_buffers();
     void ensure_model_capacity(uint32_t requiredModelCount);
@@ -291,7 +284,8 @@ class VulkanRenderDevice : public RenderDevice {
     );
 
     // Synchronization objects
-    [[nodiscard]] std::vector<vkr::Semaphore> create_sync_objects();
+    [[nodiscard]] std::vector<vkr::Fence> create_in_flight_fences();
+    [[nodiscard]] std::vector<vkr::Semaphore> create_image_available_semaphores();
 
     // Low-level resource creation helpers
     struct ImageCreateInfo {
@@ -312,10 +306,6 @@ class VulkanRenderDevice : public RenderDevice {
         vk::DeviceSize size;
         vk::BufferUsageFlags usage;
         vk::MemoryPropertyFlags memoryProperties;
-    };
-    struct BufferAllocation {
-        vkr::Buffer buffer;
-        vkr::DeviceMemory memory;
     };
     [[nodiscard]] ImageAllocation create_image(const ImageCreateInfo& info);
     [[nodiscard]] BufferAllocation create_buffer(const BufferCreateInfo& info);
@@ -363,8 +353,8 @@ class VulkanRenderDevice : public RenderDevice {
     void update_lighting_buffer(uint32_t currentImage);
     void update_model_buffer(uint32_t currentImage, std::span<const glm::mat4> models);
 
-    // Historic (deprecated)
-    bool init_vulkan(const InitInfo& info);
+    // Cleanup function(s)
+    void unmap_buffer_allocation(auto& alloc);
 };  // namespace garnish::vulkan
 
 static vk::VertexInputBindingDescription getBindingDescription() {
