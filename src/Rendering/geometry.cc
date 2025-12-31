@@ -191,7 +191,7 @@ Geometry createUnitSphereGeometry(uint32_t sectors, uint32_t stacks) {
         uint32_t k1 = i * (sectors + 1);
         uint32_t k2 = k1 + sectors + 1;
 
-        for (auto j : std::views::iota(0U, sectors)) {
+        for ([[maybe_unused]] auto j : std::views::iota(0U, sectors)) {
             if (i != 0) {
                 indices.push_back(k1);
                 indices.push_back(k2);
@@ -202,6 +202,8 @@ Geometry createUnitSphereGeometry(uint32_t sectors, uint32_t stacks) {
                 indices.push_back(k2);
                 indices.push_back(k2 + 1);
             }
+            ++k1;
+            ++k2;
         }
     }
 
