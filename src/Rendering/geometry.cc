@@ -152,8 +152,3 @@ Geometry createUnitCubeGeometry() {
 
     return geo;
 }
-
-constexpr bool operator==(const Vertex& vertex, const Vertex& other) noexcept {
-    return vertex.position == other.position && vertex.normal == other.normal &&
-           vertex.uv == other.uv;
-}

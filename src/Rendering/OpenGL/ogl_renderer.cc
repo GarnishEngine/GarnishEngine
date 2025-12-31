@@ -39,7 +39,9 @@ OpenGLRenderDevice::OpenGLRenderDevice(const RenderDevice::InitInfo& info)
         glContext.reset(raw);
         SDL_GL_MakeCurrent(window, glContext.get());
     } else {
-        throw std::runtime_error(std::format("SDL_GL_CreateContext failed: {}", SDL_GetError()));
+        throw std::runtime_error(
+            std::format("SDL_GL_CreateContext failed: {}", SDL_GetError())
+        );
     }
 
     glbinding::initialize(SDL_GL_GetProcAddress);
@@ -126,7 +128,8 @@ bool OpenGLRenderDevice::draw_frame(ECSController& world) {
         glm::mat4 model{1.0F};
         if (world.has_component<Transform>(entity)) {
             auto& tf = world.get_component<Transform>(entity);
-            model = glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
+            model =
+                glm::translate(model, tf.position) * glm::toMat4(tf.rotation);
         }
         shaderProgram->set_uniform("model", model);
 
@@ -207,7 +210,9 @@ uint32_t OpenGLRenderDevice::setup_mesh(const Geometry& geometry) {
     gl::glBindBuffer(gl::GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
     gl::glBufferData(
         gl::GL_ELEMENT_ARRAY_BUFFER,
-        static_cast<gl::GLsizeiptr>(geometry.indices.size() * sizeof(unsigned int)),
+        static_cast<gl::GLsizeiptr>(
+            geometry.indices.size() * sizeof(unsigned int)
+        ),
         geometry.indices.data(),
         gl::GL_STATIC_DRAW
     );
@@ -264,10 +269,26 @@ uint32_t OpenGLRenderDevice::load_texture(const std::string& texture_path) {
 
     gl::glGenTextures(1, &texID);
     gl::glBindTexture(gl::GL_TEXTURE_2D, texID);
-    gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MIN_FILTER, gl::GL_LINEAR_MIPMAP_LINEAR);
-    gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_S, gl::GL_REPEAT);
-    gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_T, gl::GL_REPEAT);
-    gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
+    gl::glTexParameteri(
+        gl::GL_TEXTURE_2D,
+        gl::GL_TEXTURE_MIN_FILTER,
+        gl::GL_LINEAR_MIPMAP_LINEAR
+    );
+    gl::glTexParameteri(
+        gl::GL_TEXTURE_2D,
+        gl::GL_TEXTURE_WRAP_S,
+        gl::GL_REPEAT
+    );
+    gl::glTexParameteri(
+        gl::GL_TEXTURE_2D,
+        gl::GL_TEXTURE_WRAP_T,
+        gl::GL_REPEAT
+    );
+    gl::glTexParameteri(
+        gl::GL_TEXTURE_2D,
+        gl::GL_TEXTURE_MAG_FILTER,
+        gl::GL_LINEAR
+    );
 
     gl::glTexImage2D(
         gl::GL_TEXTURE_2D,

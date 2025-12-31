@@ -22,7 +22,10 @@ constexpr gl::GLenum get_shader_type(std::string_view shaderPath) {
 }
 }  // namespace
 
-ShaderProgram::ShaderProgram(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
+ShaderProgram::ShaderProgram(
+    std::string_view vertexShaderPath,
+    std::string_view fragmentShaderPath
+)
     : handle(gl::glCreateProgram()) {
     gl::GLuint vertexShader = compile_shader(vertexShaderPath);
     gl::GLuint fragmentShader = compile_shader(fragmentShaderPath);
@@ -43,7 +46,10 @@ void ShaderProgram::use() const noexcept {
     gl::glUseProgram(handle);
 }
 
-void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) const {
+void ShaderProgram::set_uniform(
+    const std::string& name,
+    const glm::mat4& mat
+) const {
     use();
     gl::glUniformMatrix4fv(
         gl::glGetUniformLocation(handle, name.c_str()),
@@ -53,9 +59,16 @@ void ShaderProgram::set_uniform(const std::string& name, const glm::mat4& mat) c
     );
 }
 
-void ShaderProgram::set_uniform(const std::string& name, const glm::vec3& vec) const {
+void ShaderProgram::set_uniform(
+    const std::string& name,
+    const glm::vec3& vec
+) const {
     use();
-    gl::glUniform3fv(gl::glGetUniformLocation(handle, name.c_str()), 1, glm::value_ptr(vec));
+    gl::glUniform3fv(
+        gl::glGetUniformLocation(handle, name.c_str()),
+        1,
+        glm::value_ptr(vec)
+    );
 }
 
 void ShaderProgram::set_uniform(const std::string& name, float value) const {
@@ -69,23 +82,27 @@ void ShaderProgram::set_uniform(const std::string& name, int value) const {
 }
 
 gl::GLuint ShaderProgram::compile_shader(std::string_view shaderPath) {
-    std::vector<char> shaderSource = read_file(shaderPath);
-
+    constexpr size_t kInfoLogSize = 512;
     const gl::GLenum shaderType = get_shader_type(shaderPath);
+    const gl::GLuint shader = gl::glCreateShader(shaderType);
+
+    const std::vector<char> shaderSource = read_file(shaderPath);
     const char* source = shaderSource.data();
 
-    gl::GLuint shader = gl::glCreateShader(shaderType);
     gl::glShaderSource(shader, 1, &source, nullptr);
     gl::glCompileShader(shader);
 
     gl::GLint success = 0;
-    constexpr size_t kInfoLogSize = 512;
     std::array<char, kInfoLogSize> infoLog{};
     gl::glGetShaderiv(shader, gl::GL_COMPILE_STATUS, &success);
     if (success == 0) {
         gl::glGetShaderInfoLog(shader, kInfoLogSize, nullptr, infoLog.data());
         throw std::runtime_error(
-            std::format("Shader {} failed to compile:\n{}", shaderPath, infoLog.data())
+            std::format(
+                "Shader {} failed to compile:\n{}",
+                shaderPath,
+                infoLog.data()
+            )
         );
     }
     return shader;

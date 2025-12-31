@@ -387,13 +387,3 @@ static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptio
 }
 }  // namespace garnish::vulkan
 
-namespace std {
-template <>
-struct hash<Vertex> {
-    [[nodiscard]] constexpr size_t operator()(Vertex const& vertex) const noexcept {
-        return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >>
-                1) ^
-               (hash<glm::vec2>()(vertex.uv) << 1);
-    }
-};
-}  // namespace std
